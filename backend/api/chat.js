@@ -5,6 +5,18 @@ import { customers, customerNameMap } from './lib/mockData.js'
 import { validateInput, validateOutput, maskPII } from './lib/safety.js'
 import { searchKnowledge } from './lib/knowledgeBase.js'
 
+// 인사/간단한 입력 패턴
+const GREETING_PATTERNS = [
+  '안녕하세요', '안녕', '반갑습니다', '감사합니다', '고마워요', '고맙습니다',
+  '네', '아니요', '예', '아니오', '좋아요', '알겠습니다', '확인했습니다',
+  '하이', '헬로', 'hi', 'hello', '처음 뵙겠습니다', '수고하세요',
+]
+
+function isGreetingMessage(msg) {
+  const trimmed = msg.trim().replace(/[.!~?？ ]+$/g, '')
+  return trimmed.length <= 15 && GREETING_PATTERNS.some(p => trimmed.includes(p))
+}
+
 export default async function handler(req, res) {
   if (cors(req, res)) return
   if (req.method !== 'POST') return error(res, 'METHOD_NOT_ALLOWED', 'POST만 허용됩니다', 405)
@@ -32,7 +44,6 @@ export default async function handler(req, res) {
       },
     })
   }
-  // 이후 로직에서는 PII 마스킹된 sanitized 텍스트 사용
 
   try {
     // 고객 정보: 명시적 customerId 또는 메시지에서 자동 매칭
@@ -43,6 +54,27 @@ export default async function handler(req, res) {
         const matchedId = customerNameMap[matchedKey]
         customerInfo = customers[matchedId] || null
       }
+    }
+
+    // ── 인사/간단한 입력 → RAG 스킵, ThinkingProcess 스킵 ──
+    if (isGreetingMessage(message)) {
+      const result = await generateAnswer(message, customerInfo, conversationHistory || [], { skipRAG: true })
+      return json(res, {
+        success: true,
+        data: {
+          answer: result.answer,
+          confidence: 'high',
+          confidenceScore: 95,
+          references: [],
+          thinkingProcess: [],
+          needsEscalation: false,
+          isComplex: false,
+          subQuestions: null,
+          model: result.model,
+          complexity: 'simple',
+          customerInfo: customerInfo || null,
+        },
+      })
     }
 
     // thinking process 생성
@@ -99,7 +131,7 @@ export default async function handler(req, res) {
     let finalAnswer = result.answer
     if (!outputCheck.safe) {
       finalAnswer = '죄송합니다. 안전한 답변을 생성하지 못했습니다. 담당자에게 문의해 주세요.'
-      thinkingProcess.push('🛡️ 출력 안전성 검증: ⚠️ 수정됨')
+      thinkingProcess.push('��️ 출력 안전성 검증: ⚠️ 수정됨')
     } else {
       thinkingProcess.push('🛡️ 출력 안전성 검증: ✅ 통과')
     }

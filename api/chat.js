@@ -1,9 +1,21 @@
 // POST /api/chat — 챗봇 메시지 전송 + AI 답변 생성
 import { cors, json, error } from './_lib/cors.js'
 import { generateAnswer, analyzeQuestion } from './_lib/geminiClient.js'
-import { customers } from './_lib/mockData.js'
+import { customers, customerNameMap } from './_lib/mockData.js'
 import { validateInput, validateOutput, maskPII } from './_lib/safety.js'
 import { searchKnowledge } from './_lib/knowledgeBase.js'
+
+// 인사/간단한 입력 패턴
+const GREETING_PATTERNS = [
+  '안녕하세요', '안녕', '반갑습니다', '감사합니다', '고마워요', '고맙습니다',
+  '네', '아니요', '예', '아니오', '좋아요', '알겠습니다', '확인했습니다',
+  '하이', '헬로', 'hi', 'hello', '처음 뵙겠습니다', '수고하세요',
+]
+
+function isGreetingMessage(msg) {
+  const trimmed = msg.trim().replace(/[.!~?？ ]+$/g, '')
+  return trimmed.length <= 15 && GREETING_PATTERNS.some(p => trimmed.includes(p))
+}
 
 export default async function handler(req, res) {
   if (cors(req, res)) return
@@ -32,15 +44,48 @@ export default async function handler(req, res) {
       },
     })
   }
-  // 이후 로직에서는 PII 마스킹된 sanitized 텍스트 사용
 
   try {
-    // 고객 정보 조회
-    const customerInfo = customerId ? customers[customerId] : null
+    // 고객 정보: 명시적 customerId 또는 메시지에서 자동 매칭
+    let customerInfo = customerId ? customers[customerId] : null
+    if (!customerInfo) {
+      const matchedKey = Object.keys(customerNameMap).find(k => message.includes(k))
+      if (matchedKey) {
+        const matchedId = customerNameMap[matchedKey]
+        customerInfo = customers[matchedId] || null
+      }
+    }
+
+    // ── 인사/간단한 입력 → RAG 스킵, ThinkingProcess 스킵 ──
+    if (isGreetingMessage(message)) {
+      const result = await generateAnswer(message, customerInfo, conversationHistory || [], { skipRAG: true })
+      return json(res, {
+        success: true,
+        data: {
+          answer: result.answer,
+          confidence: 'high',
+          confidenceScore: 95,
+          references: [],
+          thinkingProcess: [],
+          needsEscalation: false,
+          isComplex: false,
+          subQuestions: null,
+          model: result.model,
+          complexity: 'simple',
+          customerInfo: customerInfo || null,
+        },
+      })
+    }
 
     // thinking process 생성
     const analysis = analyzeQuestion(message)
     const thinkingProcess = ['🤔 질문 분석 중...']
+
+    // 고객 매칭 결과 표시
+    if (customerInfo) {
+      thinkingProcess.push(`👤 고객 매칭: ${customerInfo.name} (${customerInfo.product} ${customerInfo.version})`)
+      thinkingProcess.push(`📊 세일즈포스 데이터: ${customerInfo.accountType} / ${customerInfo.industry} / 만족도 ${customerInfo.satisfactionScore}`)
+    }
 
     if (analysis.isComplex) {
       thinkingProcess.push(`복합 질문 감지: ${analysis.subQuestions.length}개 질문으로 나눠서 답변합니다`)
@@ -107,6 +152,7 @@ export default async function handler(req, res) {
         subQuestions: result.subQuestions,
         model: result.model,
         complexity: result.complexity,
+        customerInfo: customerInfo || null,
       },
     })
   } catch (err) {

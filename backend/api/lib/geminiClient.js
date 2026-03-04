@@ -135,8 +135,9 @@ function evaluateConfidence(question, answer) {
 }
 
 // Gemini로 답변 생성
-export async function generateAnswer(question, customerInfo, conversationHistory = []) {
+export async function generateAnswer(question, customerInfo, conversationHistory = [], options = {}) {
   const client = getClient()
+  const { skipRAG = false } = options
 
   // DEMO_MODE이거나 Gemini 클라이언트 없으면 mock 답변
   if (ENV.DEMO_MODE || !client) {
@@ -158,12 +159,14 @@ export async function generateAnswer(question, customerInfo, conversationHistory
       }
     }
 
-    // RAG: 지식 베이스에서 관련 문서 검색
-    const productHint = customerInfo?.product || null
-    const ragResult = searchKnowledge(question, productHint, 3)
-    const ragContext = formatContext(ragResult)
-    if (ragContext) {
-      contextParts.push(`[지식 베이스 검색 결과 — ${ragResult.stores.join(', ')} 제품]\n${ragContext}`)
+    // RAG: 인사/간단 입력이면 스킵, 그 외에는 지식 베이스 검색
+    if (!skipRAG) {
+      const productHint = customerInfo?.product || null
+      const ragResult = searchKnowledge(question, productHint, 3)
+      const ragContext = formatContext(ragResult)
+      if (ragContext) {
+        contextParts.push(`[지식 베이스 검색 결과 — ${ragResult.stores.join(', ')} 제품]\n${ragContext}`)
+      }
     }
 
     const historyText = conversationHistory
@@ -224,10 +227,26 @@ ${historyText}
   }
 }
 
-// Mock 답변 생성 (DEMO_MODE)
+// Mock 답변 생성 (DEMO_MODE 또는 Gemini 클라이언트 없을 때)
 function generateMockAnswer(question, customerInfo) {
   const analysis = analyzeQuestion(question)
   const confidence = evaluateConfidence(question, '')
+
+  // 인사/간단한 입력 감지
+  const greetings = ['안녕하세요', '안녕', '반갑습니다', '감사합니다', '고마워요', '하이', '헬로', 'hi', 'hello', '처음 뵙겠습니다', '수고하세요']
+  const trimmed = question.trim().replace(/[.!~?？ ]+$/g, '')
+  if (trimmed.length <= 15 && greetings.some(g => trimmed.includes(g))) {
+    return {
+      answer: '안녕하세요! 마크애니 AI 프리세일즈 어시스턴트 ANY 브릿지입니다. 😊\n어떤 제품이나 서비스에 대해 궁금하신 점이 있으신가요?',
+      confidence: 'high',
+      confidenceScore: 95,
+      references: [],
+      needsEscalation: false,
+      isComplex: false,
+      subQuestions: null,
+      model: 'mock',
+    }
+  }
 
   const productAnswers = {
     'Document SAFER': 'Document SAFER v3.2에서 대량 파일 처리 속도가 30% 개선되었습니다. 윈도우 11을 완벽하게 지원하며, 과거 호환성 문제가 모두 해결되었습니다.',
@@ -246,8 +265,9 @@ function generateMockAnswer(question, customerInfo) {
     confidence: confidence.level,
     confidenceScore: confidence.score,
     references: customerInfo?.references || ['정책기능서 v3.2'],
-    needsEscalation: false, // mock에서는 에스컬레이션 안 함
+    needsEscalation: false,
     isComplex: analysis.isComplex,
     subQuestions: analysis.subQuestions,
+    model: 'mock',
   }
 }
