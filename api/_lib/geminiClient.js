@@ -71,6 +71,7 @@ const SYSTEM_PROMPT = `당신은 마크애니의 AI 프리세일즈 어시스턴
 - 가격 정보는 직접 제공하지 않고 담당자 연결을 안내합니다
 - 반드시 [대화 이력]을 참고하여 이전에 한 말을 반복하지 마세요. 고객이 추가 질문이나 불만을 표현하면 새로운 구체적 정보(다음 단계, 구축 절차, 기간, 기술 세부사항 등)를 제공하세요.
 - 고객이 "그래서?", "어쩌라는거죠?", "구체적으로" 등 추가 설명을 요구하면, 지식 베이스에서 구체적 수치/절차/사례를 찾아 답변하세요. 이것은 에스컬레이션이 아니라 더 상세한 답변이 필요한 상황입니다.
+- "도입", "구축", "신규", "전환" 등 컨설팅급 질문에는 첫 답변부터 반드시 다음을 포함하세요: ① 구축 기간(예: 소규모 2~4주, 대규모 8~16주) ② 구축 프로세스 단계(요구사항 분석→설계→개발→테스트→배포→안정화) ③ 주요 레퍼런스 고객사 2~3곳. 일반적인 제품 소개만 하지 마세요.
 
 대화 흐름 (자연스러운 단계별 진행):
 1. 인사 단계: 고객이 인사하면 반갑게 맞이하고, "어떤 제품이나 서비스에 대해 궁금하신 점이 있으신가요?" 처럼 자연스럽게 의도를 파악하세요. 절대 첫 마디부터 고객사를 묻지 마세요.
@@ -89,6 +90,18 @@ ${KNOWLEDGE_BASE}`
 
 // CHECK 시맨틱 분석: 복합 질문 분해 + 복잡도 레벨
 export function analyzeQuestion(question) {
+  // 도입/구축/전환 등 컨설팅급 질문은 짧아도 complex로 올림 (Pro 모델 라우팅)
+  const consultingKeywords = ['도입', '구축', '신규', '검토', '전환', '마이그레이션', '교체', '적용']
+  const isConsulting = consultingKeywords.some(k => question.includes(k))
+
+  if (isConsulting) {
+    const subQuestions = [
+      { question: '도입/구축 컨설팅', role: 'sales', assignee: '송인찬' },
+      { question: '기술 환경 분석', role: 'se', assignee: '이현진' },
+    ]
+    return { isComplex: true, complexity: 'complex', subQuestions }
+  }
+
   const markers = ['?', '그리고', '또한', '와', '과', '및', '아울러']
   const hasMarkers = markers.some(m => question.includes(m)) && question.length > 30
 
