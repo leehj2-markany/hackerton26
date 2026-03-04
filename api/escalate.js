@@ -2,6 +2,7 @@
 import { cors, json, error } from './_lib/cors.js'
 import { ENV, SLACK_USERS } from './_lib/config.js'
 import { agents } from './_lib/mockData.js'
+import { searchKnowledge } from './_lib/knowledgeBase.js'
 import {
   createChannel,
   inviteUsersToChannel,
@@ -105,9 +106,21 @@ export default async function handler(req, res) {
       agents: members,
     })
 
-    // ── 4. AI 코파일럿 답변 초안 전송 ──
+    // ── 4. AI 코파일럿 답변 초안 전송 (RAG 참조 근거 포함) ──
     if (aiAnswer) {
-      await postAiCopilotSuggestion(channelId, question, aiAnswer)
+      // RAG 검색으로 참조 근거 추출 (내부 담당자용)
+      let references = []
+      try {
+        const ragResult = searchKnowledge(question, null, 3)
+        references = ragResult.chunks.map(c => ({
+          title: c.title,
+          snippet: c.content?.slice(0, 150) || '',
+          score: c.score ? `${Math.round(c.score * 100)}%` : '-',
+        }))
+      } catch (ragErr) {
+        console.error('[escalate] RAG 검색 실패:', ragErr.message)
+      }
+      await postAiCopilotSuggestion(channelId, question, aiAnswer, references)
     }
 
     // ── 5. 담당자별 멘션 메시지 ──

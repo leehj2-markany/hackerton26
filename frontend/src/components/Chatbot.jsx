@@ -75,6 +75,7 @@ const Chatbot = () => {
   const [, setCollectedEmail] = useState('')
   const [, setSlackPollSince] = useState(null)
   const [slackChannelId, setSlackChannelId] = useState(null)
+  const [sessionId] = useState(() => `session_${Date.now()}`)
   const messagesEndRef = useRef(null)
 
   const quickReplyOptions = [
@@ -335,7 +336,7 @@ const Chatbot = () => {
         .slice(-6)
         .map(m => ({ role: m.type === 'user' ? 'user' : 'assistant', content: m.text }))
 
-      const result = await sendMessage(question, customerInfo?.id || null, `session_${Date.now()}`, history)
+      const result = await sendMessage(question, customerInfo?.id || null, sessionId, history)
       const data = result.data
 
       // 백엔드에서 고객 매칭 정보가 오면 InfoPanel용으로 저장

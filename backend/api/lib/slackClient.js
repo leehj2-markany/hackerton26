@@ -213,8 +213,13 @@ export async function simulateAgentJoin(channelId, agents) {
 // ─── 4. postAiCopilotSuggestion ─────────────────────────
 
 /** AI 코파일럿 답변 초안 전송 (Block Kit + 버튼) */
-export async function postAiCopilotSuggestion(channelId, question, suggestion) {
-  log('postAiCopilot', `channel=${channelId}, question=${question?.slice(0, 40)}...`)
+export async function postAiCopilotSuggestion(channelId, question, suggestion, references = []) {
+  log('postAiCopilot', `channel=${channelId}, question=${question?.slice(0, 40)}..., refs=${references.length}`)
+
+  // RAG 참조 근거 텍스트 생성 (내부 담당자용)
+  const refText = references.length > 0
+    ? references.map((r, i) => `${i + 1}. 📄 *${r.title}* (유사도: ${r.score || '-'})\n   _${(r.snippet || '').slice(0, 120)}_`).join('\n')
+    : '_(참조 문서 없음)_'
 
   const blocks = [
     {
@@ -231,6 +236,13 @@ export async function postAiCopilotSuggestion(channelId, question, suggestion) {
       text: {
         type: 'mrkdwn',
         text: `*💡 AI 추천 답변:*\n${(suggestion || 'AI 답변을 생성 중입니다...').slice(0, 2500)}`,
+      },
+    },
+    {
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: `*📚 참조 근거 (지식 베이스):*\n${refText}`,
       },
     },
     {
