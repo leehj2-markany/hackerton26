@@ -1,0 +1,22 @@
+{
+  "name": "anybridge-backend",
+  "version": "1.0.0",
+  "description": "ANY 브릿지 백엔드 - Vercel Serverless Functions",
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "dev:vercel": "vercel dev",
+    "build": "echo 'Serverless - no build needed'",
+    "test": "vitest --run",
+    "lint": "eslint api/"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@supabase/supabase-js": "^2.49.1",
+    "dotenv": "^16.4.5",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "vitest": "^3.0.0"
+  }
+}

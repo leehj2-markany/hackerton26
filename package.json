@@ -1,0 +1,29 @@
+{
+  "name": "anybridge-hackathon",
+  "version": "1.0.0",
+  "description": "ANY 브릿지 - 마크애니 AI 해커톤 2026",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test:gemini": "node test-gemini.js",
+    "build": "cd frontend && npm install && npm run build"
+  },
+  "keywords": [
+    "ai",
+    "chatbot",
+    "rag",
+    "gemini",
+    "hackathon"
+  ],
+  "author": "미생:코딩편 팀",
+  "license": "MIT",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@supabase/supabase-js": "^2.49.1",
+    "dotenv": "^16.4.5",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "vercel": "^50.25.3"
+  }
+}

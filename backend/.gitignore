@@ -1,0 +1,17 @@
+# 환경 변수 (API 키 보호)
+.env
+.env.local
+.env.production
+
+# Node modules
+node_modules/
+
+# 빌드
+dist/
+.vercel/
+
+# 로그
+*.log
+
+# OS
+.DS_Store
