@@ -128,13 +128,11 @@ const CONSTITUTIONAL_PRINCIPLES = [
 ]
 
 // ══════════════════════════════════════════════════════
-// 4. 차단 입력 패턴 (기존 호환)
+// 4. 차단 입력 패턴 — 제거됨
 // ══════════════════════════════════════════════════════
-const BLOCKED_INPUT_PATTERNS = [
-  { pattern: /경쟁사.*비교.*나쁜|경쟁사.*깎아/i, reason: '경쟁사 비방 유도 요청은 처리할 수 없습니다.' },
-  { pattern: /(정확한|구체적인)?\s*가격.*알려|견적.*뽑아|얼마.*인가요/i, reason: '가격 정보는 담당 영업팀을 통해 안내드립니다. 연결해 드릴까요?' },
-  { pattern: /내부\s*(문서|자료|코드|소스).*유출|기밀.*공개/i, reason: '내부 기밀 정보 요청은 처리할 수 없습니다.' },
-]
+// 비즈니스 맥락 판단(경쟁사 비방, 가격 문의, 기밀 요청 등)은
+// 룰베이스 regex로 구분 불가 → LLM 시스템 프롬프트 규칙으로 위임.
+// 프롬프트 인젝션 방어(INJECTION_PATTERNS)만 regex로 유지.
 
 // ══════════════════════════════════════════════════════
 // 5. 마크애니 제품 키워드 (신뢰도 평가용)
@@ -334,19 +332,13 @@ export function securityLog(event, details = {}) {
 // (chat.js에서 import하여 사용 중)
 // ══════════════════════════════════════════════════════
 export function validateInput(text) {
-  // sanitizeInput 듀얼 레이어 실행
+  // sanitizeInput 듀얼 레이어 실행 (프롬프트 인젝션 방어 + 특수문자 제거)
   const result = sanitizeInput(text)
   if (!result.safe) {
     return { safe: false, reason: result.reason, sanitized: '' }
   }
 
-  // 차단 입력 패턴 체크
-  for (const rule of BLOCKED_INPUT_PATTERNS) {
-    if (rule.pattern.test(result.sanitized)) {
-      return { safe: false, reason: rule.reason, sanitized: '' }
-    }
-  }
-
+  // 비즈니스 맥락 판단은 LLM 시스템 프롬프트에 위임 (regex 오탐 방지)
   // PII 마스킹 (차단이 아닌 마스킹 후 통과)
   const sanitized = maskPII(result.sanitized)
 

@@ -12,6 +12,24 @@ function buildUserIdMap() {
   return map
 }
 
+/**
+ * Slack raw 텍스트에서 <@userId> 멘션을 사람 이름으로 변환
+ * 추가로 채널 링크, URL 포맷 등 Slack 전용 마크업도 정리
+ * 예: "<@U04N9LV482Z> 님이 채널에 참여함" → "송인찬 님이 채널에 참여함"
+ */
+function formatSlackMentions(text, userIdMap) {
+  if (!text) return text
+  return text
+    .replace(/<@([A-Z0-9]+)>/g, (match, userId) => {
+      const userInfo = userIdMap[userId]
+      return userInfo ? userInfo.name : match
+    })
+    .replace(/<#[A-Z0-9]+\|([^>]+)>/g, '#$1')              // 채널 링크 → #채널명
+    .replace(/<(https?:\/\/[^|>]+)\|([^>]+)>/g, '$2')      // URL with label → label
+    .replace(/<(https?:\/\/[^>]+)>/g, '$1')                 // URL without label → URL
+    .replace(/<!subteam\^[A-Z0-9]+\|@([^>]+)>/g, '@$1')    // 유저그룹 멘션
+}
+
 export default async function handler(req, res) {
   if (cors(req, res)) return
   if (req.method !== 'GET') return error(res, 'METHOD_NOT_ALLOWED', 'GET만 허용됩니다', 405)
@@ -49,7 +67,7 @@ export default async function handler(req, res) {
           agentName: userInfo?.name || 'Unknown',
           agentRole: userInfo?.role || '',
           agentAvatar: userInfo?.avatar || '👤',
-          text: msg.text,
+          text: formatSlackMentions(msg.text, userIdMap),
           timestamp: new Date(parseFloat(msg.ts) * 1000).toISOString(),
         }
       })

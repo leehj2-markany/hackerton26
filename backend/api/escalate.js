@@ -69,8 +69,8 @@ export default async function handler(req, res) {
   let channelId, channelName, channelUrl
 
   try {
-    // ── 1. Slack 채널 생성 ──
-    const channel = await createChannel(`${customerName}-drm`)
+    // ── 1. Slack 채널 생성 (esc-{제품}-{MMDD}-{HHmm} 형식) ──
+    const channel = await createChannel('drm', customerName)
     channelId = channel.id
     channelName = channel.name
     channelUrl = channel.url

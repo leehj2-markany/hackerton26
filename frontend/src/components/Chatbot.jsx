@@ -5,9 +5,23 @@ import AgentStatus from './AgentStatus'
 import { mockAgents } from '../data/mockData'
 import { sendMessage, escalateCase, sendSlackQuestion, pollSlackMessages } from '../api/chatApi'
 
-// 가상 봇 vs 실제 Slack 사용자 구분
-const VIRTUAL_AGENTS = ['채소희', '박우호']
+// 실제 Slack 사용자 (에스컬레이션 후 폴링 대상)
 const REAL_SLACK_AGENTS = ['송인찬', '이현진']
+
+/**
+ * Slack raw 멘션/포맷 제거 (프론트엔드 안전장치)
+ * 백엔드에서 이미 변환하지만, 혹시 누락된 경우를 대비
+ * "<@U04N9LV482Z>" → "사용자", "<#C123|general>" → "#general", "<http://url|label>" → "label"
+ */
+const formatSlackText = (text) => {
+  if (!text) return text
+  return text
+    .replace(/<@[A-Z0-9]+>/g, '사용자')                    // 유저 멘션
+    .replace(/<#[A-Z0-9]+\|([^>]+)>/g, '#$1')              // 채널 링크
+    .replace(/<(https?:\/\/[^|>]+)\|([^>]+)>/g, '$2')      // URL with label
+    .replace(/<(https?:\/\/[^>]+)>/g, '$1')                 // URL without label
+    .replace(/<!subteam\^[A-Z0-9]+\|@([^>]+)>/g, '@$1')    // 유저그룹 멘션
+}
 
 // 이메일/연락처 수집 인라인 폼
 const EmailCollectForm = ({ onSubmit }) => {
@@ -117,185 +131,100 @@ const Chatbot = () => {
     handleAIResponse(currentInput)
   }
 
-  // 에스컬레이션 후 추가 질의 처리 — LLM이 질문 분해 + 담당자 배정 판단
+  // 에스컬레이션 후 추가 질의 처리 — AI 개입 없이 Slack 채널로 전달
   const handleFollowUpQuestion = async (question) => {
     setIsProcessing(true)
     setShowQuickReplies(false)
 
-    // 에이전트 목록 (LLM이 배정할 풀)
+    // 담당자 풀 (표시용)
     const agentPool = [
       { name: '송인찬', role: '어카운트 매니저', avatar: '👨‍💼' },
       { name: '이현진', role: 'SE', avatar: '👨‍💻' },
       { name: '박우호', role: '개발리더', avatar: '👨‍🔧' },
     ]
 
-    // 1. 채소희가 질문 접수
-    await delay(1500)
+    // 1. 채소희가 질문 접수 → Slack 전달 안내
+    await delay(1000)
     setMessages(prev => [...prev, {
       type: 'agent', agentName: '채소희', agentRole: '고객센터', agentAvatar: '👩‍💼',
-      text: '네, 확인하겠습니다! 질문을 분석하고 있어요... 🔍',
+      text: '네, 담당자분들께 바로 전달하겠습니다! 💬',
       timestamp: new Date()
     }])
 
-    // 2. LLM에게 질문 분해 + 담당자 배정 요청
-    let decomp = []
-    try {
-      const decompPrompt = `다음 고객 질문을 분석하여 하위 질문으로 분해하고, 각 하위 질문에 가장 적합한 담당자를 배정해주세요.
-
-고객: ${customerInfo?.name || '고객'}
-제품: ${customerInfo?.product || 'DRM'}
-질문: "${question}"
-
-담당자 풀:
-- 송인찬 (어카운트 매니저): 영업, 계약, 비용, 일정, 레퍼런스
-- 이현진 (SE): 기술 지원, 호환성, 연동, 설치, 운영
-- 박우호 (개발리더): 보안, 인증, 아키텍처, 커스터마이징, 개발
-
-반드시 아래 JSON 형식으로만 응답하세요:
-[{"subQuestion":"하위질문","assignee":"담당자이름","role":"역할"}]`
-
-      const result = await sendMessage(decompPrompt, customerInfo?.id || null, `decomp_${Date.now()}`, [])
-      const answer = result?.data?.answer || ''
-      // JSON 배열 파싱 시도
-      const jsonMatch = answer.match(/\[[\s\S]*?\]/)
-      if (jsonMatch) {
-        decomp = JSON.parse(jsonMatch[0])
-      }
-    } catch (err) {
-      console.error('LLM decomposition error:', err)
-    }
-
-    // LLM 분해 실패 시 기본 배정 (질문 전체를 모든 담당자에게)
-    if (!decomp.length) {
-      decomp = [{ subQuestion: question, assignee: '송인찬', role: '어카운트 매니저' }]
-    }
-
-    // 3. 채소희가 분해 결과 안내
-    await delay(1500)
-    let assignText = `질문을 ${decomp.length}개 영역으로 분류했습니다.\n\n`
-    decomp.forEach((d, i) => {
-      assignText += `${i + 1}️⃣ ${d.subQuestion} → ${d.assignee}님 답변 예정\n`
-    })
-    assignText += `\n슬랙 채널에 답변 요청을 보내겠습니다.`
+    // 2. Slack 채널에 질문 전달 (UI 표시)
+    await delay(800)
+    const channelName = customerInfo?.name || '고객'
     setMessages(prev => [...prev, {
-      type: 'agent', agentName: '채소희', agentRole: '고객센터', agentAvatar: '👩‍💼',
-      text: assignText, timestamp: new Date()
+      type: 'slack',
+      channel: `#${channelName}-문의`,
+      text: `#${channelName}-문의\n\n[고객 추가 질문]\n"${question}"\n\n담당자분들 확인 부탁드립니다. 🙏`,
+      timestamp: new Date()
     }])
 
-    // 4. 슬랙 채널 메시지 표시
-    await delay(1500)
-    const uniqueAssignees = [...new Map(decomp.map(d => [d.assignee, d])).values()]
-    let slackText = `#${customerInfo?.name || '고객'}-문의\n\n`
-    uniqueAssignees.forEach(d => {
-      const subQs = decomp.filter(x => x.assignee === d.assignee).map(x => x.subQuestion)
-      slackText += `@${d.assignee} 님, 고객님께서 [${subQs.join(', ')}] 관련 문의를 주셨습니다. 답변 부탁드립니다. 🙏\n`
-    })
-    setMessages(prev => [...prev, {
-      type: 'slack', channel: `#${customerInfo?.name || '고객'}-문의`, text: slackText, timestamp: new Date()
-    }])
-
-    // 5. 실제 Slack 전송 (백그라운드)
+    // 3. 실제 Slack 전송
     const pollStartTs = String(Date.now() / 1000)
     setSlackPollSince(pollStartTs)
+    const allAssignees = agentPool.map(a => ({ name: a.name, role: a.role }))
     sendSlackQuestion(
       question,
-      decomp.map(d => ({ name: d.assignee, role: d.role })),
+      allAssignees,
       customerInfo?.name || '고객',
-      { decomposition: decomp },
+      { followUp: true },
       slackChannelId
     ).then(res => {
       if (res?.data?.channelId) setSlackChannelId(res.data.channelId)
     }).catch(err => console.error('Slack send error:', err))
 
-    // 6. 각 담당자 답변 — 가상 봇은 LLM, 실제 사용자는 Slack 폴링 + LLM 폴백
-    const virtualDecomps = decomp.filter(d => VIRTUAL_AGENTS.includes(d.assignee))
-    const realAgentNames = [...new Set(decomp.filter(d => REAL_SLACK_AGENTS.includes(d.assignee)).map(d => d.assignee))]
+    // 4. 담당자 답변 대기 — Slack 폴링만, AI 답변 생성 없음
+    const realAgentNames = [...REAL_SLACK_AGENTS]
+    const answeredAgents = new Set()
+    const maxPollTime = 180000 // 3분 대기
+    const pollInterval = 3000
+    const startTime = Date.now()
 
-    // 6a. 가상 봇 답변 (LLM)
-    for (const agentDecomp of virtualDecomps) {
-      const pool = agentPool.find(a => a.name === agentDecomp.assignee) || { avatar: '👤' }
-      setTypingAgent({ name: agentDecomp.assignee, avatar: pool.avatar })
-      let agentAnswer = ''
+    // 타이핑 인디케이터 표시
+    setTypingAgent({ name: '담당자', avatar: '💬' })
+
+    while (answeredAgents.size < realAgentNames.length && (Date.now() - startTime) < maxPollTime) {
+      await delay(pollInterval)
       try {
-        const rolePrompt = `${agentDecomp.assignee} (${agentDecomp.role}) 역할로 "${agentDecomp.subQuestion}" 질문에 답변해주세요. 고객: ${customerInfo?.name || '고객'}, 제품: ${customerInfo?.product || 'DRM'}`
-        const result = await sendMessage(rolePrompt, customerInfo?.id || null, `followup_${Date.now()}`, [])
-        if (result?.data?.answer) agentAnswer = result.data.answer
-      } catch (err) {
-        console.error(`Virtual agent ${agentDecomp.assignee} error:`, err)
-        agentAnswer = '확인 후 답변드리겠습니다.'
-      }
-      setTypingAgent(null)
-      setMessages(prev => [...prev, {
-        type: 'agent', agentName: agentDecomp.assignee, agentRole: agentDecomp.role,
-        agentAvatar: pool.avatar, text: agentAnswer, timestamp: new Date()
-      }])
-    }
-
-    // 6b. 실제 Slack 사용자 답변 대기 (폴링 → 타임아웃 시 LLM 폴백)
-    if (realAgentNames.length > 0) {
-      const answeredAgents = new Set()
-      const maxPollTime = 120000
-      const pollInterval = 3000
-      const startTime = Date.now()
-
-      for (const agentName of realAgentNames) {
-        const pool = agentPool.find(a => a.name === agentName) || { avatar: '👤' }
-        setTypingAgent({ name: agentName, avatar: pool.avatar })
-      }
-
-      while (answeredAgents.size < realAgentNames.length && (Date.now() - startTime) < maxPollTime) {
-        await delay(pollInterval)
-        try {
-          const pollResult = await pollSlackMessages(pollStartTs, 20, slackChannelId)
-          const newMessages = pollResult?.data?.messages || []
-          for (const msg of newMessages) {
-            if (realAgentNames.includes(msg.agentName) && !answeredAgents.has(msg.agentName)) {
-              answeredAgents.add(msg.agentName)
-              setTypingAgent(null)
-              setMessages(prev => [...prev, {
-                type: 'agent', agentName: msg.agentName, agentRole: msg.agentRole,
-                agentAvatar: msg.agentAvatar, text: msg.text, isLive: true, timestamp: new Date(msg.timestamp)
-              }])
-              const remaining = realAgentNames.filter(n => !answeredAgents.has(n))
-              if (remaining.length > 0) {
-                const next = agentPool.find(a => a.name === remaining[0]) || { avatar: '👤' }
-                setTypingAgent({ name: remaining[0], avatar: next.avatar })
-              }
+        const pollResult = await pollSlackMessages(pollStartTs, 20, slackChannelId)
+        const newMessages = pollResult?.data?.messages || []
+        for (const msg of newMessages) {
+          if (!answeredAgents.has(msg.agentName)) {
+            answeredAgents.add(msg.agentName)
+            setTypingAgent(null)
+            setMessages(prev => [...prev, {
+              type: 'agent', agentName: msg.agentName, agentRole: msg.agentRole,
+              agentAvatar: msg.agentAvatar, text: msg.text, isLive: true, timestamp: new Date(msg.timestamp)
+            }])
+            // 아직 대기 중인 담당자가 있으면 타이핑 인디케이터 유지
+            if (answeredAgents.size < realAgentNames.length) {
+              setTypingAgent({ name: '담당자', avatar: '💬' })
             }
           }
-        } catch (err) { console.error('Slack poll error:', err) }
-      }
-      setTypingAgent(null)
-
-      // 타임아웃 에이전트 → LLM 폴백
-      for (const agentName of realAgentNames) {
-        if (!answeredAgents.has(agentName)) {
-          const pool = agentPool.find(a => a.name === agentName) || { avatar: '👤', role: '' }
-          const subQs = decomp.filter(d => d.assignee === agentName).map(d => d.subQuestion).join(', ')
-          let fallbackText = ''
-          try {
-            const result = await sendMessage(
-              `${agentName} (${pool.role}) 역할로 "${subQs}" 질문에 답변해주세요. 고객: ${customerInfo?.name || '고객'}, 제품: ${customerInfo?.product || 'DRM'}`,
-              customerInfo?.id || null, `fb_${Date.now()}`, []
-            )
-            if (result?.data?.answer) fallbackText = result.data.answer
-          } catch (e) { console.error(`LLM fallback for ${agentName}:`, e) }
-          if (!fallbackText) fallbackText = '확인 후 답변드리겠습니다.'
-          setMessages(prev => [...prev, {
-            type: 'agent', agentName, agentRole: pool.role, agentAvatar: pool.avatar,
-            text: fallbackText + '\n\n_(자동 응답)_', timestamp: new Date()
-          }])
         }
-      }
+      } catch (err) { console.error('Slack poll error:', err) }
     }
+    setTypingAgent(null)
 
-    // 7. 채소희 마무리
-    await delay(2000)
-    setMessages(prev => [...prev, {
-      type: 'agent', agentName: '채소희', agentRole: '고객센터', agentAvatar: '👩‍💼',
-      text: '답변이 완료되었습니다 ✅\n혹시 더 궁금하신 점이 있으신가요?',
-      showContinueOrEnd: true, timestamp: new Date()
-    }])
+    // 5. 결과에 따른 마무리 메시지
+    await delay(1500)
+    if (answeredAgents.size > 0) {
+      // 답변이 하나라도 온 경우
+      setMessages(prev => [...prev, {
+        type: 'agent', agentName: '채소희', agentRole: '고객센터', agentAvatar: '👩‍💼',
+        text: '담당자 답변이 도착했습니다 ✅\n혹시 더 궁금하신 점이 있으신가요?',
+        showContinueOrEnd: true, timestamp: new Date()
+      }])
+    } else {
+      // 타임아웃 — AI 대신 안내 메시지만 표시
+      setMessages(prev => [...prev, {
+        type: 'agent', agentName: '채소희', agentRole: '고객센터', agentAvatar: '👩‍💼',
+        text: '담당자분들이 현재 다른 업무 중인 것 같습니다.\n슬랙 채널에 질문이 전달되어 있으니, 확인 후 답변드릴 예정입니다. 📩\n혹시 더 궁금하신 점이 있으신가요?',
+        showContinueOrEnd: true, timestamp: new Date()
+      }])
+    }
 
     setFollowUpIndex(prev => prev + 1)
     setIsProcessing(false)
@@ -652,7 +581,7 @@ const Chatbot = () => {
       console.error('Slack send error:', err)
     }
 
-    // Step 8: 송인찬 답변 — Slack 라이브 대기 → 타임아웃 시 LLM 폴백
+    // Step 8: 송인찬 답변 — Slack 라이브 대기 (AI 폴백 없음)
     setTypingAgent({ name: '송인찬', avatar: '👨‍💼' })
     const songicAnswer = await pollForAgent('송인찬', escalationPollStartTs, 60000, activeChannelId)
     setTypingAgent(null)
@@ -662,22 +591,15 @@ const Chatbot = () => {
         text: songicAnswer.text, isLive: true, timestamp: new Date(songicAnswer.timestamp)
       }])
     } else {
-      let songicText = ''
-      try {
-        const result = await sendMessage(
-          `송인찬 (어카운트 매니저) 역할로 "구축 가능성" 질문에 답변해주세요. 고객: ${customerInfo?.name || '고객'}, 제품: ${customerInfo?.product || 'DRM'}. 원래 질문: ${lastUserMsg?.text || ''}`,
-          customerInfo?.id || null, `esc_${Date.now()}`, []
-        )
-        if (result?.data?.answer) songicText = result.data.answer
-      } catch (e) { console.error('LLM fallback for 송인찬:', e) }
-      if (!songicText) songicText = '확인 후 답변드리겠습니다.'
+      // 타임아웃 — AI 대신 안내 메시지만 표시
       setMessages(prev => [...prev, {
-        type: 'agent', agentName: '송인찬', agentRole: '어카운트 매니저', agentAvatar: '👨‍💼',
-        text: songicText, timestamp: new Date()
+        type: 'agent', agentName: '채소희', agentRole: '고객센터', agentAvatar: '👩‍💼',
+        text: '송인찬님이 현재 다른 업무 중입니다. 슬랙 채널에서 확인 후 답변드릴 예정입니다. 📩',
+        timestamp: new Date()
       }])
     }
 
-    // Step 9: 이현진 답변 — Slack 라이브 대기 → 타임아웃 시 LLM 폴백
+    // Step 9: 이현진 답변 — Slack 라이브 대기 (AI 폴백 없음)
     setTypingAgent({ name: '이현진', avatar: '👨‍💻' })
     const leehjAnswer = await pollForAgent('이현진', escalationPollStartTs, 60000, activeChannelId)
     setTypingAgent(null)
@@ -687,18 +609,11 @@ const Chatbot = () => {
         text: leehjAnswer.text, isLive: true, timestamp: new Date(leehjAnswer.timestamp)
       }])
     } else {
-      let leehjText = ''
-      try {
-        const result = await sendMessage(
-          `이현진 (SE) 역할로 "윈도우 11 호환성" 질문에 답변해주세요. 고객: ${customerInfo?.name || '고객'}, 제품: ${customerInfo?.product || 'DRM'}. 원래 질문: ${lastUserMsg?.text || ''}`,
-          customerInfo?.id || null, `esc_${Date.now()}`, []
-        )
-        if (result?.data?.answer) leehjText = result.data.answer
-      } catch (e) { console.error('LLM fallback for 이현진:', e) }
-      if (!leehjText) leehjText = '확인 후 답변드리겠습니다.'
+      // 타임아웃 — AI 대신 안내 메시지만 표시
       setMessages(prev => [...prev, {
-        type: 'agent', agentName: '이현진', agentRole: 'SE', agentAvatar: '👨‍💻',
-        text: leehjText, timestamp: new Date()
+        type: 'agent', agentName: '채소희', agentRole: '고객센터', agentAvatar: '👩‍💼',
+        text: '이현진님이 현재 다른 업무 중입니다. 슬랙 채널에서 확인 후 답변드릴 예정입니다. 📩',
+        timestamp: new Date()
       }])
     }
 
@@ -790,7 +705,7 @@ const Chatbot = () => {
                       {msg.isLive && <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">🟢 LIVE</span>}
                     </div>
                     <div className="bg-blue-50 border border-blue-200 text-gray-800 rounded-lg p-3 ml-7">
-                      <p className="whitespace-pre-wrap text-sm">{msg.text}</p>
+                      <p className="whitespace-pre-wrap text-sm">{formatSlackText(msg.text)}</p>
                       {msg.showContinueOrEnd && (
                         <div className="mt-3 flex space-x-2">
                           <button onClick={handleContinueChat} className="flex-1 bg-markany-blue text-white py-2 px-3 rounded-lg hover:bg-markany-dark transition text-sm font-semibold">
@@ -850,7 +765,7 @@ const Chatbot = () => {
                       <span className="text-xs text-purple-400">{msg.channel}</span>
                     </div>
                     <div className="bg-purple-50 border-l-4 border-purple-400 text-gray-800 rounded-r-lg p-3 ml-5">
-                      <p className="whitespace-pre-wrap text-sm">{msg.text.split('\n').map((line, li) => {
+                      <p className="whitespace-pre-wrap text-sm">{formatSlackText(msg.text).split('\n').map((line, li) => {
                         // @이름 부분을 파란색 볼드로 하이라이트
                         const parts = line.split(/(@\S+)/g)
                         return (
@@ -864,7 +779,7 @@ const Chatbot = () => {
                                 <span key={pi}>{part}</span>
                               )
                             )}
-                            {li < msg.text.split('\n').length - 1 && '\n'}
+                            {li < formatSlackText(msg.text).split('\n').length - 1 && '\n'}
                           </span>
                         )
                       })}</p>
@@ -878,7 +793,7 @@ const Chatbot = () => {
                     ? 'bg-yellow-100 text-gray-800 text-sm italic'
                     : 'bg-white text-gray-800 shadow-sm'
                 } rounded-lg p-3`}>
-                  <p className="whitespace-pre-wrap">{msg.text}</p>
+                  <p className="whitespace-pre-wrap">{formatSlackText(msg.text)}</p>
                   {msg.confidence && msg.confidence !== 'low' && (
                     <div className="mt-2 pt-2 border-t border-gray-200">
                       <div className="flex items-center space-x-2 text-xs">

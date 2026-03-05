@@ -18,7 +18,8 @@ export default async function handler(req, res) {
   if (!channelId) {
     // 채널이 없으면 새로 생성
     try {
-      const channel = await createChannel(`${customerName || 'customer'}-문의`)
+      // 일반 문의 채널: esc-inquiry-{MMDD}-{HHmm} 형식
+      const channel = await createChannel('inquiry', customerName || 'customer')
       channelId = channel.id
       channelCreated = true
 
