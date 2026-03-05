@@ -5,8 +5,10 @@ import AgentStatus from './AgentStatus'
 import { mockAgents } from '../data/mockData'
 import { sendMessage, escalateCase, sendSlackQuestion, pollSlackMessages } from '../api/chatApi'
 
-// 실제 Slack 사용자 (에스컬레이션 후 폴링 대상)
+// 실제 Slack 사용자 (에스컬레이션 후 폴링 대상) — 박우호는 가상 에이전트
 const REAL_SLACK_AGENTS = ['송인찬', '이현진']
+// 가상 에이전트 (LLM으로 답변 생성)
+const VIRTUAL_AGENTS = ['박우호']
 
 /**
  * Slack raw 멘션/포맷 제거 (프론트엔드 안전장치)
@@ -89,16 +91,23 @@ const Chatbot = () => {
   const [, setCollectedEmail] = useState('')
   const [, setSlackPollSince] = useState(null)
   const [slackChannelId, setSlackChannelId] = useState(null)
+  const [slackChannelName, setSlackChannelName] = useState(null)
   const [sessionId] = useState(() => `session_${Date.now()}`)
   const messagesEndRef = useRef(null)
+  // 에스컬레이션 시 서브질문 저장 (동적 quickReply 생성용)
+  const [escalationSubQuestions, setEscalationSubQuestions] = useState(null)
 
-  const quickReplyOptions = [
-    '구축 기간은 얼마나 걸리나요? 그리고 비용은 어느 정도인가요?',
-    '기존 국방부 내부 시스템과 연동이 가능한가요?',
-    '보안 등급은 어떻게 되나요? 군사 기밀 문서도 처리 가능한가요?',
-    '다른 정부기관에서도 사용 중인 사례가 있나요?',
+  // quickReplyOptions: 서브질문이 있으면 그 기반, 없으면 기본값
+  const defaultQuickReplies = [
+    '구축 기간과 비용은 어느 정도인가요?',
+    '기존 시스템과 연동이 가능한가요?',
+    '보안 인증은 어떤 것들이 있나요?',
+    '다른 기관에서도 사용 중인 사례가 있나요?',
     '계약 진행 절차와 다음 단계가 궁금합니다.'
   ]
+  const quickReplyOptions = escalationSubQuestions?.length > 0
+    ? escalationSubQuestions.map(sq => sq.question)
+    : defaultQuickReplies
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -153,11 +162,11 @@ const Chatbot = () => {
 
     // 2. Slack 채널에 질문 전달 (UI 표시)
     await delay(800)
-    const channelName = customerInfo?.name || '고객'
+    const channelDisplay = slackChannelName || `${customerInfo?.name || '고객'}-문의`
     setMessages(prev => [...prev, {
       type: 'slack',
-      channel: `#${channelName}-문의`,
-      text: `#${channelName}-문의\n\n[고객 추가 질문]\n"${question}"\n\n담당자분들 확인 부탁드립니다. 🙏`,
+      channel: `#${channelDisplay}`,
+      text: `#${channelDisplay}\n\n[고객 추가 질문]\n"${question}"\n\n담당자분들 확인 부탁드립니다. 🙏`,
       timestamp: new Date()
     }])
 
@@ -290,6 +299,7 @@ const Chatbot = () => {
         references: data.references || [],
         model: data.model,
         complexity: data.complexity,
+        subQuestions: data.subQuestions || null,
         timestamp: new Date()
       }
       setMessages(prev => [...prev, response])
@@ -450,29 +460,43 @@ const Chatbot = () => {
     setShowAgentStatus(false)
   }
 
+
   const handleEscalation = async () => {
     setShowAgentStatus(true)
     setIsProcessing(true)
-    
-    const agentList = [
-      { name: '채소희', role: '고객센터', avatar: '👩‍💼' },
-      { name: '송인찬', role: '어카운트 매니저', avatar: '👨‍💼' },
-      { name: '이현진', role: 'SE', avatar: '👨‍💻' },
-      { name: '박우호', role: '개발리더', avatar: '👨‍🔧' }
-    ]
+
+    // 담당자 정보 매핑
+    const AGENT_MAP = {
+      '채소희': { role: '고객센터', avatar: '👩‍💼' },
+      '송인찬': { role: '어카운트 매니저', avatar: '👨‍💼' },
+      '이현진': { role: 'SE', avatar: '👨‍💻' },
+      '박우호': { role: '개발리더', avatar: '👨‍🔧' },
+    }
 
     // Remove escalation button
     setMessages(prev => prev.map(msg => msg.showEscalation ? { ...msg, showEscalation: false } : msg))
 
-    // 백엔드 에스컬레이션 API 호출 (백그라운드)
+    // 마지막 사용자/AI 메시지 추출
     const lastUserMsg = messages.filter(m => m.type === 'user').pop()
     const lastAiMsg = messages.filter(m => m.type === 'ai').pop()
-    escalateCase({
+
+    // 서브질문 추출 (AI 분석 결과 기반, 없으면 기본값)
+    const subQuestions = lastAiMsg?.subQuestions || [
+      { question: lastUserMsg?.text || '고객 문의', assignee: '송인찬' }
+    ]
+
+    // 서브질문 기반 quickReply용 저장
+    setEscalationSubQuestions(subQuestions)
+
+    // 백엔드 에스컬레이션 API 호출 → channelName 수신
+    let escalationResult = null
+    const escalationPromise = escalateCase({
       caseId: `case_${Date.now()}`,
       customerId: customerInfo?.id || 'unknown',
       question: lastUserMsg?.text || '',
       aiAnswer: lastAiMsg?.text || '',
-    }).catch(err => console.error('Escalation API background error:', err))
+      subQuestions: subQuestions,
+    }).then(res => { escalationResult = res }).catch(err => console.error('Escalation API error:', err))
 
     // System: connecting
     setMessages(prev => [...prev, {
@@ -481,96 +505,86 @@ const Chatbot = () => {
       timestamp: new Date()
     }])
 
-    // Step 1: 채소희 입장 (1.5초)
+    // Step 1: 채소희 입장
     await delay(1500)
-    setAgents(prev => [...prev, { ...agentList[0], joined: true }])
+    setAgents(prev => [...prev, { name: '채소희', ...AGENT_MAP['채소희'], joined: true }])
     setMessages(prev => [...prev, {
       type: 'system',
       text: '채소희 (고객센터)가 입장했습니다',
       timestamp: new Date()
     }])
 
-    // Step 2: 채소희 인사 (1.5초)
+    // Step 2: 채소희 인사
     await delay(1500)
     setMessages(prev => [...prev, {
       type: 'agent',
       agentName: '채소희', agentRole: '고객센터', agentAvatar: '👩‍💼',
-      text: '불편을 드려 죄송합니다 😔\n안녕하세요, 고객센터 채소희입니다.\n제가 직접 도와드리겠습니다. 관련 전문가분들을 바로 연결해 드릴게요!',
+      text: '안녕하세요, 고객센터 채소희입니다.\n제가 직접 도와드리겠습니다. 관련 전문가분들을 바로 연결해 드릴게요!',
       timestamp: new Date()
     }])
 
-    // Step 3: 송인찬 입장 (1.5초)
-    await delay(1500)
-    setAgents(prev => [...prev, { ...agentList[1], joined: true }])
-    setMessages(prev => [...prev, {
-      type: 'system',
-      text: '송인찬 (어카운트 매니저)가 입장했습니다',
-      timestamp: new Date()
-    }])
+    // 서브질문에서 고유 담당자 목록 추출 (채소희 제외)
+    const assigneeNames = [...new Set(subQuestions.map(sq => sq.assignee).filter(Boolean))]
+    const assignees = assigneeNames.map(name => ({
+      name,
+      ...(AGENT_MAP[name] || { role: '담당자', avatar: '👤' })
+    }))
 
-    // Step 4: 채소희 안내 (1초)
+    // Step 3: 담당자 순차 입장
+    for (const agent of assignees) {
+      await delay(1200)
+      setAgents(prev => [...prev, { ...agent, joined: true }])
+      setMessages(prev => [...prev, {
+        type: 'system',
+        text: `${agent.name} (${agent.role})가 입장했습니다`,
+        timestamp: new Date()
+      }])
+    }
+
+    // escalation API 응답 대기 (최대 5초)
+    await Promise.race([escalationPromise, delay(5000)])
+
+    // 채널명: 백엔드 응답 기반 동적 생성, 없으면 고객명 기반 폴백
+    const channelName = escalationResult?.data?.channelName
+      || `${customerInfo?.name || '고객'}-문의`
+    setSlackChannelName(channelName)
+
+    // Step 4: 채소희 질문 분류 (서브질문 기반 동적 생성)
     await delay(1000)
+    const numEmojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣']
+    const classificationLines = subQuestions.map((sq, i) => {
+      const num = numEmojis[i] || `${i + 1}.`
+      return `${num} ${sq.question} → ${sq.assignee}님 답변 예정`
+    }).join('\n')
     setMessages(prev => [...prev, {
       type: 'agent',
       agentName: '채소희', agentRole: '고객센터', agentAvatar: '👩‍💼',
-      text: '영업 담당 송인찬님이 입장하셨습니다. 구축 관련 문의를 답변해 주실 거예요.',
+      text: `모든 담당자가 입장했습니다 ✅\n\n질문을 ${subQuestions.length}개 영역으로 분류했습니다:\n\n${classificationLines}\n\n슬랙 채널에 답변 요청을 보내겠습니다.`,
       timestamp: new Date()
     }])
 
-    // Step 5: 이현진 입장 (1.5초)
-    await delay(1500)
-    setAgents(prev => [...prev, { ...agentList[2], joined: true }])
-    setMessages(prev => [...prev, {
-      type: 'system',
-      text: '이현진 (SE)가 입장했습니다',
-      timestamp: new Date()
-    }])
-
-    // Step 6: 박우호 입장 (1.5초)
-    await delay(1500)
-    setAgents(prev => [...prev, { ...agentList[3], joined: true }])
-    setMessages(prev => [...prev, {
-      type: 'system',
-      text: '박우호 (개발리더)가 입장했습니다',
-      timestamp: new Date()
-    }])
-
-    // Step 7: 채소희 질문 분류 (1초)
+    // Step 5: 슬랙 채널 답변 요청 (동적 생성)
     await delay(1000)
-    setMessages(prev => [...prev, {
-      type: 'agent',
-      agentName: '채소희', agentRole: '고객센터', agentAvatar: '👩‍💼',
-      text: '모든 담당자가 입장했습니다 ✅\n\n질문을 3개 영역으로 분류했습니다:\n\n1️⃣ 구축 가능성 → 송인찬님 답변 예정\n2️⃣ 윈도우 11 호환성 → 이현진님 답변 예정\n3️⃣ 보안 인증 → 박우호님 답변 예정\n\n슬랙 채널에 답변 요청을 보내겠습니다.',
-      timestamp: new Date()
-    }])
-
-    // Step 7.5: 슬랙 채널 답변 요청 (1초)
-    await delay(1000)
+    const slackMentionLines = subQuestions.map(sq =>
+      `@${sq.assignee} 님, 고객님께서 [${sq.question}] 관련 문의를 주셨습니다. 답변 부탁드립니다. 🙏`
+    ).join('\n')
     setMessages(prev => [...prev, {
       type: 'slack',
-      channel: '#국방부-DRM-구축',
-      text: '#국방부-DRM-구축\n\n@송인찬 님, 고객님께서 [구축 가능성] 관련 문의를 주셨습니다. 답변 부탁드립니다. 🙏\n@이현진 님, 고객님께서 [윈도우 11 호환성] 관련 문의를 주셨습니다. 답변 부탁드립니다. 🙏\n@박우호 님, 고객님께서 [보안 인증] 관련 문의를 주셨습니다. 답변 부탁드립니다. 🙏',
+      channel: `#${channelName}`,
+      text: `#${channelName}\n\n${slackMentionLines}`,
       timestamp: new Date()
     }])
 
-    // Step 7.6: 실제 Slack으로 질문 전송 (백그라운드) + channelId 캡처
+    // Step 6: 실제 Slack으로 질문 전송 + channelId 캡처
     const escalationPollStartTs = String(Date.now() / 1000)
     setSlackPollSince(escalationPollStartTs)
     let activeChannelId = slackChannelId
     try {
       const sendResult = await sendSlackQuestion(
         lastUserMsg?.text || '고객 문의',
-        [
-          { name: '송인찬', role: '어카운트 매니저' },
-          { name: '이현진', role: 'SE' },
-          { name: '박우호', role: '개발리더' },
-        ],
+        assignees.map(a => ({ name: a.name, role: a.role })),
         customerInfo?.name || '고객',
-        { decomposition: [
-          { assignee: '송인찬', subQuestion: '구축 가능성' },
-          { assignee: '이현진', subQuestion: '윈도우 11 호환성' },
-          { assignee: '박우호', subQuestion: '보안 인증' },
-        ]},
+        { decomposition: subQuestions.map(sq => ({ assignee: sq.assignee, subQuestion: sq.question })) },
         slackChannelId
       )
       if (sendResult?.data?.channelId) {
@@ -581,67 +595,62 @@ const Chatbot = () => {
       console.error('Slack send error:', err)
     }
 
-    // Step 8: 송인찬 답변 — Slack 라이브 대기 (AI 폴백 없음)
-    setTypingAgent({ name: '송인찬', avatar: '👨‍💼' })
-    const songicAnswer = await pollForAgent('송인찬', escalationPollStartTs, 60000, activeChannelId)
-    setTypingAgent(null)
-    if (songicAnswer) {
-      setMessages(prev => [...prev, {
-        type: 'agent', agentName: '송인찬', agentRole: '어카운트 매니저', agentAvatar: '👨‍💼',
-        text: songicAnswer.text, isLive: true, timestamp: new Date(songicAnswer.timestamp)
-      }])
-    } else {
-      // 타임아웃 — AI 대신 안내 메시지만 표시
-      setMessages(prev => [...prev, {
-        type: 'agent', agentName: '채소희', agentRole: '고객센터', agentAvatar: '👩‍💼',
-        text: '송인찬님이 현재 다른 업무 중입니다. 슬랙 채널에서 확인 후 답변드릴 예정입니다. 📩',
-        timestamp: new Date()
-      }])
+    // Step 7: 담당자별 답변 루프 (서브질문 기반 동적)
+    let answeredCount = 0
+    for (const sq of subQuestions) {
+      const agentName = sq.assignee
+      const agentInfo = AGENT_MAP[agentName] || { role: '담당자', avatar: '👤' }
+
+      if (VIRTUAL_AGENTS.includes(agentName)) {
+        // 가상 에이전트 (박우호) — LLM으로 답변 생성
+        setTypingAgent({ name: agentName, avatar: agentInfo.avatar })
+        let virtualAnswer = ''
+        try {
+          const result = await sendMessage(
+            `당신은 ${agentName} (${agentInfo.role})입니다. 개발자 스타일로 간결하고 기술적으로 답변하세요. 반말이나 구어체를 섬어도 됩니다. 질문: "${sq.question}". 고객: ${customerInfo?.name || '고객'}, 제품: ${customerInfo?.product || 'DRM'}. 원래 질문: ${lastUserMsg?.text || ''}`,
+            customerInfo?.id || null, `esc_${Date.now()}`, []
+          )
+          if (result?.data?.answer) virtualAnswer = result.data.answer
+        } catch (e) { console.error(`LLM for ${agentName}:`, e) }
+        if (!virtualAnswer) virtualAnswer = '확인 후 답변드리겠습니다.'
+        setTypingAgent(null)
+        setMessages(prev => [...prev, {
+          type: 'agent', agentName, agentRole: agentInfo.role, agentAvatar: agentInfo.avatar,
+          text: virtualAnswer, timestamp: new Date()
+        }])
+        answeredCount++
+      } else {
+        // 실제 Slack 사용자 — 폴링 대기
+        setTypingAgent({ name: agentName, avatar: agentInfo.avatar })
+        const agentAnswer = await pollForAgent(agentName, escalationPollStartTs, 60000, activeChannelId)
+        setTypingAgent(null)
+        if (agentAnswer) {
+          setMessages(prev => [...prev, {
+            type: 'agent', agentName, agentRole: agentInfo.role, agentAvatar: agentInfo.avatar,
+            text: agentAnswer.text, isLive: true, timestamp: new Date(agentAnswer.timestamp)
+          }])
+          answeredCount++
+        } else {
+          // 타임아웃 안내
+          setMessages(prev => [...prev, {
+            type: 'agent', agentName: '채소희', agentRole: '고객센터', agentAvatar: '👩‍💼',
+            text: `${agentName}님이 현재 다른 업무 중입니다. 슬랙 채널에서 확인 후 답변드릴 예정입니다. 📩`,
+            timestamp: new Date()
+          }])
+        }
+      }
     }
 
-    // Step 9: 이현진 답변 — Slack 라이브 대기 (AI 폴백 없음)
-    setTypingAgent({ name: '이현진', avatar: '👨‍💻' })
-    const leehjAnswer = await pollForAgent('이현진', escalationPollStartTs, 60000, activeChannelId)
-    setTypingAgent(null)
-    if (leehjAnswer) {
-      setMessages(prev => [...prev, {
-        type: 'agent', agentName: '이현진', agentRole: 'SE', agentAvatar: '👨‍💻',
-        text: leehjAnswer.text, isLive: true, timestamp: new Date(leehjAnswer.timestamp)
-      }])
-    } else {
-      // 타임아웃 — AI 대신 안내 메시지만 표시
-      setMessages(prev => [...prev, {
-        type: 'agent', agentName: '채소희', agentRole: '고객센터', agentAvatar: '👩‍💼',
-        text: '이현진님이 현재 다른 업무 중입니다. 슬랙 채널에서 확인 후 답변드릴 예정입니다. 📩',
-        timestamp: new Date()
-      }])
-    }
-
-    // Step 10: 박우호 답변 (가상 봇 — LLM API로 생성)
-    setTypingAgent({ name: '박우호', avatar: '👨‍🔧' })
-    let parkAnswer = ''
-    try {
-      const result = await sendMessage(
-        `박우호 (개발리더) 역할로 "보안 인증" 질문에 답변해주세요. 고객: ${customerInfo?.name || '고객'}, 제품: ${customerInfo?.product || 'DRM'}. 원래 질문: ${lastUserMsg?.text || ''}`,
-        customerInfo?.id || null, `esc_${Date.now()}`, []
-      )
-      if (result?.data?.answer) parkAnswer = result.data.answer
-    } catch (e) { console.error('LLM for 박우호:', e) }
-    if (!parkAnswer) parkAnswer = '확인 후 답변드리겠습니다.'
-    setTypingAgent(null)
-    setMessages(prev => [...prev, {
-      type: 'agent',
-      agentName: '박우호', agentRole: '개발리더', agentAvatar: '👨‍🔧',
-      text: parkAnswer,
-      timestamp: new Date()
-    }])
-
-    // Step 11: 채소희 마무리 + 선택지 (2초)
+    // Step 8: 채소희 마무리 + 선택지
     await delay(2000)
+    const totalQ = subQuestions.length
+    const completionText = answeredCount === totalQ
+      ? `${totalQ}개 질문에 대한 답변이 모두 완료되었습니다 ✅\n혹시 더 궁금하신 점이 있으신가요?`
+      : `${totalQ}개 중 ${answeredCount}개 질문에 대한 답변이 완료되었습니다.\n나머지는 슬랙 채널에서 답변 예정입니다.\n혹시 더 궁금하신 점이 있으신가요?`
     setMessages(prev => [...prev, {
       type: 'agent',
       agentName: '채소희', agentRole: '고객센터', agentAvatar: '👩‍💼',
-      text: '3개 질문에 대한 답변이 모두 완료되었습니다 ✅\n혹시 더 궁금하신 점이 있으신가요?',
+      text: completionText,
       showContinueOrEnd: true,
       timestamp: new Date()
     }])
@@ -794,19 +803,7 @@ const Chatbot = () => {
                     : 'bg-white text-gray-800 shadow-sm'
                 } rounded-lg p-3`}>
                   <p className="whitespace-pre-wrap">{formatSlackText(msg.text)}</p>
-                  {msg.confidence && msg.confidence !== 'low' && (
-                    <div className="mt-2 pt-2 border-t border-gray-200">
-                      <div className="flex items-center space-x-2 text-xs">
-                        <span>{msg.confidence === 'high' ? '🟢 높음' : '🟡 중간'}</span>
-                        <span className="text-gray-500">신뢰도</span>
-                      </div>
-                      {msg.references?.length > 0 && (
-                        <div className="mt-1 text-xs text-gray-500">
-                          참조: {msg.references.join(', ')}
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  {/* 신뢰도는 콘솔 로그에만 남기고 UI에는 표시하지 않음 */}
                   {msg.showEscalation && (
                     <button
                       onClick={handleEscalation}

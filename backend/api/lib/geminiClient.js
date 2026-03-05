@@ -94,20 +94,25 @@ const SYSTEM_PROMPT = `당신은 마크애니의 AI 프리세일즈 어시스턴
 ${KNOWLEDGE_BASE}`
 
 
-// ── LLM-as-a-Router: Flash가 복잡도를 판단 ──
+// ── LLM-as-a-Router: Flash가 복잡도를 판단 + 서브질문 분류 + 담당자 배정 ──
 // 키워드 룰 전부 제거. 모든 판단은 LLM 자연어 이해에 위임.
-const ROUTER_PROMPT = `당신은 고객 질문의 복잡도를 판단하는 라우터입니다.
+const ROUTER_PROMPT = `당신은 고객 질문의 복잡도를 판단하고, 서브질문을 분류하여 적절한 담당자에게 배정하는 라우터입니다.
 아래 질문을 분석하여 반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트는 절대 포함하지 마세요.
 
-판단 기준:
+복잡도 판단 기준:
 - simple: 인사, 단일 제품 질문, 단순 기능 문의, 짧은 질문 (예: "DRM이 뭐예요?", "도입하려고요")
 - complex: 여러 주제가 결합된 질문, 비교 요청, 환경 조건이 복잡한 질문 (예: "500명 규모 망분리 환경에서 DRM 도입하면서 그룹웨어 연동도 하고 싶은데")
 - critical: 긴급 장애, 보안사고, 법적/계약 이슈, 감사 대응 등 즉각 전문가 개입이 필요한 질문
 
+담당자 배정 기준 (서브질문별로 가장 적합한 1명 배정):
+- 송인찬 (어카운트 매니저): 영업, 견적, 비용, 계약, 구축 일정, 도입 프로세스, 레퍼런스, 고객 사례
+- 이현진 (SE): 기술 호환성, 시스템 연동, OS 지원, 네트워크 환경, 설치/배포, 아키텍처
+- 박우호 (개발리더): 보안 인증, 암호화 기술, API/SDK, 커스터마이징, 개발 관련 기술 심화 질문
+
 질문: "{QUESTION}"
 
 JSON 응답 (이것만 출력):
-{"complexity":"simple|complex|critical","reason":"판단 근거 한 줄","subQuestions":["서브질문1","서브질문2"]}`
+{"complexity":"simple|complex|critical","reason":"판단 근거 한 줄","subQuestions":[{"question":"서브질문 내용","assignee":"담당자 이름"}]}`
 
 export async function analyzeQuestion(question) {
   const client = getClient()
@@ -132,8 +137,23 @@ export async function analyzeQuestion(question) {
       ? parsed.complexity
       : 'simple'
 
+    // 담당자 역할 매핑
+    const AGENT_ROLES = {
+      '송인찬': 'sales',
+      '이현진': 'se',
+      '박우호': 'dev',
+    }
+
     const subQuestions = Array.isArray(parsed.subQuestions) && parsed.subQuestions.length > 0
-      ? parsed.subQuestions.map(q => ({ question: q, role: 'sales', assignee: '송인찬' }))
+      ? parsed.subQuestions.map(sq => {
+          // LLM이 { question, assignee } 객체로 반환하는 경우
+          if (typeof sq === 'object' && sq.question) {
+            const assignee = sq.assignee || '송인찬'
+            return { question: sq.question, role: AGENT_ROLES[assignee] || 'sales', assignee }
+          }
+          // LLM이 문자열로 반환하는 경우 (폴백)
+          return { question: String(sq), role: 'sales', assignee: '송인찬' }
+        })
       : null
 
     return {

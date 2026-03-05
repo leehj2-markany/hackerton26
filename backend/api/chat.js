@@ -139,6 +139,9 @@ export default async function handler(req, res) {
     // PII 마스킹 적용
     finalAnswer = maskPII(finalAnswer)
 
+    // 신뢰도 로그 (UI에는 표시하지 않지만 분석용으로 기록)
+    console.log(`[chat] confidence=${result.confidence} (${result.confidenceScore}%), model=${result.model}, complexity=${result.complexity}`)
+
     return json(res, {
       success: true,
       data: {
