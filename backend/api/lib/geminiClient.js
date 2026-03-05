@@ -86,59 +86,77 @@ const SYSTEM_PROMPT = `당신은 마크애니의 AI 프리세일즈 어시스턴
 - 기술적으로 확신이 없는 질문도 [ESCALATION]을 붙여주세요
 - 에스컬레이션이 필요 없는 일반 답변에는 [ESCALATION]을 붙이지 마세요
 
+대화 유도 전략 (고객에게 추가 질문을 자연스럽게 이끌어내기):
+- 답변 끝에 고객의 환경이나 상황을 파악하는 후속 질문을 하나 던지세요. 예: "혹시 대략적인 사용자 규모가 어느 정도인가요?", "현재 어떤 환경에서 운영하고 계신가요?"
+- 고객이 정보를 제공하면 그에 맞춰 점점 더 구체적인 답변을 제공하세요 (일반적 → 맞춤형으로 자연스럽게 진행).
+- 절대 한 번에 모든 정보를 쏟아내지 마세요. 핵심 정보를 간결히 주고, 후속 질문으로 대화를 이어가세요.
+
 ${KNOWLEDGE_BASE}`
 
-// CHECK 시맨틱 분석: 복합 질문 분해 + 복잡도 레벨
-export function analyzeQuestion(question) {
-  // 도입/구축/전환 등 컨설팅급 질문은 짧아도 complex로 올림 (Pro 모델 라우팅)
-  const consultingKeywords = ['도입', '구축', '신규', '검토', '전환', '마이그레이션', '교체', '적용']
-  const isConsulting = consultingKeywords.some(k => question.includes(k))
 
-  if (isConsulting) {
-    const subQuestions = [
-      { question: '도입/구축 컨설팅', role: 'sales', assignee: '송인찬' },
-      { question: '기술 환경 분석', role: 'se', assignee: '이현진' },
-    ]
-    return { isComplex: true, complexity: 'complex', subQuestions }
-  }
+// ── LLM-as-a-Router: Flash가 복잡도를 판단 ──
+// 키워드 룰 전부 제거. 모든 판단은 LLM 자연어 이해에 위임.
+const ROUTER_PROMPT = `당신은 고객 질문의 복잡도를 판단하는 라우터입니다.
+아래 질문을 분석하여 반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트는 절대 포함하지 마세요.
 
-  const markers = ['?', '그리고', '또한', '와', '과', '및', '아울러']
-  const hasMarkers = markers.some(m => question.includes(m)) && question.length > 30
+판단 기준:
+- simple: 인사, 단일 제품 질문, 단순 기능 문의, 짧은 질문 (예: "DRM이 뭐예요?", "도입하려고요")
+- complex: 여러 주제가 결합된 질문, 비교 요청, 환경 조건이 복잡한 질문 (예: "500명 규모 망분리 환경에서 DRM 도입하면서 그룹웨어 연동도 하고 싶은데")
+- critical: 긴급 장애, 보안사고, 법적/계약 이슈, 감사 대응 등 즉각 전문가 개입이 필요한 질문
 
-  if (!hasMarkers) {
-    return { isComplex: false, complexity: 'simple', subQuestions: null }
-  }
+질문: "{QUESTION}"
 
-  // 간단한 규칙 기반 분해 (데모용)
-  const subQuestions = []
-  if (question.includes('구축') || question.includes('가능')) {
-    subQuestions.push({ question: '맞춤형 구축 가능성', role: 'sales', assignee: '송인찬' })
-  }
-  if (question.includes('호환') || question.includes('윈도우')) {
-    subQuestions.push({ question: '윈도우 11 호환성', role: 'se', assignee: '이현진' })
-  }
-  if (question.includes('보안') || question.includes('인증')) {
-    subQuestions.push({ question: '보안 인증 요구사항', role: 'dev', assignee: '박우호' })
-  }
-  if (question.includes('비용') || question.includes('가격') || question.includes('기간')) {
-    subQuestions.push({ question: '비용 및 일정', role: 'sales', assignee: '송인찬' })
-  }
-  if (question.includes('연동') || question.includes('시스템')) {
-    subQuestions.push({ question: '시스템 연동', role: 'se', assignee: '이현진' })
+JSON 응답 (이것만 출력):
+{"complexity":"simple|complex|critical","reason":"판단 근거 한 줄","subQuestions":["서브질문1","서브질문2"]}`
+
+export async function analyzeQuestion(question) {
+  const client = getClient()
+
+  // Gemini 클라이언트 없으면 (DEMO_MODE 등) 간단한 길이 기반 fallback
+  if (!client) {
+    return fallbackAnalyze(question)
   }
 
-  if (subQuestions.length === 0) {
-    subQuestions.push({ question: question.slice(0, 30), role: 'sales', assignee: '송인찬' })
+  try {
+    const prompt = ROUTER_PROMPT.replace('{QUESTION}', question)
+    const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' })
+    const result = await model.generateContent(prompt)
+    const text = result.response.text().trim()
+
+    // JSON 파싱 (LLM이 ```json 래핑할 수 있으므로 추출)
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) return fallbackAnalyze(question)
+
+    const parsed = JSON.parse(jsonMatch[0])
+    const complexity = ['simple', 'complex', 'critical'].includes(parsed.complexity)
+      ? parsed.complexity
+      : 'simple'
+
+    const subQuestions = Array.isArray(parsed.subQuestions) && parsed.subQuestions.length > 0
+      ? parsed.subQuestions.map(q => ({ question: q, role: 'sales', assignee: '송인찬' }))
+      : null
+
+    return {
+      isComplex: complexity !== 'simple',
+      complexity,
+      subQuestions,
+      routerReason: parsed.reason || '',
+    }
+  } catch (err) {
+    console.error('Router LLM error, falling back:', err.message)
+    return fallbackAnalyze(question)
   }
-
-  const isComplex = subQuestions.length > 1
-  // 3개 이상 서브질문 또는 에스컬레이션 키워드 → critical (Claude Opus)
-  const escalationKeywords = ['긴급', '장애', '보안사고', '법적', '계약', '소송', '감사']
-  const isCritical = subQuestions.length >= 2 || escalationKeywords.some(k => question.includes(k))
-  const complexity = isCritical ? 'critical' : isComplex ? 'complex' : 'simple'
-
-  return { isComplex, complexity, subQuestions }
 }
+
+// Fallback: Gemini 없을 때 최소한의 판단 (DEMO_MODE용)
+function fallbackAnalyze(question) {
+  // 길이 + 간단한 시그널로만 판단 — 키워드 하드코딩 최소화
+  if (question.length > 80) {
+    return { isComplex: true, complexity: 'complex', subQuestions: null, routerReason: 'fallback: 긴 질문' }
+  }
+  return { isComplex: false, complexity: 'simple', subQuestions: null, routerReason: 'fallback: 짧은 질문' }
+}
+
 
 // 신뢰도 평가
 function evaluateConfidence(question, answer) {
@@ -164,7 +182,7 @@ export async function generateAnswer(question, customerInfo, conversationHistory
     //   simple  → Gemini 2.5 Flash (~4s, 속도 우선)
     //   complex → Gemini 2.5 Pro (~15s, 정확도 우선)
     //   critical → Claude Opus 4 (~20s, 최고 성능)
-    const analysis = analyzeQuestion(question)
+    const analysis = await analyzeQuestion(question)
 
     const contextParts = []
     if (customerInfo) {
@@ -242,9 +260,10 @@ ${historyText}
   }
 }
 
+
 // Mock 답변 생성 (DEMO_MODE 또는 Gemini 클라이언트 없을 때)
 function generateMockAnswer(question, customerInfo) {
-  const analysis = analyzeQuestion(question)
+  const analysis = fallbackAnalyze(question)
   const confidence = evaluateConfidence(question, '')
 
   // 인사/간단한 입력 감지

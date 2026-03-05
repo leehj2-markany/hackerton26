@@ -78,7 +78,7 @@ export default async function handler(req, res) {
     }
 
     // thinking process 생성
-    const analysis = analyzeQuestion(message)
+    const analysis = await analyzeQuestion(message)
     const thinkingProcess = ['🤔 질문 분석 중...']
 
     // 고객 매칭 결과 표시
