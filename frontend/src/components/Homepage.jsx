@@ -19,7 +19,9 @@ const Homepage = () => {
             </div>
             <div className="flex items-center space-x-4">
               <button className="text-gray-700 hover:text-markany-blue transition">로그인</button>
-              <button className="bg-markany-blue text-white px-4 py-2 rounded-lg hover:bg-markany-dark transition">
+              <button className="bg-markany-blue text-white px-4 py-2 rounded-lg hover:bg-markany-dark transition"
+                onClick={() => window.dispatchEvent(new CustomEvent('openChatbot'))}
+              >
                 문의하기
               </button>
             </div>
@@ -42,7 +44,9 @@ const Homepage = () => {
               <button className="bg-markany-blue text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-markany-dark transition shadow-lg">
                 제품 둘러보기
               </button>
-              <button className="bg-white text-markany-blue px-8 py-3 rounded-lg text-lg font-semibold border-2 border-markany-blue hover:bg-markany-light transition">
+              <button className="bg-white text-markany-blue px-8 py-3 rounded-lg text-lg font-semibold border-2 border-markany-blue hover:bg-markany-light transition"
+                onClick={() => window.dispatchEvent(new CustomEvent('openChatbot'))}
+              >
                 무료 상담
               </button>
             </div>

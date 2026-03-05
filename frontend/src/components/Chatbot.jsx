@@ -94,6 +94,16 @@ const IntakeForm = ({ onSubmit }) => {
 const Chatbot = () => {
   const [isOpen, setIsOpen] = useState(true)
   const [isMinimized, setIsMinimized] = useState(false)
+
+  // Homepage 버튼(문의하기/무료상담) 클릭 시 챗봇 열기 이벤트 수신
+  useEffect(() => {
+    const handleOpenChatbot = () => {
+      setIsOpen(true)
+      setIsMinimized(false)
+    }
+    window.addEventListener('openChatbot', handleOpenChatbot)
+    return () => window.removeEventListener('openChatbot', handleOpenChatbot)
+  }, [])
   const [showIntakeForm, setShowIntakeForm] = useState(true)
   const [sessionClosed, setSessionClosed] = useState(false)
   const [messages, setMessages] = useState([])
@@ -788,7 +798,7 @@ const Chatbot = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                 </svg>
               </button>
-              <button onClick={() => setIsOpen(false)} className="hover:bg-white/20 p-1 rounded transition">
+              <button onClick={() => setIsMinimized(true)} className="hover:bg-white/20 p-1 rounded transition">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
