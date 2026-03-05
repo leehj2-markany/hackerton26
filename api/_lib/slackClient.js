@@ -579,3 +579,37 @@ export async function addReaction(channelId, timestamp, emoji) {
     return { ok: false, error: err.message }
   }
 }
+
+/** 채널 보관 (archive) */
+export async function archiveChannel(channelId) {
+  log('archiveChannel', `channel=${channelId}`)
+  try {
+    if (isDemoMode()) {
+      log('archiveChannel', '[DEMO] 채널 보관 시뮬레이션')
+      return { ok: true, demo: true }
+    }
+    return await slackFetch('conversations.archive', { channel: channelId })
+  } catch (err) {
+    console.error('[Slack:archiveChannel] 실패:', err.message)
+    return { ok: false, error: err.message }
+  }
+}
+
+/** 사용자에게 DM 전송 */
+export async function sendDirectMessage(userId, text, blocks) {
+  log('sendDirectMessage', `user=${userId}, text=${text?.slice(0, 50)}...`)
+  try {
+    if (isDemoMode()) {
+      log('sendDirectMessage', '[DEMO] DM 전송 시뮬레이션')
+      return { ok: true, demo: true }
+    }
+    // DM은 chat.postMessage에 channel=userId로 전송
+    const body = { channel: userId, text }
+    if (blocks) body.blocks = blocks
+    const data = await slackFetch('chat.postMessage', body)
+    return { ok: true, ts: data.ts, channel: data.channel }
+  } catch (err) {
+    console.error('[Slack:sendDirectMessage] 실패:', err.message)
+    return { ok: false, error: err.message }
+  }
+}

@@ -74,6 +74,11 @@ const server = createServer(async (req, res) => {
       await handler(fakeReq, fakeRes)
       return
     }
+    if (pathname === '/api/session/close') {
+      const handler = (await import('./api/session/close.js')).default
+      await handler(fakeReq, fakeRes)
+      return
+    }
 
     // 동적 라우트: /api/case/{caseId}
     const caseMatch = pathname.match(/^\/api\/case\/(.+)$/)
@@ -117,5 +122,6 @@ server.listen(PORT, () => {
   console.log(`   GET  /api/dashboard/stats`)
   console.log(`   POST /api/slack/send`)
   console.log(`   GET  /api/slack/poll`)
+  console.log(`   POST /api/session/close`)
   console.log(`   GET  /api/health\n`)
 })

@@ -79,3 +79,18 @@ export async function pollSlackMessages(sinceTs, limit = 20, channelId) {
 }
 
 export { API_URL }
+
+// 10. 세션 종료 (채널 보관 + DM 발송)
+export async function closeSession(channelId, sessionId, customerInfo) {
+  return request('/session/close', {
+    method: 'POST',
+    body: JSON.stringify({ channelId, sessionId, customerInfo }),
+  })
+}
+
+// 11. 세션 종료 (sendBeacon용 — 탭 닫기/리프레시 시)
+export function closeSessionBeacon(channelId, sessionId, customerInfo) {
+  const url = `${API_URL}/session/close`
+  const body = JSON.stringify({ channelId, sessionId, customerInfo })
+  navigator.sendBeacon(url, new Blob([body], { type: 'application/json' }))
+}

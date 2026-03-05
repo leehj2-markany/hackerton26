@@ -3,7 +3,7 @@ import ThinkingPanel from './ThinkingPanel'
 import InfoPanel from './InfoPanel'
 import AgentStatus from './AgentStatus'
 import { mockAgents } from '../data/mockData'
-import { sendMessage, escalateCase, sendSlackQuestion, pollSlackMessages } from '../api/chatApi'
+import { sendMessage, escalateCase, sendSlackQuestion, pollSlackMessages, closeSession, closeSessionBeacon } from '../api/chatApi'
 
 // 실제 Slack 사용자 (에스컬레이션 후 폴링 대상) — 박우호는 가상 에이전트
 const REAL_SLACK_AGENTS = ['송인찬', '이현진']
@@ -25,57 +25,78 @@ const formatSlackText = (text) => {
     .replace(/<!subteam\^[A-Z0-9]+\|@([^>]+)>/g, '@$1')    // 유저그룹 멘션
 }
 
-// 이메일/연락처 수집 인라인 폼
-const EmailCollectForm = ({ onSubmit }) => {
+// 초기 고객 정보 수집 폼 (대화 시작 시)
+const IntakeForm = ({ onSubmit }) => {
+  const [company, setCompany] = useState('')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
 
-  const handleSubmit = () => {
-    if (!name.trim() || !email.trim()) return
-    onSubmit(email.trim(), phone.trim(), name.trim())
+  const isValid = company.trim() && email.trim() && email.includes('@')
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (!isValid) return
+    onSubmit({ company: company.trim(), name: name.trim(), email: email.trim(), phone: phone.trim() })
   }
 
   return (
-    <div className="mt-3 space-y-2">
-      <input
-        type="text"
-        value={name}
-        onChange={e => setName(e.target.value)}
-        placeholder="이름 (필수)"
-        className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-      />
-      <input
-        type="email"
-        value={email}
-        onChange={e => setEmail(e.target.value)}
-        placeholder="이메일 (필수)"
-        className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-      />
-      <input
-        type="tel"
-        value={phone}
-        onChange={e => setPhone(e.target.value)}
-        placeholder="연락처 (선택)"
-        className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-      />
+    <form onSubmit={handleSubmit} className="space-y-3">
+      <div className="text-center mb-4">
+        <div className="text-2xl mb-1">👋</div>
+        <p className="text-sm text-gray-700 font-semibold">마크애니에 오신 것을 환영합니다</p>
+        <p className="text-xs text-gray-500 mt-1">간단한 정보를 입력해 주시면 맞춤형 상담을 시작합니다</p>
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-600 mb-1">기업명 <span className="text-red-500">*</span></label>
+        <input
+          type="text" value={company} onChange={e => setCompany(e.target.value)}
+          placeholder="예: 삼성전자"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-markany-blue focus:border-transparent"
+          autoFocus
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-600 mb-1">담당자명</label>
+        <input
+          type="text" value={name} onChange={e => setName(e.target.value)}
+          placeholder="예: 홍길동"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-markany-blue focus:border-transparent"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-600 mb-1">이메일 <span className="text-red-500">*</span></label>
+        <input
+          type="email" value={email} onChange={e => setEmail(e.target.value)}
+          placeholder="예: hong@company.com"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-markany-blue focus:border-transparent"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-600 mb-1">연락처</label>
+        <input
+          type="tel" value={phone} onChange={e => setPhone(e.target.value)}
+          placeholder="예: 010-1234-5678"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-markany-blue focus:border-transparent"
+        />
+      </div>
       <button
-        onClick={handleSubmit}
-        disabled={!name.trim() || !email.trim()}
-        className="w-full bg-markany-blue text-white py-2 rounded-lg hover:bg-markany-dark transition text-sm font-semibold disabled:opacity-50"
+        type="submit" disabled={!isValid}
+        className="w-full bg-markany-blue text-white py-2.5 rounded-lg hover:bg-markany-dark transition text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
       >
-        📧 상담 내역 받기
+        상담 시작하기
       </button>
-    </div>
+    </form>
   )
 }
+
 
 const Chatbot = () => {
   const [isOpen, setIsOpen] = useState(true)
   const [isMinimized, setIsMinimized] = useState(false)
-  const [messages, setMessages] = useState([
-    { type: 'ai', text: '안녕하세요, 마크애니입니다. 무엇을 도와드릴까요?', timestamp: new Date() }
-  ])
+  const [showIntakeForm, setShowIntakeForm] = useState(true)
+  const [sessionClosed, setSessionClosed] = useState(false)
+  const [messages, setMessages] = useState([])
   const [inputValue, setInputValue] = useState('')
   const [showThinking, setShowThinking] = useState(false)
   const [thinkingSteps, setThinkingSteps] = useState([])
@@ -87,8 +108,6 @@ const Chatbot = () => {
   const [isProcessing, setIsProcessing] = useState(false)
   const [typingAgent, setTypingAgent] = useState(null)
   const [showQuickReplies, setShowQuickReplies] = useState(false)
-  const [, setCollectingEmail] = useState(false)
-  const [, setCollectedEmail] = useState('')
   const [, setSlackPollSince] = useState(null)
   const [slackChannelId, setSlackChannelId] = useState(null)
   const [slackChannelName, setSlackChannelName] = useState(null)
@@ -122,6 +141,65 @@ const Chatbot = () => {
     return () => clearTimeout(timer)
   }, [])
 
+  // sessionStorage에서 고객 정보 복원
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem('anybridge_customer')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        setCustomerInfo(parsed)
+        setShowIntakeForm(false)
+        setMessages([{ type: 'ai', text: `안녕하세요 ${parsed.company} ${parsed.name || ''}님! 무엇을 도와드릴까요?`, timestamp: new Date() }])
+      }
+      const savedChannel = sessionStorage.getItem('anybridge_channelId')
+      if (savedChannel) setSlackChannelId(savedChannel)
+      const savedChannelName = sessionStorage.getItem('anybridge_channelName')
+      if (savedChannelName) setSlackChannelName(savedChannelName)
+    } catch (_) { /* 무시 */ }
+  }, [])
+
+  // beforeunload: 탭 닫기/리프레시 시 세션 종료 API 호출
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (sessionClosed) return
+      const chId = slackChannelId || sessionStorage.getItem('anybridge_channelId')
+      if (!chId) return
+      const custRaw = sessionStorage.getItem('anybridge_customer')
+      const cust = custRaw ? JSON.parse(custRaw) : null
+      closeSessionBeacon(chId, sessionId, cust)
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [slackChannelId, sessionId, sessionClosed])
+
+  // slackChannelId 변경 시 sessionStorage에 저장
+  useEffect(() => {
+    if (slackChannelId) sessionStorage.setItem('anybridge_channelId', slackChannelId)
+  }, [slackChannelId])
+
+  useEffect(() => {
+    if (slackChannelName) sessionStorage.setItem('anybridge_channelName', slackChannelName)
+  }, [slackChannelName])
+
+  // 초기 정보 수집 완료 핸들러
+  const handleIntakeSubmit = (info) => {
+    const custInfo = {
+      id: `cust_${Date.now()}`,
+      name: info.name || '',
+      company: info.company,
+      email: info.email,
+      phone: info.phone || '',
+      product: '',
+    }
+    setCustomerInfo(custInfo)
+    setShowIntakeForm(false)
+    sessionStorage.setItem('anybridge_customer', JSON.stringify(custInfo))
+    const greeting = info.name
+      ? `안녕하세요 ${info.company} ${info.name}님! 무엇을 도와드릴까요?`
+      : `안녕하세요 ${info.company}님! 무엇을 도와드릴까요?`
+    setMessages([{ type: 'ai', text: greeting, timestamp: new Date() }])
+  }
+
   const handleSend = async () => {
     if (!inputValue.trim() || isProcessing) return
 
@@ -140,19 +218,20 @@ const Chatbot = () => {
     handleAIResponse(currentInput)
   }
 
-  // 에스컬레이션 후 추가 질의 처리 — AI 개입 없이 Slack 채널로 전달
+  // 에스컬레이션 후 추가 질의 처리 — 가상 에이전트는 LLM, 실제 담당자는 Slack 폴링
   const handleFollowUpQuestion = async (question) => {
     setIsProcessing(true)
     setShowQuickReplies(false)
 
-    // 담당자 풀 (표시용)
-    const agentPool = [
-      { name: '송인찬', role: '어카운트 매니저', avatar: '👨‍💼' },
-      { name: '이현진', role: 'SE', avatar: '👨‍💻' },
-      { name: '박우호', role: '개발리더', avatar: '👨‍🔧' },
-    ]
+    // 담당자 정보 매핑 (handleEscalation과 동일)
+    const AGENT_MAP = {
+      '채소희': { role: '고객센터', avatar: '👩‍💼' },
+      '송인찬': { role: '어카운트 매니저', avatar: '👨‍💼' },
+      '이현진': { role: 'SE', avatar: '👨‍💻' },
+      '박우호': { role: '개발리더', avatar: '👨‍🔧' },
+    }
 
-    // 1. 채소희가 질문 접수 → Slack 전달 안내
+    // 1. 채소희가 질문 접수
     await delay(1000)
     setMessages(prev => [...prev, {
       type: 'agent', agentName: '채소희', agentRole: '고객센터', agentAvatar: '👩‍💼',
@@ -173,10 +252,10 @@ const Chatbot = () => {
     // 3. 실제 Slack 전송
     const pollStartTs = String(Date.now() / 1000)
     setSlackPollSince(pollStartTs)
-    const allAssignees = agentPool.map(a => ({ name: a.name, role: a.role }))
+    const realAgents = REAL_SLACK_AGENTS.map(name => ({ name, role: (AGENT_MAP[name] || {}).role || '담당자' }))
     sendSlackQuestion(
       question,
-      allAssignees,
+      realAgents,
       customerInfo?.name || '고객',
       { followUp: true },
       slackChannelId
@@ -184,31 +263,61 @@ const Chatbot = () => {
       if (res?.data?.channelId) setSlackChannelId(res.data.channelId)
     }).catch(err => console.error('Slack send error:', err))
 
-    // 4. 담당자 답변 대기 — Slack 폴링만, AI 답변 생성 없음
-    const realAgentNames = [...REAL_SLACK_AGENTS]
+    // 4-A. 가상 에이전트 (박우호) — LLM으로 답변 생성
+    let answeredCount = 0
+    for (const vName of VIRTUAL_AGENTS) {
+      const vInfo = AGENT_MAP[vName] || { role: '담당자', avatar: '👤' }
+      setTypingAgent({ name: vName, avatar: vInfo.avatar })
+      let virtualAnswer = ''
+      try {
+        const result = await sendMessage(
+          `당신은 ${vName} (${vInfo.role})입니다. 개발자 스타일로 간결하고 기술적으로 답변하세요. 반말이나 구어체를 섞어도 됩니다. 질문: "${question}". 고객: ${customerInfo?.name || '고객'}, 제품: ${customerInfo?.product || 'DRM'}.`,
+          customerInfo?.id || null, `esc_followup_${Date.now()}`, []
+        )
+        if (result?.data?.answer) virtualAnswer = result.data.answer
+      } catch (e) { console.error(`LLM for ${vName}:`, e) }
+      if (!virtualAnswer) virtualAnswer = '확인 후 답변드리겠습니다.'
+      setTypingAgent(null)
+      setMessages(prev => [...prev, {
+        type: 'agent', agentName: vName, agentRole: vInfo.role, agentAvatar: vInfo.avatar,
+        text: virtualAnswer, timestamp: new Date()
+      }])
+      answeredCount++
+    }
+
+    // 4-B. 실제 Slack 사용자 — 폴링 (1명 답변 시 추가 대기 30초로 단축)
     const answeredAgents = new Set()
-    const maxPollTime = 180000 // 3분 대기
+    const maxPollTime = 90000 // 90초 (기존 3분에서 단축)
+    const shortenedWait = 30000 // 1명 답변 후 나머지 대기 시간
     const pollInterval = 3000
     const startTime = Date.now()
+    let firstAnswerTime = null
 
-    // 타이핑 인디케이터 표시
     setTypingAgent({ name: '담당자', avatar: '💬' })
 
-    while (answeredAgents.size < realAgentNames.length && (Date.now() - startTime) < maxPollTime) {
+    while (answeredAgents.size < REAL_SLACK_AGENTS.length) {
+      const elapsed = Date.now() - startTime
+      // 전체 타임아웃 체크
+      if (elapsed > maxPollTime) break
+      // 1명 이상 답변 후 추가 대기 시간 초과 체크
+      if (firstAnswerTime && (Date.now() - firstAnswerTime) > shortenedWait) break
+
       await delay(pollInterval)
       try {
         const pollResult = await pollSlackMessages(pollStartTs, 20, slackChannelId)
         const newMessages = pollResult?.data?.messages || []
         for (const msg of newMessages) {
-          if (!answeredAgents.has(msg.agentName)) {
+          if (!answeredAgents.has(msg.agentName) && REAL_SLACK_AGENTS.includes(msg.agentName)) {
             answeredAgents.add(msg.agentName)
+            if (!firstAnswerTime) firstAnswerTime = Date.now()
             setTypingAgent(null)
+            const aInfo = AGENT_MAP[msg.agentName] || {}
             setMessages(prev => [...prev, {
-              type: 'agent', agentName: msg.agentName, agentRole: msg.agentRole,
-              agentAvatar: msg.agentAvatar, text: msg.text, isLive: true, timestamp: new Date(msg.timestamp)
+              type: 'agent', agentName: msg.agentName, agentRole: aInfo.role || msg.agentRole,
+              agentAvatar: aInfo.avatar || msg.agentAvatar, text: msg.text, isLive: true, timestamp: new Date(msg.timestamp)
             }])
-            // 아직 대기 중인 담당자가 있으면 타이핑 인디케이터 유지
-            if (answeredAgents.size < realAgentNames.length) {
+            answeredCount++
+            if (answeredAgents.size < REAL_SLACK_AGENTS.length) {
               setTypingAgent({ name: '담당자', avatar: '💬' })
             }
           }
@@ -217,17 +326,23 @@ const Chatbot = () => {
     }
     setTypingAgent(null)
 
-    // 5. 결과에 따른 마무리 메시지
+    // 5. 마무리 메시지
     await delay(1500)
-    if (answeredAgents.size > 0) {
-      // 답변이 하나라도 온 경우
+    const totalExpected = VIRTUAL_AGENTS.length + REAL_SLACK_AGENTS.length
+    if (answeredCount >= totalExpected) {
       setMessages(prev => [...prev, {
         type: 'agent', agentName: '채소희', agentRole: '고객센터', agentAvatar: '👩‍💼',
-        text: '담당자 답변이 도착했습니다 ✅\n혹시 더 궁금하신 점이 있으신가요?',
+        text: '담당자 답변이 모두 도착했습니다 ✅\n혹시 더 궁금하신 점이 있으신가요?',
+        showContinueOrEnd: true, timestamp: new Date()
+      }])
+    } else if (answeredCount > 0) {
+      const remaining = totalExpected - answeredCount
+      setMessages(prev => [...prev, {
+        type: 'agent', agentName: '채소희', agentRole: '고객센터', agentAvatar: '👩‍💼',
+        text: `담당자 답변이 도착했습니다 ✅\n나머지 ${remaining}명은 슬랙 채널에서 확인 후 답변드릴 예정입니다.\n혹시 더 궁금하신 점이 있으신가요?`,
         showContinueOrEnd: true, timestamp: new Date()
       }])
     } else {
-      // 타임아웃 — AI 대신 안내 메시지만 표시
       setMessages(prev => [...prev, {
         type: 'agent', agentName: '채소희', agentRole: '고객센터', agentAvatar: '👩‍💼',
         text: '담당자분들이 현재 다른 업무 중인 것 같습니다.\n슬랙 채널에 질문이 전달되어 있으니, 확인 후 답변드릴 예정입니다. 📩\n혹시 더 궁금하신 점이 있으신가요?',
@@ -237,6 +352,7 @@ const Chatbot = () => {
 
     setFollowUpIndex(prev => prev + 1)
     setIsProcessing(false)
+    setShowQuickReplies(true)
   }
 
   const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms))
@@ -385,22 +501,15 @@ const Chatbot = () => {
 
     // 채소희 마무리 인사
     await delay(1500)
+    const custName = customerInfo?.name || customerInfo?.company || '고객'
     setMessages(prev => [...prev, {
       type: 'agent',
       agentName: '채소희', agentRole: '고객센터', agentAvatar: '👩‍💼',
-      text: '오늘 상담해 주셔서 감사합니다! 😊\n담당자분들의 연락처를 슬랙 프로필에서 확인하여 전달드릴게요.\n추후 궁금하신 점이 있으시면 언제든 연락 주세요 🙏',
+      text: `오늘 상담해 주셔서 감사합니다, ${custName}님! 😊\n담당자분들의 연락처를 슬랙 프로필에서 확인하여 전달드릴게요.\n추후 궁금하신 점이 있으시면 언제든 연락 주세요 🙏`,
       timestamp: new Date()
     }])
 
-    // 슬랙 프로필에서 연락처 추출 메시지
-    await delay(2000)
-    setMessages(prev => [...prev, {
-      type: 'system',
-      text: '📋 Slack 프로필에서 담당자 연락처를 추출하고 있습니다...',
-      timestamp: new Date()
-    }])
-
-    // 담당자 연락처 카드 (슬랙 프로필 기반)
+    // 담당자 연락처 카드
     await delay(2000)
     const involvedAgents = mockAgents.filter(a => a.name !== '채소희')
     setMessages(prev => [...prev, {
@@ -409,57 +518,43 @@ const Chatbot = () => {
       timestamp: new Date()
     }])
 
-    // 이메일/연락처 수집 요청
+    // 세션 종료 API 호출 (채널 보관 + DM 발송)
+    if (slackChannelId) {
+      try {
+        await closeSession(slackChannelId, sessionId, customerInfo)
+        setSessionClosed(true)
+      } catch (e) {
+        console.error('Session close error:', e)
+      }
+    }
+
+    // 이메일 발송 안내
     await delay(1500)
-    setMessages(prev => [...prev, {
-      type: 'agent',
-      agentName: '채소희', agentRole: '고객센터', agentAvatar: '👩‍💼',
-      text: '상담 내용을 정리하여 이메일로 발송해 드리겠습니다.\n이메일 주소와 연락처를 남겨주시겠어요? 📧',
-      showEmailForm: true,
-      timestamp: new Date()
-    }])
+    const emailAddr = customerInfo?.email
+    if (emailAddr) {
+      setMessages(prev => [...prev, {
+        type: 'agent',
+        agentName: '채소희', agentRole: '고객센터', agentAvatar: '👩‍💼',
+        text: `상담 내용을 ${emailAddr}로 정리하여 발송해 드리겠습니다. 📧\n좋은 하루 보내세요! 👋`,
+        timestamp: new Date()
+      }])
+    } else {
+      setMessages(prev => [...prev, {
+        type: 'agent',
+        agentName: '채소희', agentRole: '고객센터', agentAvatar: '👩‍💼',
+        text: '담당자가 확인 후 연락드리겠습니다. 좋은 하루 보내세요! 👋',
+        timestamp: new Date()
+      }])
+    }
 
-    setCollectingEmail(true)
-    setIsProcessing(false)
-  }
-
-  const handleEmailSubmit = async (email, phone, name) => {
-    setCollectingEmail(false)
-    setIsProcessing(true)
-
-    // 이메일 폼 버튼 숨기기
-    setMessages(prev => prev.map(msg => msg.showEmailForm ? { ...msg, showEmailForm: false } : msg))
-
-    // 사용자 입력 표시
-    setMessages(prev => [...prev, {
-      type: 'user',
-      text: `${name} / ${email}${phone ? ' / ' + phone : ''}`,
-      timestamp: new Date()
-    }])
-
-    setCollectedEmail(email)
-
-    // 채소희 확인 메시지
-    await delay(1500)
-    setMessages(prev => [...prev, {
-      type: 'agent',
-      agentName: '채소희', agentRole: '고객센터', agentAvatar: '👩‍💼',
-      text: `감사합니다, ${name}님! ✅\n${email}로 오늘 상담 내용을 정리하여 발송해 드리겠습니다.\n좋은 하루 보내세요! 👋`,
-      timestamp: new Date()
-    }])
-
-    await delay(1000)
-    setMessages(prev => [...prev, {
-      type: 'system',
-      text: `📧 상담 요약 이메일 발송 예약 완료 → ${email}`,
-      timestamp: new Date()
-    }])
+    // sessionStorage 정리
+    sessionStorage.removeItem('anybridge_channelId')
+    sessionStorage.removeItem('anybridge_channelName')
 
     setIsProcessing(false)
     setEscalationMode(false)
     setShowAgentStatus(false)
   }
-
 
   const handleEscalation = async () => {
     setShowAgentStatus(true)
@@ -703,7 +798,14 @@ const Chatbot = () => {
 
           {/* Messages Area */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
-            {messages.map((msg, index) => (
+            {showIntakeForm && (
+              <div className="flex justify-center items-center h-full">
+                <div className="w-full max-w-sm bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                  <IntakeForm onSubmit={handleIntakeSubmit} />
+                </div>
+              </div>
+            )}
+            {!showIntakeForm && messages.map((msg, index) => (
               <div key={index} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {msg.type === 'agent' ? (
                   <div className="max-w-[85%]">
@@ -727,9 +829,7 @@ const Chatbot = () => {
                       )}
                       {msg.continueChoice === 'continue' && <div className="mt-2 text-xs text-blue-600 font-medium">💬 질문 계속</div>}
                       {msg.continueChoice === 'end' && <div className="mt-2 text-xs text-gray-500 font-medium">✅ 충분합니다</div>}
-                      {msg.showEmailForm && (
-                        <EmailCollectForm onSubmit={handleEmailSubmit} />
-                      )}
+
                     </div>
                   </div>
                 ) : msg.type === 'contactCard' ? (
@@ -829,8 +929,8 @@ const Chatbot = () => {
               </div>
             ))}
             
-            {showThinking && <ThinkingPanel steps={thinkingSteps} />}
-            {showAgentStatus && <AgentStatus agents={agents} />}
+            {!showIntakeForm && showThinking && <ThinkingPanel steps={thinkingSteps} />}
+            {!showIntakeForm && showAgentStatus && <AgentStatus agents={agents} />}
             
             {/* Quick Reply chips */}
             {showQuickReplies && !isProcessing && (
@@ -882,13 +982,13 @@ const Chatbot = () => {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !e.nativeEvent.isComposing && handleSend()}
-                placeholder={isProcessing ? '담당자 답변 대기 중...' : '메시지를 입력하세요...'}
-                disabled={isProcessing}
+                placeholder={showIntakeForm ? '위 정보를 입력해 주세요' : isProcessing ? '담당자 답변 대기 중...' : '메시지를 입력하세요...'}
+                disabled={isProcessing || showIntakeForm}
                 className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-markany-blue disabled:bg-gray-100 disabled:text-gray-400"
               />
               <button
                 onClick={handleSend}
-                disabled={isProcessing}
+                disabled={isProcessing || showIntakeForm}
                 className="bg-markany-blue text-white px-6 py-2 rounded-lg hover:bg-markany-dark transition font-semibold disabled:opacity-50"
               >
                 전송

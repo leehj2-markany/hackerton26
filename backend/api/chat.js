@@ -12,9 +12,15 @@ const GREETING_PATTERNS = [
   '하이', '헬로', 'hi', 'hello', '처음 뵙겠습니다', '수고하세요',
 ]
 
+// 에스컬레이션 의도가 포함된 메시지는 인사로 처리하지 않음
+const ESCALATION_INTENT_WORDS = ['연결', '담당자', '사람', '전문가', '상담', '견적', '계약']
+
 function isGreetingMessage(msg) {
   const trimmed = msg.trim().replace(/[.!~?？ ]+$/g, '')
-  return trimmed.length <= 15 && GREETING_PATTERNS.some(p => trimmed.includes(p))
+  if (trimmed.length > 15) return false
+  // 에스컬레이션 의도가 있으면 인사가 아님
+  if (ESCALATION_INTENT_WORDS.some(w => trimmed.includes(w))) return false
+  return GREETING_PATTERNS.some(p => trimmed.includes(p))
 }
 
 export default async function handler(req, res) {
