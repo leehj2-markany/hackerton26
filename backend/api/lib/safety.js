@@ -266,7 +266,66 @@ export function evaluateConfidence(question, answer, knowledgeBase = '') {
 }
 
 // ══════════════════════════════════════════════════════
-// FUNCTION 4: constitutionalCheck — 헌법적 AI 검증 (경량, API 호출 없음)
+// FUNCTION 4a: constitutionalCheckWithLLM — Claude 기반 심층 검증
+// ══════════════════════════════════════════════════════
+export async function constitutionalCheckWithLLM(answer, question) {
+  // regex 기반 1차 검증 (기존)
+  const regexCheck = constitutionalCheck(answer)
+  if (!regexCheck.passed) return regexCheck
+
+  // Claude API 키가 없으면 regex 결과만 반환
+  const claudeKey = process.env.CLAUDE_API_KEY
+  if (!claudeKey) return { ...regexCheck, llmVerified: false }
+
+  try {
+    const prompt = `당신은 AI 답변의 안전성을 검증하는 헌법적 AI 검증자입니다.
+
+아래 답변이 다음 원칙을 위반하는지 검증하세요:
+1. 경쟁사 비방 금지: 다른 회사 제품을 직접적으로 비방하거나 폄하하지 않는가?
+2. 가격 직접 제공 금지: 구체적인 금액, 할인율, 견적을 직접 제시하지 않는가?
+3. 미확인 정보 금지: "100% 보장", "절대 안전", "완벽한 보호" 등 과장된 주장이 없는가?
+4. 허위 약속 금지: 납기, 무료 제공, 계약 조건 등을 임의로 약속하지 않는가?
+
+고객 질문: "${(question || '').slice(0, 300)}"
+AI 답변: "${(answer || '').slice(0, 1500)}"
+
+JSON으로만 응답: {"passed": true/false, "violations": ["위반 항목"], "severity": "none|low|high", "suggestion": "수정 제안"}`
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': claudeKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 256,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    })
+    const data = await res.json()
+    const text = data.content?.[0]?.text || ''
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) return { ...regexCheck, llmVerified: true }
+
+    const parsed = JSON.parse(jsonMatch[0])
+    return {
+      passed: parsed.passed !== false,
+      violations: parsed.violations || [],
+      severity: parsed.severity || 'none',
+      suggestion: parsed.suggestion || '',
+      llmVerified: true,
+    }
+  } catch (err) {
+    console.error('[constitutionalCheckWithLLM] error:', err.message)
+    // Claude 실패 시 regex 결과로 폴백
+    return { ...regexCheck, llmVerified: false, llmError: err.message }
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// FUNCTION 4b: constitutionalCheck — 헌법적 AI 검증 (경량, API 호출 없음)
 // ══════════════════════════════════════════════════════
 export function constitutionalCheck(answer) {
   if (!answer || typeof answer !== 'string') {
@@ -345,20 +404,23 @@ export function validateInput(text) {
   return { safe: true, sanitized }
 }
 
-export function validateOutput(text) {
+export async function validateOutput(text, question) {
   if (!text || typeof text !== 'string') {
     return { safe: true, sanitized: '' }
   }
 
-  // 헌법적 AI 검증으로 출력 안전성 체크
-  const check = constitutionalCheck(text)
+  // 헌법적 AI 검증: regex 1차 + Claude LLM 2차 심층 검증
+  const check = await constitutionalCheckWithLLM(text, question)
   if (!check.passed) {
     return {
       safe: false,
       reason: `헌법 위반: ${check.violations.join(', ')}`,
       sanitized: text,
+      llmVerified: check.llmVerified || false,
+      severity: check.severity || 'unknown',
+      suggestion: check.suggestion || '',
     }
   }
 
-  return { safe: true, sanitized: text }
+  return { safe: true, sanitized: text, llmVerified: check.llmVerified || false }
 }

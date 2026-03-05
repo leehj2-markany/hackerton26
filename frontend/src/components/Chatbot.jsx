@@ -509,6 +509,30 @@ const Chatbot = () => {
     handleFollowUpQuestion(question)
   }
 
+  // 새 대화 시작 — 모든 상태 초기화
+  const handleNewChat = () => {
+    sessionStorage.removeItem('anybridge_customer')
+    sessionStorage.removeItem('anybridge_channelId')
+    sessionStorage.removeItem('anybridge_channelName')
+    setMessages([])
+    setCustomerInfo(null)
+    setShowIntakeForm(true)
+    setSessionClosed(false)
+    setEscalationMode(false)
+    setShowAgentStatus(false)
+    setAgents([])
+    setShowThinking(false)
+    setThinkingSteps([])
+    setInputValue('')
+    setIsProcessing(false)
+    setTypingAgent(null)
+    setShowQuickReplies(false)
+    setSlackChannelId(null)
+    setSlackChannelName(null)
+    setEscalationSubQuestions(null)
+    setFollowUpIndex(0)
+  }
+
   const handleEndChat = async () => {
     setMessages(prev => prev.map(msg => msg.showContinueOrEnd ? { ...msg, showContinueOrEnd: false, continueChoice: 'end' } : msg))
     setIsProcessing(true)
@@ -795,13 +819,21 @@ const Chatbot = () => {
               <span className="font-semibold">마크애니 AI 지원</span>
               {escalationMode && <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">담당자 연결됨</span>}
             </div>
-            <div className="flex space-x-2">
-              <button onClick={() => setIsMinimized(true)} className="hover:bg-white/20 p-1 rounded transition">
+            <div className="flex space-x-1">
+              {/* 새 대화 버튼 — 인테이크 폼이 아닌 상태에서만 표시 */}
+              {!showIntakeForm && (
+                <button onClick={handleNewChat} className="hover:bg-white/20 p-1 rounded transition" title="새 대화">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                </button>
+              )}
+              <button onClick={() => setIsMinimized(true)} className="hover:bg-white/20 p-1 rounded transition" title="최소화">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                 </svg>
               </button>
-              <button onClick={() => setIsMinimized(true)} className="hover:bg-white/20 p-1 rounded transition">
+              <button onClick={() => setIsMinimized(true)} className="hover:bg-white/20 p-1 rounded transition" title="닫기">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>

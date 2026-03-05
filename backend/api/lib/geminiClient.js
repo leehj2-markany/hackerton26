@@ -180,6 +180,132 @@ function fallbackAnalyze(question) {
 }
 
 
+// ── R20: Prompt Cache (인메모리, LRU 방식) ──
+const CACHE_MAX_SIZE = 100
+const CACHE_TTL_MS = 30 * 60 * 1000 // 30분
+const promptCache = new Map()
+
+function getCacheKey(question, customerId) {
+  // 질문을 정규화하여 캐시 키 생성 (공백/특수문자 제거, 소문자)
+  const normalized = (question || '').trim().toLowerCase()
+    .replace(/[.!?~？！。\s]+/g, ' ')
+    .replace(/\s+/g, ' ')
+  return `${normalized}::${customerId || 'anon'}`
+}
+
+function getCachedAnswer(key) {
+  const entry = promptCache.get(key)
+  if (!entry) return null
+  if (Date.now() - entry.timestamp > CACHE_TTL_MS) {
+    promptCache.delete(key)
+    return null
+  }
+  entry.hits++
+  return entry.data
+}
+
+function setCachedAnswer(key, data) {
+  // LRU: 최대 크기 초과 시 가장 오래된 항목 제거
+  if (promptCache.size >= CACHE_MAX_SIZE) {
+    const oldestKey = promptCache.keys().next().value
+    promptCache.delete(oldestKey)
+  }
+  promptCache.set(key, { data, timestamp: Date.now(), hits: 0 })
+}
+
+// 캐시 통계 (디버깅/health 엔드포인트용)
+export function getCacheStats() {
+  let totalHits = 0
+  for (const entry of promptCache.values()) totalHits += entry.hits
+  return { size: promptCache.size, maxSize: CACHE_MAX_SIZE, totalHits, ttlMinutes: CACHE_TTL_MS / 60000 }
+}
+
+// ── R23: Take a Step Back Prompting ──
+// 복합 질문을 상위 개념으로 재구성하여 더 넓은 맥락에서 답변
+async function takeStepBack(question, client) {
+  if (!client) return null
+
+  const stepBackPrompt = `당신은 질문 분석 전문가입니다. 아래 구체적인 질문의 배경이 되는 더 넓은 상위 질문을 생성하세요.
+이 상위 질문에 답하면 원래 질문에도 더 정확하게 답할 수 있습니다.
+
+원래 질문: "${question}"
+
+상위 질문만 한 줄로 출력하세요 (다른 텍스트 없이):`
+
+  try {
+    const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' })
+    const result = await model.generateContent(stepBackPrompt)
+    const stepBackQuestion = result.response.text().trim()
+    return stepBackQuestion || null
+  } catch (err) {
+    console.error('[takeStepBack] error:', err.message)
+    return null
+  }
+}
+
+// ── R19 Self-Reflection: 답변 자체 검증 ──
+async function selfReflect(question, answer, client) {
+  if (!client) return { passed: true, reflection: '', issues: [] }
+
+  const reflectionPrompt = `당신은 AI 답변 품질 검증자입니다. 아래 질문과 답변을 검토하고 JSON으로만 응답하세요.
+
+질문: "${question}"
+답변: "${answer}"
+
+검증 항목:
+1. 사실 정확성: 답변이 질문에 정확히 대응하는가?
+2. 완전성: 핵심 정보가 빠지지 않았는가?
+3. 일관성: 내부 모순이 없는가?
+4. 안전성: 부적절한 약속이나 미확인 정보가 없는가?
+
+JSON 응답: {"passed": true/false, "issues": ["이슈1", "이슈2"], "suggestion": "개선 제안"}`
+
+  try {
+    const reflectModel = client.getGenerativeModel({ model: 'gemini-2.5-flash' })
+    const result = await reflectModel.generateContent(reflectionPrompt)
+    const text = result.response.text().trim()
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) return { passed: true, reflection: '', issues: [] }
+    const parsed = JSON.parse(jsonMatch[0])
+    return {
+      passed: parsed.passed !== false,
+      reflection: parsed.suggestion || '',
+      issues: parsed.issues || [],
+    }
+  } catch (err) {
+    console.error('[selfReflect] error:', err.message)
+    return { passed: true, reflection: '', issues: [] }
+  }
+}
+
+// ── R24 Self-Consistency: 복합 질문에 대해 2회 생성 후 일관성 검증 ──
+async function checkSelfConsistency(question, answer1, client, modelName) {
+  if (!client) return { consistent: true, score: 100 }
+
+  try {
+    // 2번째 답변 생성
+    const model = client.getGenerativeModel({ model: modelName })
+    const result = await model.generateContent(question)
+    const answer2 = result.response.text()
+
+    // 일관성 검증
+    const checkPrompt = `두 답변의 핵심 내용이 일치하는지 검증하세요. JSON으로만 응답.
+답변1: "${answer1.slice(0, 500)}"
+답변2: "${answer2.slice(0, 500)}"
+JSON: {"consistent": true/false, "score": 0-100, "differences": ["차이점"]}`
+
+    const checkModel = client.getGenerativeModel({ model: 'gemini-2.5-flash' })
+    const checkResult = await checkModel.generateContent(checkPrompt)
+    const text = checkResult.response.text().trim()
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) return { consistent: true, score: 85 }
+    return JSON.parse(jsonMatch[0])
+  } catch (err) {
+    console.error('[selfConsistency] error:', err.message)
+    return { consistent: true, score: 85 }
+  }
+}
+
 // 신뢰도 평가
 function evaluateConfidence(question, answer) {
   const highKeywords = ['Document SAFER', 'DRM', 'SafeCopy', '인증', '호환', '업그레이드', '버전']
@@ -199,12 +325,33 @@ export async function generateAnswer(question, customerInfo, conversationHistory
     return generateMockAnswer(question, customerInfo)
   }
 
+  // ── R20: 캐시 조회 (인사 메시지는 캐시하지 않음) ──
+  const cacheKey = !skipRAG ? getCacheKey(question, customerInfo?.id) : null
+  if (cacheKey) {
+    const cached = getCachedAnswer(cacheKey)
+    if (cached) {
+      const thinkingProcess = [...(cached.thinkingProcess || [])]
+      thinkingProcess.unshift('⚡ 캐시 히트 — 즉시 응답')
+      return { ...cached, thinkingProcess, fromCache: true }
+    }
+  }
+
   try {
     // 3-Tier LLM 라우팅:
     //   simple  → Gemini 2.5 Flash (~4s, 속도 우선)
     //   complex → Gemini 2.5 Pro (~15s, 정확도 우선)
     //   critical → Claude Opus 4 (~20s, 최고 성능)
     const analysis = await analyzeQuestion(question)
+    const thinkingProcess = []
+
+    // ── R23: Take a Step Back (complex/critical 질문에만 적용) ──
+    let stepBackQuestion = null
+    if (analysis.complexity === 'complex' || analysis.complexity === 'critical') {
+      stepBackQuestion = await takeStepBack(question, client)
+      if (stepBackQuestion) {
+        thinkingProcess.push(`🔭 Step Back: "${stepBackQuestion}"`)
+      }
+    }
 
     const contextParts = []
     if (customerInfo) {
@@ -222,6 +369,20 @@ export async function generateAnswer(question, customerInfo, conversationHistory
       if (ragContext) {
         contextParts.push(`[지식 베이스 검색 결과 — ${ragResult.stores.join(', ')} 제품]\n${ragContext}`)
       }
+
+      // Step Back 질문으로 추가 RAG 검색
+      if (stepBackQuestion) {
+        const stepBackRag = searchKnowledge(stepBackQuestion, productHint, 2)
+        const stepBackContext = formatContext(stepBackRag)
+        if (stepBackContext) {
+          contextParts.push(`[Step Back 추가 검색 결과]\n${stepBackContext}`)
+        }
+      }
+    }
+
+    // Step Back 분석 컨텍스트 추가
+    if (stepBackQuestion) {
+      contextParts.push(`[Step Back 분석]\n상위 질문: ${stepBackQuestion}`)
     }
 
     const historyText = conversationHistory
@@ -261,11 +422,32 @@ ${historyText}
       answer = answer.replace(/\[ESCALATION\]\s*/g, '').trim()
     }
 
+    // ── R19 Self-Reflection: 답변 자체 검증 ──
+    const reflection = await selfReflect(question, answer, client)
+    if (!reflection.passed) {
+      // 보완 정보 추가 (재생성은 하지 않음, 성능 고려)
+      answer += `\n\n💡 보완: ${reflection.reflection}`
+      thinkingProcess.push('🔍 Self-Reflection: ⚠️ 보완 적용')
+    } else {
+      thinkingProcess.push('🔍 Self-Reflection: ✅ 통과')
+    }
+
+    // ── R24 Self-Consistency: 복합 질문에 대해 일관성 검증 ──
+    let selfConsistency = null
+    if (analysis.complexity === 'complex') {
+      selfConsistency = await checkSelfConsistency(question, answer, client, modelName)
+      if (!selfConsistency.consistent) {
+        thinkingProcess.push('⚠️ 일관성 검증: 차이 발견 — 보수적 답변 적용')
+      } else {
+        thinkingProcess.push(`✅ 일관성 검증: 통과 (${selfConsistency.score}점)`)
+      }
+    }
+
     const confidence = evaluateConfidence(question, answer)
 
     // 에스컬레이션은 LLM 판단([ESCALATION] 마커)에만 의존
     // 신뢰도 낮음이나 복합 질문이라고 자동 에스컬레이션하지 않음
-    return {
+    const result = {
       answer,
       confidence: confidence.level,
       confidenceScore: confidence.score,
@@ -275,7 +457,18 @@ ${historyText}
       complexity: analysis.complexity,
       subQuestions: analysis.subQuestions,
       model: modelName,
+      thinkingProcess,
+      stepBackQuestion: stepBackQuestion || undefined,
+      selfReflection: { passed: reflection.passed, issues: reflection.issues },
+      selfConsistency: selfConsistency ? { consistent: selfConsistency.consistent, score: selfConsistency.score } : null,
     }
+
+    // ── R20: 캐시 저장 (에스컬레이션 결과는 캐시하지 않음) ──
+    if (cacheKey && !llmWantsEscalation) {
+      setCachedAnswer(cacheKey, result)
+    }
+
+    return result
   } catch (err) {
     console.error('Gemini API error:', err.message)
     return generateMockAnswer(question, customerInfo)

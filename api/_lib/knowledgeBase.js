@@ -150,6 +150,70 @@ export const STORES = {
 }
 
 
+// ── RA-RAG Lite: 검색 결과 재랭킹 ──
+// 1차 키워드 검색 후, 질문과의 의미적 관련성을 재평가
+
+/**
+ * 검색 결과를 질문과의 관련성 기준으로 재랭킹
+ * @param {string} query - 원본 질문
+ * @param {object} searchResults - searchKnowledge 결과
+ * @param {number} topK - 반환할 최대 청크 수
+ */
+export function rerankResults(query, searchResults, topK = 3) {
+  if (!searchResults.chunks || searchResults.chunks.length <= 1) return searchResults
+
+  const queryTokens = tokenize(query)
+  const queryBigrams = generateBigrams(queryTokens)
+
+  const reranked = searchResults.chunks.map((chunk, i) => {
+    const originalScore = searchResults.scores?.[i] || 0
+
+    // 1. 제목 매칭 보너스 (제목에 질문 키워드가 있으면 높은 관련성)
+    const titleTokens = tokenize(chunk.title)
+    const titleOverlap = queryTokens.filter(t => titleTokens.some(tt => tt.includes(t) || t.includes(tt))).length
+    const titleBonus = titleOverlap * 5
+
+    // 2. 바이그램 매칭 (연속 2단어 매칭은 단일 단어보다 높은 관련성)
+    const chunkText = `${chunk.title} ${chunk.content}`.toLowerCase()
+    const bigramBonus = queryBigrams.filter(bg => chunkText.includes(bg)).length * 4
+
+    // 3. 키워드 밀도 (청크 내 질문 키워드 출현 빈도)
+    const contentTokens = tokenize(chunk.content)
+    const keywordDensity = queryTokens.filter(t => contentTokens.includes(t)).length / Math.max(queryTokens.length, 1)
+    const densityBonus = Math.floor(keywordDensity * 10)
+
+    // 4. 청크 길이 보너스 (더 상세한 청크 선호)
+    const lengthBonus = chunk.content.length > 300 ? 2 : 0
+
+    const finalScore = originalScore + titleBonus + bigramBonus + densityBonus + lengthBonus
+
+    return { chunk, store: searchResults.stores?.[i] || '', score: finalScore, originalScore }
+  })
+
+  reranked.sort((a, b) => b.score - a.score)
+  const top = reranked.slice(0, topK)
+
+  return {
+    chunks: top.map(r => r.chunk),
+    stores: [...new Set(top.map(r => r.store))],
+    scores: top.map(r => r.score),
+    totalSearched: searchResults.totalSearched,
+    reranked: true,
+  }
+}
+
+/**
+ * 바이그램 생성 유틸리티
+ */
+function generateBigrams(tokens) {
+  const bigrams = []
+  for (let i = 0; i < tokens.length - 1; i++) {
+    bigrams.push(`${tokens[i]} ${tokens[i + 1]}`)
+  }
+  return bigrams
+}
+
+
 // ── RAG 검색 엔진 (Gemini File Search 시뮬레이션) ──
 
 /**
@@ -192,12 +256,15 @@ export function searchKnowledge(query, productHint = null, topK = 3) {
   results.sort((a, b) => b.score - a.score)
   const topResults = results.slice(0, topK)
 
-  return {
+  const rawResult = {
     chunks: topResults.map(r => r.chunk),
     stores: [...new Set(topResults.map(r => r.store))],
     scores: topResults.map(r => r.score),
     totalSearched: results.length,
   }
+
+  // RA-RAG Lite: 자동 재랭킹 적용
+  return rerankResults(query, rawResult, topK)
 }
 
 /**

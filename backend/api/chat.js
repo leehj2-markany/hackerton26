@@ -117,6 +117,11 @@ export default async function handler(req, res) {
     // Gemini로 답변 생성
     const result = await generateAnswer(message, customerInfo, conversationHistory || [])
 
+    // geminiClient에서 반환한 thinkingProcess 병합 (Self-Reflection, Self-Consistency, Step Back 등)
+    if (result.thinkingProcess?.length) {
+      thinkingProcess.push(...result.thinkingProcess)
+    }
+
     // 모델 선택 표시
     if (result.complexity === 'critical') {
       thinkingProcess.push('💎 모델 선택: Claude Opus 4 (최고 성능)')
@@ -132,8 +137,8 @@ export default async function handler(req, res) {
     )
     thinkingProcess.push('답변 생성 중...')
 
-    // ── AI Safety: 출력 검증 ──
-    const outputCheck = validateOutput(result.answer)
+    // ── AI Safety: 출력 검증 (Constitutional AI + Claude LLM 2차 검증) ──
+    const outputCheck = await validateOutput(result.answer, message)
     let finalAnswer = result.answer
     if (!outputCheck.safe) {
       finalAnswer = '죄송합니다. 안전한 답변을 생성하지 못했습니다. 담당자에게 문의해 주세요.'
@@ -162,6 +167,8 @@ export default async function handler(req, res) {
         model: result.model,
         complexity: result.complexity,
         customerInfo: customerInfo || null,
+        selfReflection: result.selfReflection || null,
+        selfConsistency: result.selfConsistency || null,
       },
     })
   } catch (err) {
