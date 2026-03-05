@@ -92,7 +92,7 @@ const IntakeForm = ({ onSubmit }) => {
 
 
 const Chatbot = () => {
-  const [isOpen, setIsOpen] = useState(true)
+  const [isOpen, setIsOpen] = useState(false)
   const [isMinimized, setIsMinimized] = useState(false)
 
   // Homepage 버튼(문의하기/무료상담) 클릭 시 챗봇 열기 이벤트 수신
@@ -146,9 +146,14 @@ const Chatbot = () => {
     scrollToBottom()
   }, [messages])
 
+  // sessionStorage에서 고객 정보가 있으면 자동으로 챗봇 열기 (기존 세션 복원)
   useEffect(() => {
-    const timer = setTimeout(() => { setIsOpen(true) }, 1000)
-    return () => clearTimeout(timer)
+    try {
+      const saved = sessionStorage.getItem('anybridge_customer')
+      if (saved) {
+        setIsOpen(true)
+      }
+    } catch (_) { /* 무시 */ }
   }, [])
 
   // sessionStorage에서 고객 정보 복원
@@ -766,14 +771,12 @@ const Chatbot = () => {
     setShowQuickReplies(true)
   }
 
-  if (!isOpen && !isMinimized) return null
-
   return (
     <>
-      {/* Minimized Button */}
-      {isMinimized && (
+      {/* Floating Chat Button — 챗봇이 닫혀있거나 최소화 상태일 때 표시 */}
+      {(!isOpen || isMinimized) && (
         <button
-          onClick={() => setIsMinimized(false)}
+          onClick={() => { setIsOpen(true); setIsMinimized(false) }}
           className="fixed bottom-6 right-6 bg-markany-blue text-white p-4 rounded-full shadow-2xl hover:bg-markany-dark transition-all z-50 animate-bounce"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -783,7 +786,7 @@ const Chatbot = () => {
       )}
 
       {/* Chatbot Window */}
-      {!isMinimized && (
+      {isOpen && !isMinimized && (
         <div className="fixed bottom-6 right-6 w-[450px] h-[700px] bg-white rounded-2xl shadow-2xl flex flex-col z-50 border border-gray-200">
           {/* Header */}
           <div className="bg-gradient-to-r from-markany-blue to-markany-dark text-white p-4 rounded-t-2xl flex justify-between items-center">
@@ -1009,7 +1012,7 @@ const Chatbot = () => {
       )}
 
       {/* Info Panel - Desktop Only */}
-      {!isMinimized && customerInfo && (
+      {isOpen && !isMinimized && customerInfo && (
         <div className="hidden xl:block">
           <InfoPanel customerInfo={customerInfo} />
         </div>
