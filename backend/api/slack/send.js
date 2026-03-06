@@ -7,7 +7,7 @@ export default async function handler(req, res) {
   if (cors(req, res)) return
   if (req.method !== 'POST') return error(res, 'METHOD_NOT_ALLOWED', 'POST만 허용됩니다', 405)
 
-  const { question, assignees, customerName, caseContext, channelId: providedChannelId } = req.body || {}
+  const { question, assignees, customerName, customerEnglishName, caseContext, channelId: providedChannelId, product } = req.body || {}
 
   if (!question?.trim()) return error(res, 'INVALID_INPUT', '질문이 비어있습니다.')
 
@@ -18,8 +18,8 @@ export default async function handler(req, res) {
   if (!channelId) {
     // 채널이 없으면 새로 생성
     try {
-      // 일반 문의 채널: esc-inquiry-{MMDD}-{HHmm} 형식
-      const channel = await createChannel('inquiry', customerName || 'customer')
+      // 일반 문의 채널: esc-{고객사}-inquiry-{MMDD}-{HHmm} 형식
+      const channel = await createChannel(product || 'inquiry', customerName || 'customer', customerEnglishName)
       channelId = channel.id
       channelCreated = true
 

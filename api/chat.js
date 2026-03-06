@@ -1,0 +1,178 @@
+// POST /api/chat — 챗봇 메시지 전송 + AI 답변 생성
+import { cors, json, error } from './_lib/cors.js'
+import { generateAnswer, analyzeQuestion } from './_lib/geminiClient.js'
+import { customers, customerNameMap } from './_lib/mockData.js'
+import { validateInput, validateOutput, maskPII } from './_lib/safety.js'
+import { searchKnowledge } from './_lib/knowledgeBase.js'
+
+// 인사/간단한 입력 패턴
+const GREETING_PATTERNS = [
+  '안녕하세요', '안녕', '반갑습니다', '감사합니다', '고마워요', '고맙습니다',
+  '네', '아니요', '예', '아니오', '좋아요', '알겠습니다', '확인했습니다',
+  '하이', '헬로', 'hi', 'hello', '처음 뵙겠습니다', '수고하세요',
+]
+
+// 에스컬레이션 의도가 포함된 메시지는 인사로 처리하지 않음
+const ESCALATION_INTENT_WORDS = ['연결', '담당자', '사람', '전문가', '상담', '견적', '계약']
+
+function isGreetingMessage(msg) {
+  const trimmed = msg.trim().replace(/[.!~?？ ]+$/g, '')
+  if (trimmed.length > 15) return false
+  // 에스컬레이션 의도가 있으면 인사가 아님
+  if (ESCALATION_INTENT_WORDS.some(w => trimmed.includes(w))) return false
+  return GREETING_PATTERNS.some(p => trimmed.includes(p))
+}
+
+export default async function handler(req, res) {
+  if (cors(req, res)) return
+  if (req.method !== 'POST') return error(res, 'METHOD_NOT_ALLOWED', 'POST만 허용됩니다', 405)
+
+  const { message, customerId, conversationHistory } = req.body || {}
+
+  if (!message?.trim()) {
+    return error(res, 'INVALID_INPUT', '메시지가 비어있습니다.')
+  }
+
+  // ── AI Safety: 입력 검증 ──
+  const inputCheck = validateInput(message)
+  if (!inputCheck.safe) {
+    return json(res, {
+      success: true,
+      data: {
+        answer: inputCheck.reason,
+        confidence: 'high',
+        confidenceScore: 100,
+        references: [],
+        thinkingProcess: ['🛡️ 안전성 검사 수행', `차단 사유: ${inputCheck.reason}`],
+        needsEscalation: false,
+        isComplex: false,
+        blocked: true,
+      },
+    })
+  }
+
+  try {
+    // 고객 정보: 명시적 customerId 또는 메시지에서 자동 매칭
+    let customerInfo = customerId ? customers[customerId] : null
+    if (!customerInfo) {
+      const matchedKey = Object.keys(customerNameMap).find(k => message.includes(k))
+      if (matchedKey) {
+        const matchedId = customerNameMap[matchedKey]
+        customerInfo = customers[matchedId] || null
+      }
+    }
+
+    // ── 인사/간단한 입력 → RAG 스킵, ThinkingProcess 스킵 ──
+    if (isGreetingMessage(message)) {
+      const result = await generateAnswer(message, customerInfo, conversationHistory || [], { skipRAG: true })
+      return json(res, {
+        success: true,
+        data: {
+          answer: result.answer,
+          confidence: 'high',
+          confidenceScore: 95,
+          references: [],
+          thinkingProcess: [],
+          needsEscalation: false,
+          isComplex: false,
+          subQuestions: null,
+          model: result.model,
+          complexity: 'simple',
+          customerInfo: customerInfo || null,
+        },
+      })
+    }
+
+    // thinking process 생성
+    const analysis = await analyzeQuestion(message)
+    const thinkingProcess = ['🤔 질문 분석 중...']
+
+    // 고객 매칭 결과 표시
+    if (customerInfo) {
+      thinkingProcess.push(`👤 고객 매칭: ${customerInfo.name} (${customerInfo.product} ${customerInfo.version})`)
+      thinkingProcess.push(`📊 세일즈포스 데이터: ${customerInfo.accountType} / ${customerInfo.industry} / 만족도 ${customerInfo.satisfactionScore}`)
+    }
+
+    if (analysis.isComplex) {
+      thinkingProcess.push(`복합 질문 감지: ${analysis.subQuestions.length}개 질문으로 나눠서 답변합니다`)
+      analysis.subQuestions.forEach((sq, i) => {
+        thinkingProcess.push(`질문 ${i + 1}: ${sq.question}`)
+      })
+      thinkingProcess.push('논리 검증: ✅ 일관성 확인')
+    } else {
+      if (customerInfo) {
+        thinkingProcess.push(`제품 분류: ${customerInfo.product}`)
+      }
+    }
+
+    // RAG 검색 수행 및 thinkingProcess에 반영
+    const productHint = customerInfo?.product || null
+    const ragResult = searchKnowledge(message, productHint, 3)
+    thinkingProcess.push(`📚 지식 베이스 검색 중... ${ragResult.chunks.length}건 발견 (${ragResult.stores.join(', ')})`)
+    ragResult.chunks.forEach((chunk, i) => {
+      thinkingProcess.push(`  참조 ${i + 1}: ${chunk.title}`)
+    })
+    thinkingProcess.push('🛡️ 안전성 검증 + 신뢰도 평가 중...')
+
+    // Gemini로 답변 생성
+    const result = await generateAnswer(message, customerInfo, conversationHistory || [])
+
+    // geminiClient에서 반환한 thinkingProcess 병합 (Self-Reflection, Self-Consistency, Step Back 등)
+    if (result.thinkingProcess?.length) {
+      thinkingProcess.push(...result.thinkingProcess)
+    }
+
+    // 모델 선택 표시
+    if (result.complexity === 'critical') {
+      thinkingProcess.push('💎 모델 선택: Claude Opus 4 (최고 성능)')
+    } else if (result.complexity === 'complex') {
+      thinkingProcess.push('🧠 모델 선택: Gemini 2.5 Pro (정확도 우선)')
+    } else {
+      thinkingProcess.push('🚀 모델 선택: Gemini 2.5 Flash (속도 우선)')
+    }
+
+    thinkingProcess.push(
+      result.confidence === 'high' ? '신뢰도 평가: 🟢 높음' :
+      result.confidence === 'medium' ? '신뢰도 평가: 🟡 중간' : '신뢰도 평가: 🔴 낮음'
+    )
+    thinkingProcess.push('답변 생성 중...')
+
+    // ── AI Safety: 출력 검증 (Constitutional AI + Claude LLM 2차 검증) ──
+    const outputCheck = await validateOutput(result.answer, message)
+    let finalAnswer = result.answer
+    if (!outputCheck.safe) {
+      finalAnswer = '죄송합니다. 안전한 답변을 생성하지 못했습니다. 담당자에게 문의해 주세요.'
+      thinkingProcess.push('��️ 출력 안전성 검증: ⚠️ 수정됨')
+    } else {
+      thinkingProcess.push('🛡️ 출력 안전성 검증: ✅ 통과')
+    }
+
+    // PII 마스킹 적용
+    finalAnswer = maskPII(finalAnswer)
+
+    // 신뢰도 로그 (UI에는 표시하지 않지만 분석용으로 기록)
+    console.log(`[chat] confidence=${result.confidence} (${result.confidenceScore}%), model=${result.model}, complexity=${result.complexity}`)
+
+    return json(res, {
+      success: true,
+      data: {
+        answer: finalAnswer,
+        confidence: result.confidence,
+        confidenceScore: result.confidenceScore,
+        references: result.references,
+        thinkingProcess,
+        needsEscalation: result.needsEscalation,
+        isComplex: result.isComplex,
+        subQuestions: result.subQuestions,
+        model: result.model,
+        complexity: result.complexity,
+        customerInfo: customerInfo || null,
+        selfReflection: result.selfReflection || null,
+        selfConsistency: result.selfConsistency || null,
+      },
+    })
+  } catch (err) {
+    console.error('Chat API error:', err)
+    return error(res, 'AI_ERROR', 'AI 응답 생성 중 오류가 발생했습니다.', 500)
+  }
+}

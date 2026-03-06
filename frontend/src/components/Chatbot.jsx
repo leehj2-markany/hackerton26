@@ -455,9 +455,11 @@ const Chatbot = () => {
       setShowThinking(false)
       setThinkingSteps([])
       setIsProcessing(false)
+      // ── Graceful Degradation: API 완전 실패 시 담당자 연결 버튼 표시 ──
       setMessages(prev => [...prev, {
         type: 'ai',
-        text: '죄송합니다, 일시적으로 AI 응답을 생성하지 못했습니다. 다시 시도해 주세요.',
+        text: '죄송합니다, 현재 AI 응답 생성에 일시적인 문제가 발생했습니다.\n담당자를 직접 연결해 드릴 수 있습니다.',
+        showEscalation: true,
         timestamp: new Date()
       }])
     }
@@ -833,7 +835,7 @@ const Chatbot = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                 </svg>
               </button>
-              <button onClick={() => setIsMinimized(true)} className="hover:bg-white/20 p-1 rounded transition" title="닫기">
+              <button onClick={() => { setIsOpen(false); handleNewChat() }} className="hover:bg-white/20 p-1 rounded transition" title="닫기">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>

@@ -389,23 +389,23 @@ export async function getChannelHistory(channelId, limit = 10) {
 
 /**
  * Slack 채널 생성 (conversations.create)
- * - 형식: esc-{제품명}-{MMDD}-{HHmm} (예: esc-drm-0305-1423)
+ * - 형식: esc-{고객사영문약칭}-{제품명}-{MMDD}-{HHmm} (예: esc-samsung-drm-0305-1423)
  * - esc- 프리픽스로 에스컬레이션 채널 즉시 식별
- * - 한글 고객명 대신 제품명(영문) + 날짜시간으로 유니크성 확보
- * - 하위 호환: 단일 인자 호출 시 첫 번째 인자를 제품명으로 사용
+ * - 고객사 영문약칭 포함으로 어떤 고객 건인지 채널명만으로 파악 가능
+ * - 하위 호환: customerEnglishName 미전달 시 기존 형식(esc-{제품}-{MMDD}-{HHmm}) 유지
  *
  * @param {string} productName - 제품명 (영문, 예: 'drm', 'safeguard')
- * @param {string} [customerName] - 고객명 (로그용, 채널명에는 미포함)
+ * @param {string} [customerName] - 고객명 (로그용)
+ * @param {string} [customerEnglishName] - 고객사 영문약칭 (채널명에 포함, 예: 'samsung', 'hyundai')
  */
-export async function createChannel(productName, customerName) {
+export async function createChannel(productName, customerName, customerEnglishName) {
   // 하위 호환: 기존 단일 인자 호출 지원 (caseName → productName으로 취급)
   if (!customerName && productName) {
-    // 기존 호출: createChannel('고객명-drm') 형태 → 제품명 추출 시도
     const legacy = productName
     productName = legacy.replace(/[가-힣\s]/g, '').replace(/^-+|-+$/g, '') || 'general'
   }
 
-  // 채널명 생성: esc-{제품명}-{MMDD}-{HHmm}
+  // 채널명 생성: esc-{고객사영문약칭}-{제품명}-{MMDD}-{HHmm}
   const now = new Date()
   const mm = String(now.getMonth() + 1).padStart(2, '0')
   const dd = String(now.getDate()).padStart(2, '0')
@@ -421,10 +421,22 @@ export async function createChannel(productName, customerName) {
     .replace(/--+/g, '-')
     .replace(/^-|-$/g, '') || 'general'
 
-  // 최종 채널명: esc-{제품}-{MMDD}-{HHmm} (80자 이내)
-  const channelName = `esc-${safeProduct}-${dateSuffix}`.slice(0, 80)
+  // 고객사 영문약칭 정규화 (있을 때만)
+  const safeCustomer = customerEnglishName
+    ? customerEnglishName
+        .replace(/[^a-z0-9\s-]/gi, '')
+        .replace(/\s+/g, '-')
+        .toLowerCase()
+        .replace(/--+/g, '-')
+        .replace(/^-|-$/g, '')
+    : ''
 
-  log('createChannel', `product=${productName}, customer=${customerName || '(미지정)'}, channelName=${channelName}`)
+  // 최종 채널명: esc-{고객사}-{제품}-{MMDD}-{HHmm} 또는 esc-{제품}-{MMDD}-{HHmm} (80자 이내)
+  const channelName = safeCustomer
+    ? `esc-${safeCustomer}-${safeProduct}-${dateSuffix}`.slice(0, 80)
+    : `esc-${safeProduct}-${dateSuffix}`.slice(0, 80)
+
+  log('createChannel', `customer=${customerEnglishName || '(미지정)'}, product=${productName}, channelName=${channelName}`)
 
   if (isDemoMode()) {
     const mockId = `C_DEMO_${Date.now().toString(36).toUpperCase()}`

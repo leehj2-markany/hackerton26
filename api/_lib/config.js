@@ -1,5 +1,10 @@
 // 환경 변수 로드 (로컬 개발용, Vercel에서는 환경변수가 자동 주입됨)
-try { const { config } = await import('dotenv'); config({ path: '.env' }) } catch (_) { /* Vercel 환경 */ }
+try {
+  if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+    const { config } = await import('dotenv')
+    config({ path: '.env' })
+  }
+} catch (_) { /* Vercel 환경 — dotenv 불필요 */ }
 
 export const ENV = {
   DEMO_MODE: process.env.DEMO_MODE === 'true',
