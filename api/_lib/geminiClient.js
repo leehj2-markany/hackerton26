@@ -1,7 +1,23 @@
 // 3-Tier LLM 클라이언트 — Gemini Flash / Pro + Claude Opus 4
+// [타임아웃] Vercel 함수 10초 제한 대응 — 모든 LLM 호출에 타임아웃 적용하여
+// API hang 시 Vercel이 FUNCTION_INVOCATION_FAILED로 죽기 전에 폴백 처리
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { ENV } from './config.js'
 import { searchKnowledge, formatContext } from './knowledgeBase.js'
+
+// LLM 호출 타임아웃 (ms) — Vercel 10초 제한보다 충분히 짧게
+const LLM_TIMEOUT = 7000
+const LLM_SUB_TIMEOUT = 4000 // 보조 호출(selfReflect, stepBack 등)은 더 짧게
+
+function withTimeout(promise, ms, fallback) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(`LLM timeout (${ms}ms)`)), ms)),
+  ]).catch(err => {
+    console.warn(`[withTimeout] ${err.message}`)
+    return typeof fallback === 'function' ? fallback() : fallback
+  })
+}
 
 let genAI = null
 
@@ -14,21 +30,28 @@ function getClient() {
 
 // Claude Opus 4 호출 (복잡한 에스컬레이션급 질문용)
 async function callClaudeOpus(prompt) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': ENV.CLAUDE_API_KEY,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'claude-opus-4-20250514',
-      max_tokens: 1024,
-      messages: [{ role: 'user', content: prompt }],
-    }),
-  })
-  const data = await res.json()
-  return data.content?.[0]?.text || ''
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), LLM_TIMEOUT)
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': ENV.CLAUDE_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-20250514',
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      signal: controller.signal,
+    })
+    const data = await res.json()
+    return data.content?.[0]?.text || ''
+  } finally {
+    clearTimeout(timer)
+  }
 }
 
 // 마크애니 제품 지식 베이스 (RAG 시뮬레이션)
@@ -126,7 +149,12 @@ export async function analyzeQuestion(question) {
   try {
     const prompt = ROUTER_PROMPT.replace('{QUESTION}', question)
     const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' })
-    const result = await model.generateContent(prompt)
+    const result = await withTimeout(
+      model.generateContent(prompt),
+      LLM_SUB_TIMEOUT,
+      null
+    )
+    if (!result) return fallbackAnalyze(question)
     const text = result.response.text().trim()
 
     // JSON 파싱 (LLM이 ```json 래핑할 수 있으므로 추출)
@@ -232,7 +260,12 @@ async function takeStepBack(question, client) {
 
   try {
     const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' })
-    const result = await model.generateContent(stepBackPrompt)
+    const result = await withTimeout(
+      model.generateContent(stepBackPrompt),
+      LLM_SUB_TIMEOUT,
+      null
+    )
+    if (!result) return null
     const stepBackQuestion = result.response.text().trim()
     return stepBackQuestion || null
   } catch (err) {
@@ -260,7 +293,12 @@ JSON 응답: {"passed": true/false, "issues": ["이슈1", "이슈2"], "suggestio
 
   try {
     const reflectModel = client.getGenerativeModel({ model: 'gemini-2.5-flash' })
-    const result = await reflectModel.generateContent(reflectionPrompt)
+    const result = await withTimeout(
+      reflectModel.generateContent(reflectionPrompt),
+      LLM_SUB_TIMEOUT,
+      null
+    )
+    if (!result) return { passed: true, reflection: '', issues: [] }
     const text = result.response.text().trim()
     const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (!jsonMatch) return { passed: true, reflection: '', issues: [] }
@@ -283,7 +321,12 @@ async function checkSelfConsistency(question, answer1, client, modelName) {
   try {
     // 2번째 답변 생성
     const model = client.getGenerativeModel({ model: modelName })
-    const result = await model.generateContent(question)
+    const result = await withTimeout(
+      model.generateContent(question),
+      LLM_SUB_TIMEOUT,
+      null
+    )
+    if (!result) return { consistent: true, score: 85 }
     const answer2 = result.response.text()
 
     // 일관성 검증
@@ -293,7 +336,12 @@ async function checkSelfConsistency(question, answer1, client, modelName) {
 JSON: {"consistent": true/false, "score": 0-100, "differences": ["차이점"]}`
 
     const checkModel = client.getGenerativeModel({ model: 'gemini-2.5-flash' })
-    const checkResult = await checkModel.generateContent(checkPrompt)
+    const checkResult = await withTimeout(
+      checkModel.generateContent(checkPrompt),
+      LLM_SUB_TIMEOUT,
+      null
+    )
+    if (!checkResult) return { consistent: true, score: 85 }
     const text = checkResult.response.text().trim()
     const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (!jsonMatch) return { consistent: true, score: 85 }
@@ -409,7 +457,12 @@ ${historyText}
       // Simple → Flash, Complex → Pro
       modelName = analysis.complexity === 'complex' ? 'gemini-2.5-pro' : 'gemini-2.5-flash'
       const model = client.getGenerativeModel({ model: modelName })
-      const result = await model.generateContent(prompt)
+      const result = await withTimeout(
+        model.generateContent(prompt),
+        LLM_TIMEOUT,
+        null
+      )
+      if (!result) throw new Error(`Main LLM timeout (${modelName})`)
       answer = result.response.text()
     }
 

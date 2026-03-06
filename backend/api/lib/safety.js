@@ -303,6 +303,7 @@ JSON으로만 응답: {"passed": true/false, "violations": ["위반 항목"], "s
         max_tokens: 256,
         messages: [{ role: 'user', content: prompt }],
       }),
+      signal: AbortSignal.timeout(4000),
     })
     const data = await res.json()
     const text = data.content?.[0]?.text || ''
