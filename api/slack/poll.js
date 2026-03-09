@@ -50,10 +50,20 @@ export default async function handler(req, res) {
 
     // since 타임스탬프 이후 메시지만 필터
     const sinceTs = since ? parseFloat(since) : 0
+    // [P2 수정] Slack 시스템 메시지 필터링 — "채널 참여함" 등이 LIVE 답변으로 표시되는 문제 해결
+    const SYSTEM_SUBTYPES = new Set([
+      'channel_join', 'channel_leave', 'channel_topic', 'channel_purpose',
+      'channel_name', 'channel_archive', 'channel_unarchive',
+      'group_join', 'group_leave', 'group_topic', 'group_purpose',
+      'pinned_item', 'unpinned_item',
+    ])
+
     const filtered = messages
       .filter(msg => {
         // 봇 메시지 제외 (봇이 보낸 질문 메시지 등)
         if (msg.bot_id || msg.subtype === 'bot_message') return false
+        // 시스템 메시지 제외 (채널 참여/퇴장/토픽 변경 등)
+        if (msg.subtype && SYSTEM_SUBTYPES.has(msg.subtype)) return false
         // since 이후 메시지만
         if (sinceTs && parseFloat(msg.ts) <= sinceTs) return false
         // 실제 담당자 메시지만 (userIdMap에 있는 사용자)

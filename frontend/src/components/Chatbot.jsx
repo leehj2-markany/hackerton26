@@ -238,6 +238,10 @@ const Chatbot = () => {
     const currentInput = inputValue
     setInputValue('')
 
+    // [P5 수정] 새 메시지 전송 시 이전 에스컬레이션 버튼 비활성화
+    // 사용자가 추가 질문을 했다면 이전 "담당자 연결하기" 버튼은 더 이상 유효하지 않음
+    setMessages(prev => prev.map(msg => msg.showEscalation ? { ...msg, showEscalation: false } : msg))
+
     // 에스컬레이션 모드: 추가 질의 처리
     if (escalationMode) {
       // meta-intent: AI 대화 복귀 요청 감지 — Slack 포워딩 차단
@@ -458,17 +462,17 @@ const Chatbot = () => {
       setThinkingSteps([])
       setIsProcessing(false)
 
-      // LLM이 에스컬레이션 필요하다고 판단하면 버튼 표시
-      // 만족도 조사는 매 응답마다 하지 않음 — 대화 종료 시에만 (Intercom 패턴)
+      // [P3 수정] LLM이 에스컬레이션 필요하다고 판단하면 AI 답변 메시지 자체에 버튼 표시
+      // 별도 메시지로 분리하면 이중 에스컬레이션 메시지 + P1(lastAiMsg 오염) 문제 발생
       if (data.needsEscalation) {
-        setTimeout(() => {
-          setMessages(prev => [...prev, {
-            type: 'ai',
-            text: '이 질문은 전문가의 추가 확인이 필요합니다. 담당자를 연결해 드릴까요?',
-            showEscalation: true,
-            timestamp: new Date()
-          }])
-        }, 1000)
+        setMessages(prev => {
+          const updated = [...prev]
+          const lastIdx = updated.length - 1
+          if (lastIdx >= 0 && updated[lastIdx].type === 'ai') {
+            updated[lastIdx] = { ...updated[lastIdx], showEscalation: true }
+          }
+          return updated
+        })
       }
     } catch (err) {
       console.error('Backend API error:', err)
@@ -651,9 +655,11 @@ const Chatbot = () => {
     // Remove escalation button
     setMessages(prev => prev.map(msg => msg.showEscalation ? { ...msg, showEscalation: false } : msg))
 
-    // 마지막 사용자/AI 메시지 추출
+    // [P1 수정] 마지막 사용자/AI 메시지 추출
+    // showEscalation: true인 시스템 메시지("담당자를 연결해 드릴까요?")를 건너뛰고
+    // 실제 AI 답변(subQuestions가 있는)을 찾아야 함
     const lastUserMsg = messages.filter(m => m.type === 'user').pop()
-    const lastAiMsg = messages.filter(m => m.type === 'ai').pop()
+    const lastAiMsg = messages.filter(m => m.type === 'ai' && !m.showEscalation).pop()
 
     // 서브질문 추출 (AI 분석 결과 기반, 없으면 기본값)
     const subQuestions = lastAiMsg?.subQuestions || [

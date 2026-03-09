@@ -85,7 +85,9 @@ export default async function handler(req, res) {
       })
     }
 
-    // thinking process 생성
+    // [P4 수정] analyzeQuestion 1회 호출 후 결과를 generateAnswer에 전달
+    // 기존: chat.js에서 analyzeQuestion 1회 + generateAnswer 내부에서 1회 = 2중 호출 (비용 낭비 + 일관성 문제)
+    // 수정: chat.js에서 1회 호출 → 결과를 options.preAnalysis로 전달 → generateAnswer에서 재사용
     const analysis = await analyzeQuestion(message)
     const thinkingProcess = ['🤔 질문 분석 중...']
 
@@ -116,8 +118,8 @@ export default async function handler(req, res) {
     })
     thinkingProcess.push('🛡️ 안전성 검증 + 신뢰도 평가 중...')
 
-    // Gemini로 답변 생성
-    const result = await generateAnswer(message, customerInfo, conversationHistory || [])
+    // Gemini로 답변 생성 — preAnalysis로 분석 결과 전달하여 2중 호출 방지
+    const result = await generateAnswer(message, customerInfo, conversationHistory || [], { preAnalysis: analysis })
 
     // geminiClient에서 반환한 thinkingProcess 병합
     if (result.thinkingProcess?.length) {
