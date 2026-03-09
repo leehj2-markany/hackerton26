@@ -151,7 +151,7 @@ const ROUTER_PROMPT = `당신은 고객 질문의 복잡도를 판단하고, 서
 질문: "{QUESTION}"
 
 JSON 응답 (이것만 출력):
-{"complexity":"simple|complex|critical","reason":"판단 근거 한 줄","subQuestions":[{"question":"서브질문 내용","assignee":"담당자 이름"}],"extractedContext":{"product":null,"userScale":null,"intent":null,"environment":null,"urgency":"normal"}}`
+{"complexity":"simple|complex|critical","reason":"판단 근거 한 줄","subQuestions":[{"question":"서브질문 내용","assignee":"담당자 이름","product":"관련 제품명 또는 null"}],"extractedContext":{"product":null,"userScale":null,"intent":null,"environment":null,"urgency":"normal"}}`
 
 export async function analyzeQuestion(question) {
   const client = getClient()
@@ -190,13 +190,13 @@ export async function analyzeQuestion(question) {
 
     const subQuestions = Array.isArray(parsed.subQuestions) && parsed.subQuestions.length > 0
       ? parsed.subQuestions.map(sq => {
-          // LLM이 { question, assignee } 객체로 반환하는 경우
+          // LLM이 { question, assignee, product } 객체로 반환하는 경우
           if (typeof sq === 'object' && sq.question) {
             const assignee = sq.assignee || '송인찬'
-            return { question: sq.question, role: AGENT_ROLES[assignee] || 'sales', assignee }
+            return { question: sq.question, role: AGENT_ROLES[assignee] || 'sales', assignee, product: sq.product || null }
           }
           // LLM이 문자열로 반환하는 경우 (폴백)
-          return { question: String(sq), role: 'sales', assignee: '송인찬' }
+          return { question: String(sq), role: 'sales', assignee: '송인찬', product: null }
         })
       : null
 
@@ -377,17 +377,129 @@ function evaluateConfidence(question, answer) {
   return { level: 'low', score: 40 + Math.floor(Math.random() * 20) }
 }
 
+// ── DESV Phase 2: Decomposed RAG Enrichment (CHECK 논문 기반) ──
+// 서브질문별 독립 RAG 검색 + RAG score 기반 semantic verification
+// LLM 추가 호출 0회 — in-memory RAG만 사용하므로 비용/시간 증가 없음
+const RAG_SCORE_THRESHOLD = 5 // 이 점수 미만이면 "컨텍스트 부족"으로 판단
+
+function enrichRAGForSubQuestions(subQuestions, customerProductHint) {
+  if (!subQuestions || subQuestions.length === 0) return null
+
+  const enriched = subQuestions.map(sq => {
+    // 서브질문별 product 힌트: Router가 추출한 product > 고객 정보 product > null
+    const productHint = sq.product || customerProductHint || null
+    const ragResult = searchKnowledge(sq.question, productHint, 3)
+    const topScore = ragResult.scores?.[0] || 0
+    const hasContext = topScore >= RAG_SCORE_THRESHOLD
+
+    return {
+      question: sq.question,
+      assignee: sq.assignee,
+      product: sq.product,
+      ragResult,
+      ragContext: formatContext(ragResult),
+      topScore,
+      hasContext, // CHECK 논문의 semantic verification proxy
+      stores: ragResult.stores || [],
+    }
+  })
+
+  // 전체 서브질문 중 컨텍스트 부족한 것이 있는지 요약
+  const insufficientSubs = enriched.filter(e => !e.hasContext)
+
+  return {
+    enrichedSubs: enriched,
+    allHaveContext: insufficientSubs.length === 0,
+    insufficientCount: insufficientSubs.length,
+    totalSubs: enriched.length,
+  }
+}
+
+// 복합질문용 구조화 프롬프트 생성 — 서브질문별 RAG 컨텍스트를 명시적으로 구분
+function buildComplexPrompt(systemPrompt, contextParts, enrichment, historyText, question) {
+  const subContextBlocks = enrichment.enrichedSubs.map((sub, i) => {
+    const header = `[서브질문 ${i + 1}: ${sub.question}]`
+    if (sub.hasContext) {
+      return `${header}\n${sub.ragContext}`
+    }
+    return `${header}\n⚠️ 지식 베이스에 충분한 정보가 없습니다. 일반 지식으로 답변하되, 정확한 정보는 담당자 확인을 권유하세요.`
+  }).join('\n\n')
+
+  return `${systemPrompt}
+
+${contextParts.join('\n')}
+
+[복합질문 분석 — 서브질문별 참조 자료]
+${subContextBlocks}
+
+[복합질문 답변 가이드]
+- 고객이 여러 주제를 동시에 질문했습니다.
+- 각 서브질문에 대한 핵심 정보를 반드시 포함하세요.
+- 자연스러운 대화체를 유지하세요 ("먼저 DRM에 대해 말씀드리면..." "다음으로 ○○의 경우..." 같은 전환어 사용).
+- 마지막에 통합 구축 시 시너지나 고려사항을 한 줄로 언급하세요.
+- 서브질문 중 지식 베이스에 정보가 부족한 것은 솔직히 안내하고 담당자 확인을 권유하세요.
+
+[대화 이력]
+${historyText}
+
+고객 질문: ${question}
+
+위 서브질문별 참조 자료를 바탕으로 통합 답변하세요. 답변만 출력하세요.`
+}
+
+// ── DESV Phase 4: 복합질문 전용 Self-Reflect (서브질문 커버리지 검증) ──
+// CHECK 논문의 "semantic error detection" — 각 서브질문에 대한 답변이 포함되어 있는지 검증
+async function verifySubQuestionCoverage(question, answer, subQuestions, client) {
+  if (!client || !subQuestions?.length) return { passed: true, reflection: '', issues: [] }
+
+  const subQList = subQuestions.map((sq, i) => `${i + 1}. ${sq.question}`).join('\n')
+  const verifyPrompt = `당신은 복합질문 답변 품질 검증자입니다. JSON으로만 응답하세요.
+
+원래 질문: "${question}"
+서브질문 목록:
+${subQList}
+
+답변: "${answer.slice(0, 800)}"
+
+검증: 각 서브질문에 대한 답변이 포함되어 있는가? 누락된 서브질문이 있는가?
+JSON: {"passed": true/false, "issues": ["누락된 내용"], "suggestion": "보완 제안", "coveredCount": 0, "totalCount": ${subQuestions.length}}`
+
+  try {
+    const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' })
+    const result = await withTimeout(model.generateContent(verifyPrompt), LLM_SUB_TIMEOUT, null)
+    if (!result) return { passed: true, reflection: '', issues: [] }
+    const text = result.response.text().trim()
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) return { passed: true, reflection: '', issues: [] }
+    const parsed = JSON.parse(jsonMatch[0])
+    return {
+      passed: parsed.passed !== false,
+      reflection: parsed.suggestion || '',
+      issues: parsed.issues || [],
+      coveredCount: parsed.coveredCount || subQuestions.length,
+      totalCount: parsed.totalCount || subQuestions.length,
+    }
+  } catch (err) {
+    console.error('[verifySubQuestionCoverage] error:', err.message)
+    return { passed: true, reflection: '', issues: [] }
+  }
+}
+
 // Gemini로 답변 생성
+// [DESV] complex 질문: Decompose → Enrich → Synthesize → Verify (CHECK 논문 기반)
+//   - takeStepBack 스킵 (서브질문 분해가 상위 호환, ~1.5초 절약)
+//   - checkSelfConsistency 스킵 (서브질문 커버리지 검증으로 대체, ~4초 절약)
+//   - 서브질문별 독립 RAG (LLM 추가 호출 0회, in-memory ~0ms)
+// simple/critical 질문: 기존 파이프라인 유지
 export async function generateAnswer(question, customerInfo, conversationHistory = [], options = {}) {
   const client = getClient()
   const { skipRAG = false } = options
 
-  // Gemini 클라이언트 없으면 에러 throw → chat.js의 graceful degradation으로 위임
   if (!client) {
     throw new Error('LLM client unavailable — no GEMINI_API_KEY')
   }
 
-  // ── R20: 캐시 조회 (인사 메시지는 캐시하지 않음) ──
+  // ── R20: 캐시 조회 ──
   const cacheKey = !skipRAG ? getCacheKey(question, customerInfo?.id) : null
   if (cacheKey) {
     const cached = getCachedAnswer(cacheKey)
@@ -399,22 +511,12 @@ export async function generateAnswer(question, customerInfo, conversationHistory
   }
 
   try {
-    // 3-Tier LLM 라우팅:
-    //   simple  → Gemini 2.5 Flash (~4s, 속도 우선)
-    //   complex → Gemini 2.5 Pro (~15s, 정확도 우선)
-    //   critical → Claude Opus 4 (~20s, 최고 성능)
+    // Phase 1: Decompose — Router가 복잡도 판단 + 서브질문 분해
     const analysis = await analyzeQuestion(question)
     const thinkingProcess = []
+    const isComplex = analysis.complexity === 'complex' && analysis.subQuestions?.length > 0
 
-    // ── R23: Take a Step Back (complex/critical 질문에만 적용) ──
-    let stepBackQuestion = null
-    if (analysis.complexity === 'complex' || analysis.complexity === 'critical') {
-      stepBackQuestion = await takeStepBack(question, client)
-      if (stepBackQuestion) {
-        thinkingProcess.push(`🔭 Step Back: "${stepBackQuestion}"`)
-      }
-    }
-
+    // ── 공통: 고객 정보 + extractedContext 컨텍스트 구성 ──
     const contextParts = []
     if (customerInfo) {
       contextParts.push(`[고객 정보] ${customerInfo.name} / ${customerInfo.product} ${customerInfo.version} / ${customerInfo.license}`)
@@ -423,8 +525,6 @@ export async function generateAnswer(question, customerInfo, conversationHistory
       }
     }
 
-    // [Context Extraction] Router가 추출한 고객 조건을 명시적으로 전달
-    // — LLM이 질문 텍스트에서 조건을 놓치는 것을 방지
     if (analysis.extractedContext) {
       const ec = analysis.extractedContext
       const parts = []
@@ -439,36 +539,62 @@ export async function generateAnswer(question, customerInfo, conversationHistory
       }
     }
 
-    // RAG: 인사/간단 입력이면 스킵, 그 외에는 지식 베이스 검색
-    if (!skipRAG) {
-      const productHint = customerInfo?.product || null
-      const ragResult = searchKnowledge(question, productHint, 3)
-      const ragContext = formatContext(ragResult)
-      if (ragContext) {
-        contextParts.push(`[지식 베이스 검색 결과 — ${ragResult.stores.join(', ')} 제품]\n${ragContext}`)
-      }
-
-      // Step Back 질문으로 추가 RAG 검색
-      if (stepBackQuestion) {
-        const stepBackRag = searchKnowledge(stepBackQuestion, productHint, 2)
-        const stepBackContext = formatContext(stepBackRag)
-        if (stepBackContext) {
-          contextParts.push(`[Step Back 추가 검색 결과]\n${stepBackContext}`)
-        }
-      }
-    }
-
-    // Step Back 분석 컨텍스트 추가
-    if (stepBackQuestion) {
-      contextParts.push(`[Step Back 분석]\n상위 질문: ${stepBackQuestion}`)
-    }
-
     const historyText = conversationHistory
       .slice(-6)
       .map(h => `${h.role === 'user' ? '고객' : 'AI'}: ${h.content}`)
       .join('\n')
 
-    const prompt = `${SYSTEM_PROMPT}
+    let prompt, enrichment
+
+    if (isComplex && !skipRAG) {
+      // ═══ DESV 파이프라인: 복합질문 전용 ═══
+      // Phase 2: Enrich — 서브질문별 독립 RAG (LLM 호출 0회, ~0ms)
+      const customerProductHint = customerInfo?.product || null
+      enrichment = enrichRAGForSubQuestions(analysis.subQuestions, customerProductHint)
+
+      if (enrichment) {
+        enrichment.enrichedSubs.forEach((sub, i) => {
+          const status = sub.hasContext ? `✅ ${sub.stores.join(', ')}` : '⚠️ 컨텍스트 부족'
+          thinkingProcess.push(`📚 서브질문 ${i + 1} RAG: "${sub.question}" → ${status} (score: ${sub.topScore})`)
+        })
+        if (!enrichment.allHaveContext) {
+          thinkingProcess.push(`⚠️ ${enrichment.insufficientCount}/${enrichment.totalSubs}개 서브질문 컨텍스트 부족 — LLM 일반 지식으로 보완`)
+        }
+
+        // Phase 3: Synthesize — 구조화된 프롬프트로 LLM 1회 호출
+        prompt = buildComplexPrompt(SYSTEM_PROMPT, contextParts, enrichment, historyText, question)
+      } else {
+        // enrichment 실패 시 기존 단일 RAG fallback
+        console.warn('[DESV] enrichment failed, falling back to single RAG')
+        enrichment = null
+      }
+    }
+
+    // 단일 질문 또는 DESV fallback: 기존 파이프라인
+    if (!prompt) {
+      if (!skipRAG) {
+        const productHint = customerInfo?.product || null
+        const ragResult = searchKnowledge(question, productHint, 3)
+        const ragContext = formatContext(ragResult)
+        if (ragContext) {
+          contextParts.push(`[지식 베이스 검색 결과 — ${ragResult.stores.join(', ')} 제품]\n${ragContext}`)
+        }
+
+        // Take a Step Back: simple이 아닌 경우에만 (complex는 DESV로 가므로 여기는 critical만 해당)
+        if (analysis.complexity === 'critical') {
+          const stepBackQ = await takeStepBack(question, client)
+          if (stepBackQ) {
+            thinkingProcess.push(`🔭 Step Back: "${stepBackQ}"`)
+            const stepBackRag = searchKnowledge(stepBackQ, productHint, 2)
+            const stepBackContext = formatContext(stepBackRag)
+            if (stepBackContext) {
+              contextParts.push(`[Step Back 추가 검색 결과]\n${stepBackContext}`)
+            }
+          }
+        }
+      }
+
+      prompt = `${SYSTEM_PROMPT}
 
 ${contextParts.join('\n')}
 
@@ -478,15 +604,15 @@ ${historyText}
 고객 질문: ${question}
 
 위 정보를 바탕으로 답변해주세요. 지식 베이스 검색 결과를 우선 참조하되, 답변만 출력하세요.`
+    }
 
+    // ── LLM 호출 (3-Tier 라우팅) ──
     let answer, modelName
 
     if (analysis.complexity === 'critical' && ENV.CLAUDE_API_KEY) {
-      // Critical → Claude Opus 4
       modelName = 'claude-opus-4'
       answer = await callClaudeOpus(prompt)
     } else {
-      // Simple → Flash, Complex → Pro
       modelName = analysis.complexity === 'complex' ? 'gemini-2.5-pro' : 'gemini-2.5-flash'
       const model = client.getGenerativeModel({ model: modelName })
       const result = await withTimeout(
@@ -498,38 +624,37 @@ ${historyText}
       answer = result.response.text()
     }
 
-    // LLM 응답에서 [ESCALATION] 마커 감지
+    // [ESCALATION] 마커 감지
     let llmWantsEscalation = false
     if (answer.includes('[ESCALATION]')) {
       llmWantsEscalation = true
       answer = answer.replace(/\[ESCALATION\]\s*/g, '').trim()
     }
 
-    // ── R19 Self-Reflection: 답변 자체 검증 ──
-    const reflection = await selfReflect(question, answer, client)
-    if (!reflection.passed) {
-      // 보완 정보 추가 (재생성은 하지 않음, 성능 고려)
-      answer += `\n\n💡 보완: ${reflection.reflection}`
-      thinkingProcess.push('🔍 Self-Reflection: ⚠️ 보완 적용')
-    } else {
-      thinkingProcess.push('🔍 Self-Reflection: ✅ 통과')
-    }
-
-    // ── R24 Self-Consistency: 복합 질문에 대해 일관성 검증 ──
-    let selfConsistency = null
-    if (analysis.complexity === 'complex') {
-      selfConsistency = await checkSelfConsistency(question, answer, client, modelName)
-      if (!selfConsistency.consistent) {
-        thinkingProcess.push('⚠️ 일관성 검증: 차이 발견 — 보수적 답변 적용')
+    // ── Phase 4: Verify — 복합질문은 서브질문 커버리지 검증, 단일질문은 기존 selfReflect ──
+    let reflection
+    if (isComplex && analysis.subQuestions?.length > 0) {
+      // DESV Phase 4: 서브질문 커버리지 검증 (CHECK 논문의 semantic verification)
+      reflection = await verifySubQuestionCoverage(question, answer, analysis.subQuestions, client)
+      if (!reflection.passed) {
+        answer += `\n\n💡 보완: ${reflection.reflection}`
+        thinkingProcess.push(`🔍 서브질문 커버리지: ⚠️ ${reflection.coveredCount}/${reflection.totalCount}개 커버 — 보완 적용`)
       } else {
-        thinkingProcess.push(`✅ 일관성 검증: 통과 (${selfConsistency.score}점)`)
+        thinkingProcess.push(`🔍 서브질문 커버리지: ✅ ${reflection.coveredCount}/${reflection.totalCount}개 모두 커버`)
+      }
+    } else {
+      // 단일/critical 질문: 기존 selfReflect
+      reflection = await selfReflect(question, answer, client)
+      if (!reflection.passed) {
+        answer += `\n\n💡 보완: ${reflection.reflection}`
+        thinkingProcess.push('🔍 Self-Reflection: ⚠️ 보완 적용')
+      } else {
+        thinkingProcess.push('🔍 Self-Reflection: ✅ 통과')
       }
     }
 
     const confidence = evaluateConfidence(question, answer)
 
-    // 에스컬레이션은 LLM 판단([ESCALATION] 마커)에만 의존
-    // 신뢰도 낮음이나 복합 질문이라고 자동 에스컬레이션하지 않음
     const finalResult = {
       answer,
       confidence: confidence.level,
@@ -543,11 +668,14 @@ ${historyText}
       model: modelName,
       thinkingProcess,
       selfReflection: { passed: reflection.passed, issues: reflection.issues },
-      selfConsistency: selfConsistency ? { consistent: selfConsistency.consistent, score: selfConsistency.score } : null,
-      stepBackQuestion: stepBackQuestion || undefined,
+      // DESV: complex에서는 selfConsistency 대신 서브질문 커버리지 결과 반환
+      selfConsistency: isComplex
+        ? { consistent: reflection.passed, score: reflection.coveredCount ? Math.round((reflection.coveredCount / reflection.totalCount) * 100) : 100 }
+        : null,
+      enrichment: enrichment ? { totalSubs: enrichment.totalSubs, allHaveContext: enrichment.allHaveContext, insufficientCount: enrichment.insufficientCount } : undefined,
     }
 
-    // ── R20: 캐시 저장 (에스컬레이션 결과는 캐시하지 않음) ──
+    // ── R20: 캐시 저장 ──
     if (cacheKey && !llmWantsEscalation) {
       setCachedAnswer(cacheKey, finalResult)
     }
@@ -555,7 +683,6 @@ ${historyText}
     return finalResult
   } catch (err) {
     console.error('Gemini API error:', err.message)
-    // mock 폴백 제거 — chat.js의 graceful degradation(담당자 연결 안내)으로 위임
     throw err
   }
 }

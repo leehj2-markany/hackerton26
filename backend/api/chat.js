@@ -1,9 +1,9 @@
 // POST /api/chat — 챗봇 메시지 전송 + AI 답변 생성
-import { cors, json, error } from './lib/cors.js'
-import { generateAnswer, analyzeQuestion } from './lib/geminiClient.js'
-import { customers, customerNameMap } from './lib/mockData.js'
-import { validateInput, validateOutput, maskPII } from './lib/safety.js'
-import { searchKnowledge } from './lib/knowledgeBase.js'
+import { cors, json, error } from './_lib/cors.js'
+import { generateAnswer, analyzeQuestion } from './_lib/geminiClient.js'
+import { customers, customerNameMap } from './_lib/mockData.js'
+import { validateInput, validateOutput, maskPII } from './_lib/safety.js'
+import { searchKnowledge } from './_lib/knowledgeBase.js'
 
 // 인사/간단한 입력 패턴
 const GREETING_PATTERNS = [
