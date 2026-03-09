@@ -8,7 +8,7 @@ import { searchKnowledge, formatContext } from './knowledgeBase.js'
 // LLM 호출 타임아웃 (ms) — Vercel maxDuration 60초이므로 여유 있게 설정
 // Pro 모델은 응답이 느릴 수 있으므로 메인 호출은 넉넉하게
 const LLM_TIMEOUT = 15000
-const LLM_SUB_TIMEOUT = 5000 // 보조 호출(selfReflect, Router 등)은 짧게
+const LLM_SUB_TIMEOUT = 8000 // 보조 호출 — Vercel maxDuration 60초이므로 여유 있게
 
 function withTimeout(promise, ms, fallback) {
   return Promise.race([
@@ -220,9 +220,19 @@ export async function analyzeQuestion(question) {
   }
 }
 
-// Fallback: Gemini 없을 때 최소한의 판단 (DEMO_MODE용)
+// Fallback: Router LLM 실패 시 최소한의 판단
+// [의도] LLM Router가 타임아웃/에러로 실패해도 복합질문을 놓치지 않도록
+// 2개 이상 제품 키워드가 감지되면 complex로 판단하여 DESV 파이프라인 진입 보장
 function fallbackAnalyze(question) {
-  // 길이 + 간단한 시그널로만 판단 — 키워드 하드코딩 최소화
+  const productKeywords = ['drm', 'document safer', 'safecopy', 'safe copy', 'contentsafer', 'content safer', '개인정보', '워터마크', '출력물 보안', '문서 보안', '콘텐츠 보안', '저작권']
+  const q = question.toLowerCase()
+  const matchedProducts = productKeywords.filter(k => q.includes(k))
+  // 2개 이상 제품 키워드 → complex (DESV 파이프라인 진입)
+  if (matchedProducts.length >= 2) {
+    // 감지된 제품별로 서브질문 자동 생성 — DESV enrichRAG가 동작하도록
+    const subQuestions = matchedProducts.map(p => ({ question: question, product: p, assignee: '송인찬', role: 'sales' }))
+    return { isComplex: true, complexity: 'complex', subQuestions, routerReason: 'fallback: 다중 제품 감지 (' + matchedProducts.join(', ') + ')', extractedContext: null }
+  }
   if (question.length > 80) {
     return { isComplex: true, complexity: 'complex', subQuestions: null, routerReason: 'fallback: 긴 질문', extractedContext: null }
   }
