@@ -95,11 +95,12 @@ export default async function handler(req, res) {
     }
 
     if (analysis.isComplex) {
-      thinkingProcess.push(`복합 질문 감지: ${analysis.subQuestions.length}개 질문으로 나눠서 답변합니다`)
-      analysis.subQuestions.forEach((sq, i) => {
-        thinkingProcess.push(`질문 ${i + 1}: ${sq.question}`)
-      })
-      thinkingProcess.push('논리 검증: ✅ 일관성 확인')
+      thinkingProcess.push(`🔀 복합 질문 감지 (DESV): ${analysis.subQuestions?.length || 0}개 서브질문으로 분해 → 독립 RAG 검색`)
+      if (analysis.subQuestions) {
+        analysis.subQuestions.forEach((sq, i) => {
+          thinkingProcess.push(`  서브질문 ${i + 1}: ${sq.question}${sq.product ? ` [${sq.product}]` : ''}`)
+        })
+      }
     } else {
       if (customerInfo) {
         thinkingProcess.push(`제품 분류: ${customerInfo.product}`)
