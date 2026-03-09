@@ -18,7 +18,6 @@ const ESCALATION_INTENT_WORDS = ['연결', '담당자', '사람', '전문가', '
 function isGreetingMessage(msg) {
   const trimmed = msg.trim().replace(/[.!~?？ ]+$/g, '')
   if (trimmed.length > 15) return false
-  // 에스컬레이션 의도가 있으면 인사가 아님
   if (ESCALATION_INTENT_WORDS.some(w => trimmed.includes(w))) return false
   return GREETING_PATTERNS.some(p => trimmed.includes(p))
 }
@@ -51,9 +50,12 @@ export default async function handler(req, res) {
     })
   }
 
+  // customerInfo는 try 밖에서 선언 — catch에서도 접근 가능하도록
+  let customerInfo = null
+
   try {
     // 고객 정보: 명시적 customerId 또는 메시지에서 자동 매칭
-    let customerInfo = customerId ? customers[customerId] : null
+    customerInfo = customerId ? customers[customerId] : null
     if (!customerInfo) {
       const matchedKey = Object.keys(customerNameMap).find(k => message.includes(k))
       if (matchedKey) {
@@ -87,7 +89,6 @@ export default async function handler(req, res) {
     const analysis = await analyzeQuestion(message)
     const thinkingProcess = ['🤔 질문 분석 중...']
 
-    // 고객 매칭 결과 표시
     if (customerInfo) {
       thinkingProcess.push(`👤 고객 매칭: ${customerInfo.name} (${customerInfo.product} ${customerInfo.version})`)
       thinkingProcess.push(`📊 세일즈포스 데이터: ${customerInfo.accountType} / ${customerInfo.industry} / 만족도 ${customerInfo.satisfactionScore}`)
@@ -108,7 +109,7 @@ export default async function handler(req, res) {
     // RAG 검색 수행 및 thinkingProcess에 반영
     const productHint = customerInfo?.product || null
     const ragResult = searchKnowledge(message, productHint, 3)
-    thinkingProcess.push(`📚 지식 베이스 검색 중... ${ragResult.chunks.length}건 발견 (${ragResult.stores.join(', ')})`)
+    thinkingProcess.push(`📚 지식 베이스 검색 중... ${ragResult.chunks.length}건 발견 (${ragResult.stores?.join(', ') || ''})`)
     ragResult.chunks.forEach((chunk, i) => {
       thinkingProcess.push(`  참조 ${i + 1}: ${chunk.title}`)
     })
@@ -117,7 +118,7 @@ export default async function handler(req, res) {
     // Gemini로 답변 생성
     const result = await generateAnswer(message, customerInfo, conversationHistory || [])
 
-    // geminiClient에서 반환한 thinkingProcess 병합 (Self-Reflection, Self-Consistency, Step Back 등)
+    // geminiClient에서 반환한 thinkingProcess 병합
     if (result.thinkingProcess?.length) {
       thinkingProcess.push(...result.thinkingProcess)
     }
@@ -142,15 +143,12 @@ export default async function handler(req, res) {
     let finalAnswer = result.answer
     if (!outputCheck.safe) {
       finalAnswer = '죄송합니다. 안전한 답변을 생성하지 못했습니다. 담당자에게 문의해 주세요.'
-      thinkingProcess.push('��️ 출력 안전성 검증: ⚠️ 수정됨')
+      thinkingProcess.push('🛡️ 출력 안전성 검증: ⚠️ 수정됨')
     } else {
       thinkingProcess.push('🛡️ 출력 안전성 검증: ✅ 통과')
     }
 
-    // PII 마스킹 적용
     finalAnswer = maskPII(finalAnswer)
-
-    // 신뢰도 로그 (UI에는 표시하지 않지만 분석용으로 기록)
     console.log(`[chat] confidence=${result.confidence} (${result.confidenceScore}%), model=${result.model}, complexity=${result.complexity}`)
 
     return json(res, {
@@ -164,6 +162,7 @@ export default async function handler(req, res) {
         needsEscalation: result.needsEscalation,
         isComplex: result.isComplex,
         subQuestions: result.subQuestions,
+        extractedContext: result.extractedContext || null,
         model: result.model,
         complexity: result.complexity,
         customerInfo: customerInfo || null,
@@ -173,6 +172,24 @@ export default async function handler(req, res) {
     })
   } catch (err) {
     console.error('Chat API error:', err)
-    return error(res, 'AI_ERROR', 'AI 응답 생성 중 오류가 발생했습니다.', 500)
+    // ── Graceful Degradation: AI 실패 시 에스컬레이션 제안 ──
+    // 500 에러 대신 성공 응답 + needsEscalation: true로 담당자 연결 흐름 유도
+    return json(res, {
+      success: true,
+      data: {
+        answer: '죄송합니다, 현재 AI 응답 생성에 일시적인 문제가 발생했습니다.\n담당자를 직접 연결해 드릴 수 있습니다. 아래 버튼을 눌러주세요.',
+        confidence: 'low',
+        confidenceScore: 0,
+        references: [],
+        thinkingProcess: ['⚠️ AI 응답 생성 실패', '🔄 담당자 연결 모드로 전환'],
+        needsEscalation: true,
+        isComplex: false,
+        subQuestions: null,
+        model: 'fallback',
+        complexity: 'simple',
+        customerInfo: customerInfo || null,
+        aiFailed: true,
+      },
+    })
   }
 }
