@@ -10,6 +10,21 @@ const REAL_SLACK_AGENTS = ['송인찬', '이현진']
 // 가상 에이전트 (LLM으로 답변 생성)
 const VIRTUAL_AGENTS = ['박우호']
 
+// [의도] 에스컬레이션 모드에서 "AI 대화로 돌아가기" meta-intent 감지
+// 시스템 제어 요청이므로 LLM 호출 없이 경량 패턴 매칭 — UX 딜레이 0ms
+// "ai와 대화하고 싶습니다" 같은 메시지가 담당자에게 전달되는 문제 방지
+const RETURN_TO_AI_PATTERNS = [
+  'ai와 대화', 'ai랑 대화', 'ai 대화', 'ai로 돌아', 'ai한테',
+  'ai와 얘기', 'ai랑 얘기', 'ai 얘기',
+  '챗봇으로', '챗봇과 대화', '챗봇이랑', '챗봇한테',
+  '처음으로', 'ai 모드', '자동 응답', '봇으로',
+]
+
+function isReturnToAIIntent(msg) {
+  const normalized = msg.trim().replace(/[.!?~？ ]+$/g, '').toLowerCase()
+  return RETURN_TO_AI_PATTERNS.some(p => normalized.includes(p))
+}
+
 /**
  * Slack raw 멘션/포맷 제거 (프론트엔드 안전장치)
  * 백엔드에서 이미 변환하지만, 혹시 누락된 경우를 대비
@@ -225,6 +240,11 @@ const Chatbot = () => {
 
     // 에스컬레이션 모드: 추가 질의 처리
     if (escalationMode) {
+      // meta-intent: AI 대화 복귀 요청 감지 — Slack 포워딩 차단
+      if (isReturnToAIIntent(currentInput)) {
+        handleReturnToAI()
+        return
+      }
       handleFollowUpQuestion(currentInput)
       return
     }
@@ -487,6 +507,25 @@ const Chatbot = () => {
         timestamp: new Date()
       }
       return [...updated, escalationMsg]
+    })
+  }
+
+  // [의도] 에스컬레이션 → AI 대화 복귀 상태 전환
+  // Slack 채널은 열린 상태로 유지 (고객이 다시 에스컬레이션할 수 있으므로)
+  const handleReturnToAI = () => {
+    setEscalationMode(false)
+    setShowAgentStatus(false)
+    setShowQuickReplies(false)
+    setTypingAgent(null)
+    // showContinueOrEnd 버튼 비활성화
+    setMessages(prev => {
+      const updated = prev.map(msg => msg.showContinueOrEnd ? { ...msg, showContinueOrEnd: false, continueChoice: 'returnToAI' } : msg)
+      return [...updated, {
+        type: 'agent',
+        agentName: '채소희', agentRole: '고객센터', agentAvatar: '👩‍💼',
+        text: 'AI 대화 모드로 전환합니다. 궁금하신 점을 자유롭게 질문해 주세요! 🤖',
+        timestamp: new Date()
+      }]
     })
   }
 
@@ -865,17 +904,23 @@ const Chatbot = () => {
                     <div className="bg-blue-50 border border-blue-200 text-gray-800 rounded-lg p-3 ml-7">
                       <p className="whitespace-pre-wrap text-sm">{formatSlackText(msg.text)}</p>
                       {msg.showContinueOrEnd && (
-                        <div className="mt-3 flex space-x-2">
-                          <button onClick={handleContinueChat} className="flex-1 bg-markany-blue text-white py-2 px-3 rounded-lg hover:bg-markany-dark transition text-sm font-semibold">
-                            💬 더 물어볼게요
-                          </button>
-                          <button onClick={handleEndChat} className="flex-1 bg-gray-500 text-white py-2 px-3 rounded-lg hover:bg-gray-600 transition text-sm font-semibold">
-                            ✅ 충분합니다, 감사해요
+                        <div className="mt-3 space-y-2">
+                          <div className="flex space-x-2">
+                            <button onClick={handleContinueChat} className="flex-1 bg-markany-blue text-white py-2 px-3 rounded-lg hover:bg-markany-dark transition text-sm font-semibold">
+                              💬 더 물어볼게요
+                            </button>
+                            <button onClick={handleEndChat} className="flex-1 bg-gray-500 text-white py-2 px-3 rounded-lg hover:bg-gray-600 transition text-sm font-semibold">
+                              ✅ 충분합니다, 감사해요
+                            </button>
+                          </div>
+                          <button onClick={handleReturnToAI} className="w-full bg-white border border-markany-blue text-markany-blue py-2 px-3 rounded-lg hover:bg-markany-light transition text-sm font-semibold">
+                            🤖 AI 대화로 돌아가기
                           </button>
                         </div>
                       )}
                       {msg.continueChoice === 'continue' && <div className="mt-2 text-xs text-blue-600 font-medium">💬 질문 계속</div>}
                       {msg.continueChoice === 'end' && <div className="mt-2 text-xs text-gray-500 font-medium">✅ 충분합니다</div>}
+                      {msg.continueChoice === 'returnToAI' && <div className="mt-2 text-xs text-blue-500 font-medium">🤖 AI 대화로 전환</div>}
 
                     </div>
                   </div>

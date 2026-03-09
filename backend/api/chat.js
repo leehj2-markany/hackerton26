@@ -190,7 +190,6 @@ export default async function handler(req, res) {
         complexity: 'simple',
         customerInfo: customerInfo || null,
         aiFailed: true,
-        errorDetail: err.message || String(err),
       },
     })
   }
