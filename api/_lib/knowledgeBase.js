@@ -233,7 +233,7 @@ export function selectStore(productName) {
  * @param {string} query - 검색 쿼리
  * @param {string|null} productHint - 제품 힌트 (있으면 해당 Store 우선)
  * @param {number} topK - 반환할 최대 청크 수
- * @returns {{ chunks: Array, store: string, scores: Array }}
+ * @returns {{ chunks: Array, stores: string[], scores: Array }}
  */
 export function searchKnowledge(query, productHint = null, topK = 3) {
   const queryTokens = tokenize(query)

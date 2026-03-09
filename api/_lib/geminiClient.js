@@ -5,9 +5,10 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import { ENV } from './config.js'
 import { searchKnowledge, formatContext } from './knowledgeBase.js'
 
-// LLM 호출 타임아웃 (ms) — Vercel 10초 제한보다 충분히 짧게
-const LLM_TIMEOUT = 7000
-const LLM_SUB_TIMEOUT = 4000 // 보조 호출(selfReflect, stepBack 등)은 더 짧게
+// LLM 호출 타임아웃 (ms) — Vercel maxDuration 60초이므로 여유 있게 설정
+// Pro 모델은 응답이 느릴 수 있으므로 메인 호출은 넉넉하게
+const LLM_TIMEOUT = 15000
+const LLM_SUB_TIMEOUT = 5000 // 보조 호출(selfReflect, Router 등)은 짧게
 
 function withTimeout(promise, ms, fallback) {
   return Promise.race([
@@ -31,7 +32,7 @@ function getClient() {
 // Claude Opus 4 호출 (복잡한 에스컬레이션급 질문용)
 async function callClaudeOpus(prompt) {
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), LLM_TIMEOUT)
+  const timer = setTimeout(() => controller.abort(), 20000) // Claude는 응답이 느릴 수 있음
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -131,9 +132,15 @@ const ROUTER_PROMPT = `당신은 고객 질문의 복잡도를 판단하고, 서
 아래 질문을 분석하여 반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트는 절대 포함하지 마세요.
 
 복잡도 판단 기준:
-- simple: 인사, 단일 제품 질문, 단순 기능 문의, 짧은 질문 (예: "DRM이 뭐예요?", "도입하려고요")
-- complex: 여러 주제가 결합된 질문, 비교 요청, 환경 조건이 복잡한 질문 (예: "500명 규모 망분리 환경에서 DRM 도입하면서 그룹웨어 연동도 하고 싶은데")
+- simple: 인사, 단일 제품에 대한 질문, 단순 기능 문의, 짧은 질문 (예: "DRM이 뭐예요?", "DRM 300유저 도입하려고요")
+- complex: 아래 중 하나라도 해당하면 반드시 complex로 판단:
+  ① 2개 이상의 서로 다른 제품이 동시에 언급된 질문 (예: "DRM과 SafeCopy", "Document SAFER랑 개인정보추출")
+  ② 여러 독립적 주제가 결합된 질문 (예: "도입하면서 연동도 하고 싶은데")
+  ③ 비교 요청 (예: "DRM과 Document SAFER 차이점")
+  ④ 환경 조건이 복잡한 질문 (예: "500명 규모 망분리 환경에서")
 - critical: 긴급 장애, 보안사고, 법적/계약 이슈, 감사 대응 등 즉각 전문가 개입이 필요한 질문
+
+중요: 2개 이상 제품이 언급되면 무조건 complex입니다. "DRM과 개인정보추출 250유저 구축검토"는 DRM + 개인정보추출 2개 제품이므로 complex입니다.
 
 담당자 배정 기준 (서브질문별로 가장 적합한 1명 배정):
 - 송인찬 (어카운트 매니저): 영업, 견적, 비용, 계약, 구축 일정, 도입 프로세스, 레퍼런스, 고객 사례
