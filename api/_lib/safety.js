@@ -417,14 +417,22 @@ export async function validateOutput(text, question) {
   // 헌법적 AI 검증: regex 1차 + Claude LLM 2차 심층 검증
   const check = await constitutionalCheckWithLLM(text, question)
   if (!check.passed) {
-    return {
-      safe: false,
-      reason: `헌법 위반: ${check.violations.join(', ')}`,
-      sanitized: text,
-      llmVerified: check.llmVerified || false,
-      severity: check.severity || 'unknown',
-      suggestion: check.suggestion || '',
+    // [안전성] severity 기반 판단 — Claude LLM이 애매한 케이스를 false로 반환해도
+    // severity가 high가 아니면 정상 답변으로 통과시킴.
+    // 프리세일즈 챗봇에서 구축 기간/프로세스 안내가 차단되는 false positive 방지.
+    if (check.severity === 'high') {
+      return {
+        safe: false,
+        reason: `헌법 위반: ${check.violations.join(', ')}`,
+        sanitized: text,
+        llmVerified: check.llmVerified || false,
+        severity: check.severity,
+        suggestion: check.suggestion || '',
+      }
     }
+    // severity가 low/none이면 경고 로그만 남기고 통과
+    console.warn(`[validateOutput] low-severity flag (passed through): ${check.violations?.join(', ')}`)
+    return { safe: true, sanitized: text, llmVerified: check.llmVerified || false, flagged: true }
   }
 
   return { safe: true, sanitized: text, llmVerified: check.llmVerified || false }

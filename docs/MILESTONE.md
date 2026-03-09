@@ -72,6 +72,7 @@
   - maskPII (전화번호/이메일/주민번호/카드번호)
   - evaluateConfidence (3단계 신뢰도 평가)
   - constitutionalCheck (헌법적 AI 3원칙)
+  - validateOutput: severity 기반 판단 (high만 차단, low/none은 경고 로그 후 통과 — false positive 방지)
   - validateResponse (전체 파이프라인)
   - securityLog (보안 이벤트 로깅)
 - [x] chat.js에 safety 미들웨어 통합 ✅ 2/28
@@ -119,7 +120,7 @@
 | 3-Tier LLM | Gemini Flash(속도 ~4s) → Pro(정확도 ~15s) → Claude Opus 4(최고성능 ~20s) 자동 라우팅 |
 | CHECK 시맨틱 분석 | 복합 질문 자동 분해 + 서브질문별 담당자 배정 |
 | RAG + Knowledge Base | 마크애니 제품 지식 기반 답변 생성 |
-| AI Safety | 듀얼 레이어 인젝션 방어(32패턴) + PII 마스킹 + 헌법적 AI 3원칙 |
+| AI Safety | 듀얼 레이어 인젝션 방어(32패턴) + PII 마스킹 + 헌법적 AI 3원칙 + severity 기반 출력 검증(false positive 방지) |
 | MCP 7종 연동 | Salesforce, Slack, Jira, Confluence, Google Workspace, Gemini, Claude |
 | Vercel Serverless | 서버리스 아키텍처로 무중단 배포 |
 | Supabase | PostgreSQL 기반 실시간 케이스 관리 (500건 실데이터) |

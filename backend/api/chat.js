@@ -162,6 +162,7 @@ export default async function handler(req, res) {
         needsEscalation: result.needsEscalation,
         isComplex: result.isComplex,
         subQuestions: result.subQuestions,
+        extractedContext: result.extractedContext || null,
         model: result.model,
         complexity: result.complexity,
         customerInfo: customerInfo || null,

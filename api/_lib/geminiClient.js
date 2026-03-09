@@ -116,11 +116,18 @@ const SYSTEM_PROMPT = `당신은 마크애니의 AI 프리세일즈 어시스턴
 - 고객이 정보를 제공하면 그에 맞춰 점점 더 구체적인 답변을 제공하세요 (일반적 → 맞춤형으로 자연스럽게 진행).
 - 절대 한 번에 모든 정보를 쏟아내지 마세요. 핵심 정보를 간결히 주고, 후속 질문으로 대화를 이어가세요.
 
+고객 조건 반영 (필수):
+- [추출된 고객 조건]이 제공되면, 해당 조건(제품명, 사용자 규모, 의도, 환경 등)을 답변에 반드시 반영하세요.
+- 예: 고객이 "300유저"라고 했으면 300유저 규모에 맞는 구축 기간/방식을 안내하세요. 규모를 무시하고 일반적인 답변을 하지 마세요.
+- 예: 고객이 "망분리 환경"이라고 했으면 오프라인/폐쇄망 대응 방안을 중심으로 답변하세요.
+- 고객이 이미 제공한 정보를 다시 물어보지 마세요. 대신 아직 모르는 정보를 후속 질문으로 물어보세요.
+
 ${KNOWLEDGE_BASE}`
 
-// ── LLM-as-a-Router: Flash가 복잡도를 판단 + 서브질문 분류 + 담당자 배정 ──
+// ── LLM-as-a-Router: Flash가 복잡도 판단 + 서브질문 분류 + 담당자 배정 + 고객 조건 추출 ──
 // 키워드 룰 전부 제거. 모든 판단은 LLM 자연어 이해에 위임.
-const ROUTER_PROMPT = `당신은 고객 질문의 복잡도를 판단하고, 서브질문을 분류하여 적절한 담당자에게 배정하는 라우터입니다.
+// [Context Extraction] Router 호출 1회로 복잡도 판단과 고객 조건 추출을 동시에 수행 — 추가 API 비용 0
+const ROUTER_PROMPT = `당신은 고객 질문의 복잡도를 판단하고, 서브질문을 분류하며, 질문에서 고객이 제공한 핵심 조건을 추출하는 라우터입니다.
 아래 질문을 분석하여 반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트는 절대 포함하지 마세요.
 
 복잡도 판단 기준:
@@ -133,10 +140,18 @@ const ROUTER_PROMPT = `당신은 고객 질문의 복잡도를 판단하고, 서
 - 이현진 (SE): 기술 호환성, 시스템 연동, OS 지원, 네트워크 환경, 설치/배포, 아키텍처
 - 박우호 (개발리더): 보안 인증, 암호화 기술, API/SDK, 커스터마이징, 개발 관련 기술 심화 질문
 
+고객 조건 추출 (extractedContext):
+- 질문에서 고객이 명시적으로 언급한 조건만 추출하세요. 추측하지 마세요.
+- product: 언급된 제품명 (DRM, Document SAFER, SafeCopy 등). 없으면 null
+- userScale: 사용자 규모 (예: "300유저", "1000명"). 없으면 null
+- intent: 고객의 의도 (예: "구매 검토", "도입", "업그레이드", "장애 문의", "기능 문의"). 없으면 null
+- environment: 운영 환경 (예: "망분리", "클라우드", "윈도우 11"). 없으면 null
+- urgency: 긴급도 ("urgent" 또는 "normal"). 장애/사고 언급 시 urgent, 그 외 normal
+
 질문: "{QUESTION}"
 
 JSON 응답 (이것만 출력):
-{"complexity":"simple|complex|critical","reason":"판단 근거 한 줄","subQuestions":[{"question":"서브질문 내용","assignee":"담당자 이름"}]}`
+{"complexity":"simple|complex|critical","reason":"판단 근거 한 줄","subQuestions":[{"question":"서브질문 내용","assignee":"담당자 이름"}],"extractedContext":{"product":null,"userScale":null,"intent":null,"environment":null,"urgency":"normal"}}`
 
 export async function analyzeQuestion(question) {
   const client = getClient()
@@ -190,6 +205,7 @@ export async function analyzeQuestion(question) {
       complexity,
       subQuestions,
       routerReason: parsed.reason || '',
+      extractedContext: parsed.extractedContext || null,
     }
   } catch (err) {
     console.error('Router LLM error, falling back:', err.message)
@@ -201,9 +217,9 @@ export async function analyzeQuestion(question) {
 function fallbackAnalyze(question) {
   // 길이 + 간단한 시그널로만 판단 — 키워드 하드코딩 최소화
   if (question.length > 80) {
-    return { isComplex: true, complexity: 'complex', subQuestions: null, routerReason: 'fallback: 긴 질문' }
+    return { isComplex: true, complexity: 'complex', subQuestions: null, routerReason: 'fallback: 긴 질문', extractedContext: null }
   }
-  return { isComplex: false, complexity: 'simple', subQuestions: null, routerReason: 'fallback: 짧은 질문' }
+  return { isComplex: false, complexity: 'simple', subQuestions: null, routerReason: 'fallback: 짧은 질문', extractedContext: null }
 }
 
 // ── R20: Prompt Cache (인메모리, LRU 방식) ──
@@ -366,9 +382,9 @@ export async function generateAnswer(question, customerInfo, conversationHistory
   const client = getClient()
   const { skipRAG = false } = options
 
-  // DEMO_MODE이거나 Gemini 클라이언트 없으면 mock 답변
-  if (ENV.DEMO_MODE || !client) {
-    return generateMockAnswer(question, customerInfo)
+  // Gemini 클라이언트 없으면 에러 throw → chat.js의 graceful degradation으로 위임
+  if (!client) {
+    throw new Error('LLM client unavailable — no GEMINI_API_KEY')
   }
 
   // ── R20: 캐시 조회 (인사 메시지는 캐시하지 않음) ──
@@ -404,6 +420,22 @@ export async function generateAnswer(question, customerInfo, conversationHistory
       contextParts.push(`[고객 정보] ${customerInfo.name} / ${customerInfo.product} ${customerInfo.version} / ${customerInfo.license}`)
       if (customerInfo.history?.length) {
         contextParts.push(`[과거 문의] ${customerInfo.history.map(h => h.question).join(', ')}`)
+      }
+    }
+
+    // [Context Extraction] Router가 추출한 고객 조건을 명시적으로 전달
+    // — LLM이 질문 텍스트에서 조건을 놓치는 것을 방지
+    if (analysis.extractedContext) {
+      const ec = analysis.extractedContext
+      const parts = []
+      if (ec.product) parts.push(`제품: ${ec.product}`)
+      if (ec.userScale) parts.push(`규모: ${ec.userScale}`)
+      if (ec.intent) parts.push(`의도: ${ec.intent}`)
+      if (ec.environment) parts.push(`환경: ${ec.environment}`)
+      if (ec.urgency === 'urgent') parts.push(`긴급도: 긴급`)
+      if (parts.length > 0) {
+        contextParts.push(`[추출된 고객 조건]\n${parts.join(' / ')}`)
+        thinkingProcess.push(`🎯 고객 조건 추출: ${parts.join(', ')}`)
       }
     }
 
@@ -507,6 +539,7 @@ ${historyText}
       isComplex: analysis.isComplex,
       complexity: analysis.complexity,
       subQuestions: analysis.subQuestions,
+      extractedContext: analysis.extractedContext || null,
       model: modelName,
       thinkingProcess,
       selfReflection: { passed: reflection.passed, issues: reflection.issues },
@@ -522,51 +555,7 @@ ${historyText}
     return finalResult
   } catch (err) {
     console.error('Gemini API error:', err.message)
-    return generateMockAnswer(question, customerInfo)
-  }
-}
-
-// Mock 답변 생성 (DEMO_MODE 또는 Gemini 클라이언트 없을 때)
-function generateMockAnswer(question, customerInfo) {
-  const analysis = fallbackAnalyze(question)
-  const confidence = evaluateConfidence(question, '')
-
-  // 인사/간단한 입력 감지
-  const greetings = ['안녕하세요', '안녕', '반갑습니다', '감사합니다', '고마워요', '하이', '헬로', 'hi', 'hello', '처음 뵙겠습니다', '수고하세요']
-  const trimmed = question.trim().replace(/[.!~?？ ]+$/g, '')
-  if (trimmed.length <= 15 && greetings.some(g => trimmed.includes(g))) {
-    return {
-      answer: '안녕하세요! 마크애니 AI 프리세일즈 어시스턴트 ANY 브릿지입니다. 😊\n어떤 제품이나 서비스에 대해 궁금하신 점이 있으신가요?',
-      confidence: 'high',
-      confidenceScore: 95,
-      references: [],
-      needsEscalation: false,
-      isComplex: false,
-      subQuestions: null,
-      model: 'mock',
-    }
-  }
-
-  const productAnswers = {
-    'Document SAFER': 'Document SAFER v3.2에서 대량 파일 처리 속도가 30% 개선되었습니다. 윈도우 11을 완벽하게 지원하며, 과거 호환성 문제가 모두 해결되었습니다.',
-    'DRM': '네, 맞춤형 DRM 구축이 가능합니다. ✅ 윈도우 11 호환: 지원됩니다 (정책기능서 v3.2 참조). ✅ 보안 인증: CC인증, GS인증 보유. 국방부 보안 요구사항에 충분히 부합합니다.',
-  }
-
-  const product = customerInfo?.product || 'DRM'
-  let answer = productAnswers[product] || '마크애니 제품에 대해 안내해 드리겠습니다.'
-
-  if (question.includes('업그레이드') || question.includes('성능')) {
-    answer = `${product} 최신 버전에서 성능이 크게 개선되었습니다. ${customerInfo?.name || '고객'}님의 환경에 맞는 업그레이드 방안을 안내해 드리겠습니다.`
-  }
-
-  return {
-    answer,
-    confidence: confidence.level,
-    confidenceScore: confidence.score,
-    references: customerInfo?.references || ['정책기능서 v3.2'],
-    needsEscalation: false,
-    isComplex: analysis.isComplex,
-    subQuestions: analysis.subQuestions,
-    model: 'mock',
+    // mock 폴백 제거 — chat.js의 graceful degradation(담당자 연결 안내)으로 위임
+    throw err
   }
 }
