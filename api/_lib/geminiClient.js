@@ -630,7 +630,9 @@ ${historyText}
       modelName = 'claude-opus-4'
       answer = await callClaudeOpus(prompt)
     } else {
-      modelName = analysis.complexity === 'complex' ? 'gemini-2.5-pro' : 'gemini-2.5-flash'
+      // [의도] complex에서도 Flash 사용 — Pro는 Vercel에서 타임아웃 빈발 (15초 초과)
+      // DESV 구조화 프롬프트가 컨텍스트 품질을 보장하므로 Flash로도 충분한 답변 품질 확보
+      modelName = 'gemini-2.5-flash'
       const model = client.getGenerativeModel({ model: modelName })
       const result = await withTimeout(
         model.generateContent(prompt),
