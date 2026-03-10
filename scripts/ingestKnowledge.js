@@ -23,6 +23,7 @@ const SHEET_PRODUCTS = [
     serverEnv: 'OS: Windows, Ubuntu, Rocky / WAS: Tomcat 9.0.100 / DB: MariaDB 11.6 / JDK: Java 1.8',
     clientEnv: 'Windows 10, 11 (32/64bit)',
     features: 'ES SAFER 통합 제품군. Document SAFER, Print SAFER, Privacy SAFER, Screen SAFER를 포함하는 통합 문서보안 솔루션.',
+    useCases: '기업/공공기관 문서 보안 통합 구축, 문서 암호화 및 접근 제어, 인쇄 보안, 개인정보 보호, 화면 캡처 방지를 하나의 패키지로 도입할 때 사용',
     docs: '(PQG_QAT)_ES SAFER_표준기능정의서, 프로젝트_스펙정의서_v2.4.xlsx',
   },
   {
@@ -32,6 +33,7 @@ const SHEET_PRODUCTS = [
     clientEnv: 'Windows 7, 8, 10, 11 (32/64bit)',
     appSupport: '표준 OA(Office, HWP, PDF, Notepad) 최신 버전까지 지원',
     cadSupport: 'ES사업부_제품개발팀_제품별_모듈담당자_V2.0',
+    useCases: '기업 문서 암호화 및 유출 방지, 문서 생명주기 관리(생성~폐기), 접근 제어(RBAC), 사용 이력 추적 및 감사 로그, 교육자료/설계문서/연구자료 유출 방지, 외부 반출 제어(USB/이메일/클라우드), 대량 문서 일괄 암호화',
     notes: 'MS오피스 DRM & MIP 저장 정책',
     docs: 'IST_표준기능정의서, 프로젝트_스펙정의서_v2.4.xlsx',
   },
@@ -40,6 +42,7 @@ const SHEET_PRODUCTS = [
     version: 'v3.1',
     serverEnv: '상동 (Document SAFER와 동일)',
     clientEnv: 'Windows 7, 8, 10, 11 (32/64bit)',
+    useCases: '개인정보 포함 문서 자동 탐지 및 암호화, 개인정보보호법/GDPR 컴플라이언스 대응, 개인정보 파일 보유 현황 관리, 비인가자 개인정보 접근 차단',
     docs: 'IST_표준기능정의서',
   },
   {
@@ -47,6 +50,7 @@ const SHEET_PRODUCTS = [
     version: 'v4.0',
     serverEnv: '상동 (Document SAFER와 동일)',
     clientEnv: 'Windows 7, 8, 10, 11 (32/64bit)',
+    useCases: '문서 인쇄 시 워터마크 자동 삽입, 인쇄 정책 제어(인쇄 허용/차단/승인), 출력물 이력 관리 및 감사 로그, 인쇄 매수 제한, 기밀 문서 인쇄 통제',
     docs: 'IST_표준기능정의서',
   },
   {
@@ -54,6 +58,7 @@ const SHEET_PRODUCTS = [
     version: 'v4.0',
     serverEnv: '상동 (Document SAFER와 동일)',
     clientEnv: 'Windows 7, 8, 10, 11 (32/64bit)',
+    useCases: '출력물에 비가시성 추적 코드 삽입, 출력물 유출 시 출력자 추적, 복사/스캔된 출력물 원본 추적, 수료증/증명서/계약서 등 중요 문서 위변조 방지 및 진위 확인',
     notes: 'Print SAFER 내 비가시성 기능으로 제공',
   },
   {
@@ -61,6 +66,7 @@ const SHEET_PRODUCTS = [
     version: 'v3.0',
     serverEnv: '상동 (Document SAFER와 동일)',
     clientEnv: 'Windows 7, 8, 10, 11 (32/64bit)',
+    useCases: '화면 캡처 방지(PrintScreen/캡처 도구 차단), 원격 접속 시 화면 유출 방지, 화상회의 중 화면 녹화 차단, 기밀 문서 열람 시 화면 보호',
     docs: 'IST_표준기능정의서',
   },
   {
@@ -68,6 +74,7 @@ const SHEET_PRODUCTS = [
     version: 'v3.0',
     serverEnv: '상동 (Document SAFER와 동일)',
     clientEnv: 'Windows 7, 8, 10, 11 (32/64bit), MAC OS',
+    useCases: '화면에 비가시성 워터마크 삽입, 화면 촬영/캡처 유출 시 촬영자 추적, 내부 정보 유출 경로 역추적, MAC OS 환경 화면 추적',
     notes: 'Screen SAFER 내 비가시성 기능으로 제공. TRACER 제품군(SDK)와 병행 체크 필요.',
   },
   {
@@ -76,6 +83,7 @@ const SHEET_PRODUCTS = [
     serverEnv: '고객사 서버 환경에 따름',
     clientEnv: 'Windows 7, 8, 10, 11 (32/64bit)',
     browserSupport: 'Chrome, Edge, Firefox, Opera, Whale',
+    useCases: '웹 브라우저에서 열람하는 문서/콘텐츠 DRM 보호, 웹 기반 그룹웨어/문서 시스템 보안, 브라우저 내 다운로드/인쇄/캡처 제어, 웹 환경 문서 열람 권한 관리',
   },
   {
     group: 'DRM 제품군', name: 'Cowork SAFER',
@@ -83,6 +91,7 @@ const SHEET_PRODUCTS = [
     serverEnv: 'OS: Windows, Ubuntu, Rocky / WAS: Tomcat 9.0.65 / DB: Oracle 19c, MSSQL 2019, MariaDB 11.0.2 / JDK: Java 1.8',
     clientEnv: 'Windows 7, 8, 10, 11 (32/64bit)',
     appSupport: 'MS-Office, 한글, PDF',
+    useCases: '외부 협력사와의 문서 공유 시 보안 유지, 협업 문서 열람 기간/횟수 제한, 외부 반출 문서 회수 및 폐기, 파트너사/하청업체 문서 유출 방지',
     docs: 'IST_표준기능정의서',
   },
   {
@@ -90,6 +99,7 @@ const SHEET_PRODUCTS = [
     version: 'Android: 4.x.x / iOS: 3.x.xx',
     serverEnv: '상동 (Document SAFER와 동일)',
     clientEnv: '최소 OS 사양: Android 7, iOS 14',
+    useCases: '모바일 기기에서 DRM 암호화 문서 열람, 스마트폰/태블릿 문서 뷰어, 외근/출장 시 사내 문서 안전 열람, 모바일 오피스 환경 문서 보안',
     docs: 'Mobile Docs_기능정의서_v_0.2.xlsx',
   },
   {
@@ -97,6 +107,7 @@ const SHEET_PRODUCTS = [
     version: 'Android: 3.00.xxxx / iOS: 2.00.xxxx',
     serverEnv: 'OS: Rocky 9, Windows Server / WAS: Tomcat 8.5~9.0 / DB: MySQL 5.7/8, Oracle / JDK: 1.8',
     clientEnv: '최소 OS 사양: Android 10, iOS 14',
+    useCases: '모바일 기기 문서 암호화 및 보안 정책 적용, 모바일 환경 문서 접근 제어, BYOD 환경 사내 문서 보호, 모바일 DRM 에이전트',
     docs: 'Mobile SAFER (요구 명세서).pdf',
   },
   {
@@ -104,6 +115,7 @@ const SHEET_PRODUCTS = [
     version: 'Android: 1.0.106 / iOS: 1.0.58',
     serverEnv: 'N/A',
     clientEnv: '최소 OS 사양: Android 7, iOS 10',
+    useCases: '모바일 화면에 사용자 정보 워터마크 표시, 모바일 화면 촬영 유출 시 촬영자 식별, 모바일 앱 화면 보안',
     docs: 'Mobile STICKER (요구 명세서).pdf',
   },
   {
@@ -111,6 +123,7 @@ const SHEET_PRODUCTS = [
     version: 'Android: 2.5.xx / iOS: 1.2.xx',
     serverEnv: 'N/A',
     clientEnv: '최소 OS 사양: Android 7, iOS 15',
+    useCases: '모바일 기기 화면 캡처 방지, 스마트폰 스크린샷 차단, 모바일 앱 내 콘텐츠 캡처 제어, 모바일 환경 화면 보호',
     docs: 'Capture SAFER_V1.2_통합_기능정의서.pptx',
   },
   {
@@ -118,12 +131,14 @@ const SHEET_PRODUCTS = [
     version: 'iOS: 2.1.02',
     serverEnv: 'N/A',
     clientEnv: '최소 OS 사양: iOS 11',
+    useCases: 'iOS 기기 전용 화면 보호, iPad/iPhone 화면 캡처 방지, iOS 환경 문서 열람 시 화면 보안',
   },
   {
     group: 'DRM 제품군', name: '국방모바일보안',
     version: '',
     serverEnv: 'N/A',
     clientEnv: '최소 OS 사양: Android 7, iOS 10',
+    useCases: '군사 보안 환경 모바일 문서 보호, 국방부/군 기관 모바일 보안 정책 적용, 군사 기밀 문서 모바일 열람 통제, 국방 모바일 오피스 보안',
     docs: '02_MMSA_1R14a_요구사항정의서_V1.0.xlsx',
   },
   {
@@ -132,18 +147,21 @@ const SHEET_PRODUCTS = [
     serverEnv: '[서버 DRM] IBM AIX(POWERPC), SUN Oracle(SPARC/Intel), HP HP-UX(IA64/PA-RISC), Linux(Intel). Memory 무관, HDD 형태 무관, Storage 바이너리 약 300MB + 로그 용량. macrypto 미사용 Document SAFER Green은 소스 직접 컴파일 시 모든 UNIX 계열 OS 지원 가능.',
     clientEnv: '[서버 DRM] IBM AIX(AIX 5.3~), SUN Oracle(Solaris 5.10~), HP(HP-UX IA64 11.31~, PA-RISC 11.11~), Linux(kernel 2.6~). JDK 1.2 이상 연동 인터페이스 지원.',
     integration: 'JAVA 인터페이스를 사용하는 모든 시스템에 적용 가능. C 인터페이스를 사용하는 모든 시스템에 적용 가능. 서버에 접근하여 파일을 업로드/다운로드하는 시스템일 경우 적용 가능. 고객사 개발자가 서버 DRM 인터페이스를 호출하는 방법으로 연동.',
+    useCases: '서버 측 문서 암호화/복호화 처리, ERP/그룹웨어/ECM 등 업무 시스템과 DRM 연동, 서버에서 파일 업로드/다운로드 시 자동 암호화, JAVA/C 인터페이스 기반 서버 DRM 연동 개발, Unix/Linux 서버 환경 문서 보안',
     docs: '연동IF정의서, MaFileCipherXU, Server DRM, MarkAny Unix 설치 지원 요청서 양식.xls',
   },
   {
     group: 'DRM 제품군', name: 'Document SAFER I/F (Client)',
     version: 'Document SAFER 제품 버전에 따름',
     clientEnv: 'Windows 7, 8, 10, 11 (32/64bit)',
+    useCases: '클라이언트 측 DRM 연동 인터페이스, 사내 애플리케이션에 DRM 암호화/복호화 기능 탑재, 커스텀 애플리케이션 DRM 연동 개발',
     docs: 'DSFileCipherX',
   },
   {
     group: 'DRM 제품군', name: 'MACRYPTO V3.0 (KCMVP)',
     version: 'V3.00',
     features: 'KCMVP 인증 암호모듈. 국가정보원 암호모듈 검증 제품.',
+    useCases: '국가/공공기관 암호화 요건 충족(KCMVP 인증 필수 환경), ARIA/SEED/AES 국가 표준 암호 알고리즘 적용, 국가정보원 보안적합성 검증 대응, 공공기관 정보보호 시스템 암호모듈',
     docs: '20_Macrypto V3.00 (보안정책정의서)',
   },
   // ── DLP 제품군 ──
@@ -153,6 +171,7 @@ const SHEET_PRODUCTS = [
     serverEnv: '[202506 최신 버전 기준] OS: RedHat 9.4 / Rocky 9.4 / WAS: Tomcat 9.0.102 / DB: MariaDB 11.4.2 / JDK: OpenJDK 21.0.1',
     clientEnv: 'Windows 10 (32/64bit), Windows 11 (64bit). 이하 버전은 EOS로 정식 지원하지 않음.',
     browserSupport: 'Chrome, Edge, Firefox',
+    useCases: 'PC 내 정보 유출 방지(DLP), USB/외장매체 사용 통제, 네트워크 파일 전송 제어, PC 보안 정책 중앙 관리, 매체 제어(USB/블루투스/Wi-Fi), 파일 반출 승인 워크플로우, 개인정보 파일 탐지 및 관리',
     notes: '기존 SecuPrint 기능 신규 제공 불가 (Litech 연동 제품 EOS). PrintSAFER 출력물 제어 기능 연동 개발 중.',
     docs: 'SAFEPC_정책정의서.xlsx, SafePC Enterprise V7.0 매뉴얼, 프로젝트_스펙정의서_v2.4.xlsx',
   },
@@ -162,6 +181,7 @@ const SHEET_PRODUCTS = [
     serverEnv: '[202506 최신 버전 기준] OS: RedHat 9.4 / Rocky 9.4 / WAS: Tomcat 9.0.102 / DB: MariaDB 11.4.2 / JDK: OpenJDK 21.0.1',
     clientEnv: 'Windows 10 (32/64bit), Windows 11 (64bit). 이하 버전은 EOS로 정식 지원하지 않음.',
     browserSupport: 'Chrome, Edge, Firefox',
+    useCases: 'USB 저장매체 암호화 및 접근 제어, 보안 USB 발급 및 관리, USB를 통한 파일 반출 통제, 분실/도난 USB 원격 잠금/삭제, 외부 USB 사용 차단 및 허용 정책 관리',
     docs: 'SAFEPC_정책정의서.xlsx, SafeUSB+ V7.0 매뉴얼(관리자 사용자), 프로젝트_스펙정의서_v2.4.xlsx',
   },
   // ── 응용보안 제품군 ──
@@ -172,11 +192,13 @@ const SHEET_PRODUCTS = [
     clientEnv: 'Windows 7, 8, 10, 11 (32/64bit) / Linux(Fedora/Ubuntu) (32/64bit) / Mac 10.10 이상. EOS된 환경에서 사용은 가능하나 정식 지원은 아님.',
     browserSupport: 'Chrome, Edge, Firefox, Opera, Whale',
     integration: 'HTML 서식 연동, 리포트 연동(ClipReport_Clipsoft / Crownix_m2soft / OzReport_forcs / UbiReport_유비디시전), PDF 연동(PDF TEXT 추출)',
+    useCases: '전자문서 위변조 방지, 증명서/수료증/계약서 등 발급 문서 진위 확인, 전자문서에 Document DNA(디지털 지문) 삽입, 웹 기반 전자문서 보안, 리포트/서식 출력물 위변조 방지, PDF 문서 보안',
     docs: 'EVM-ePageSAFER v2.5 (요구 명세서).pdf, ePageSAFER 매뉴얼, AIT_ePS_사전조사서.xls',
   },
   {
     group: '응용보안 제품군', name: 'VoiceBarcode',
     version: 'v2.5',
+    useCases: '음성 기반 바코드 인식, 시각장애인 접근성 지원 문서 보안, 음성 코드 삽입 및 인식',
   },
   {
     group: '응용보안 제품군', name: 'ePage SAFER for Web DRM',
@@ -185,6 +207,7 @@ const SHEET_PRODUCTS = [
     clientEnv: 'Windows 7, 8, 10, 11 (32/64bit)',
     browserSupport: 'Chrome, Edge, Firefox, Opera, Whale',
     integration: 'Nexacro NRE(넥사크로 EXE 환경) / WRE(일반 브라우저 환경)',
+    useCases: '웹 환경 전자문서 DRM 보호, Nexacro 기반 업무 시스템 문서 보안, 브라우저에서 열람하는 전자문서 암호화 및 권한 제어, 웹 기반 증명서/서식 보안',
     docs: 'EVM-e-PageSAFER_V2.5 WebDRM 요구명세서.pdf, ePageSAFER WebDRM 매뉴얼',
   },
   {
@@ -193,6 +216,7 @@ const SHEET_PRODUCTS = [
     serverEnv: 'OS: Windows NT 계열, Unix(IBM AIX 4.3+, SUN Solaris 5.7+, HP HP-UX 11.0+), Linux 전 기종 / WAS: ALL / DB: N/A / JDK: 1.4 이상',
     clientEnv: 'Windows 7, 8, 10, 11 (32/64bit) / Linux(Fedora/Ubuntu) (32/64bit) / Mac 10.10 이상',
     browserSupport: 'Chrome, Edge, Firefox, Opera, Whale',
+    useCases: '여러 전자문서를 하나로 병합, 다수 서식/리포트 통합 출력, 문서 병합 후 보안 적용, 대량 문서 일괄 병합 처리',
     docs: 'ePS DocumentMerger 매뉴얼',
   },
   {
@@ -201,6 +225,7 @@ const SHEET_PRODUCTS = [
     serverEnv: 'OS: Windows NT 계열(PDF 변환 필요시 필수), Unix(IBM AIX 4.3+, SUN Solaris 5.7+, HP HP-UX 11.0+), Linux 전 기종 / WAS: ALL / DB: N/A / JDK: 1.4 이상',
     clientEnv: 'Windows 7, 8, 10, 11 (32/64bit) / Linux(Fedora/Ubuntu) (32/64bit) / Mac 10.10 이상',
     browserSupport: 'Chrome, Edge, Firefox, Opera, Whale',
+    useCases: '전자문서에 고유 디지털 지문(Document DNA) 삽입, 문서 위변조 탐지 및 진위 확인, 증명서/수료증/인증서/계약서 원본 검증, 출력물 위변조 방지, 문서 이력 추적',
     docs: 'ePS Document DNA 매뉴얼',
   },
   // ── TRACER 제품군 ──
@@ -209,6 +234,7 @@ const SHEET_PRODUCTS = [
     version: 'V1.0',
     serverEnv: 'Windows Server, Linux',
     clientEnv: 'Windows 10, 11, MAC OS',
+    useCases: '3rd party 소프트웨어에 화면 추적 기능 탑재(Add-in), 자체 개발 앱에 화면 워터마크/추적 기능 연동, 화면 캡처 유출 시 촬영자 추적 기능 SDK',
     notes: '화면보호 SW Add-in',
   },
   {
@@ -216,6 +242,7 @@ const SHEET_PRODUCTS = [
     version: 'V1.0',
     serverEnv: 'Windows Server, Linux',
     clientEnv: 'Windows 10, 11',
+    useCases: '3rd party 소프트웨어에 출력물 추적 기능 탑재(Add-in), 자체 개발 앱에 인쇄 워터마크/추적 기능 연동, 출력물 유출 시 출력자 추적 기능 SDK',
     notes: '출력보호 SW Add-in',
   },
   {
@@ -224,12 +251,14 @@ const SHEET_PRODUCTS = [
     serverEnv: 'Windows Server, Linux',
     clientEnv: '서버 Side임에 따라 무관',
     browserSupport: 'Chrome, Edge, Firefox, Opera, Whale',
+    useCases: '웹 시스템에 문서 추적 기능 탑재(Add-in), 웹 기반 업무 시스템에 워터마크/추적 기능 연동, 서버 사이드 문서 보안 SDK',
     notes: '적용 시스템 Add-in',
   },
   {
     group: 'TRACER 제품군', name: 'TRACER SDK for Mobile',
     version: 'V1.0',
     clientEnv: '최소 OS 사양: Android 7, iOS 10',
+    useCases: '모바일 앱에 문서 추적 기능 탑재(Add-in), 자체 개발 모바일 앱에 워터마크/추적 기능 연동, 모바일 환경 문서 보안 SDK',
     notes: 'App Add-in',
   },
 ]
@@ -238,57 +267,68 @@ const SHEET_PRODUCTS = [
 const LEGACY_CHUNKS = [
   {
     group: 'DRM 제품군', name: 'DRM',
-    content: `마크애니 DRM(Digital Rights Management)은 기업 및 공공기관의 디지털 문서를 암호화하여 무단 열람, 복사, 인쇄, 유출을 방지하는 문서 보안 솔루션입니다. 1999년 출시 이후 25년 이상의 기술 축적으로 국내 DRM 시장 점유율 1위를 유지하고 있습니다.`,
+    content: `마크애니 DRM(Digital Rights Management)은 기업 및 공공기관의 디지털 문서를 암호화하여 무단 열람, 복사, 인쇄, 유출을 방지하는 문서 보안 솔루션입니다. 1999년 출시 이후 25년 이상의 기술 축적으로 국내 DRM 시장 점유율 1위를 유지하고 있습니다.
+[용도/유스케이스] 기업/공공기관 문서 암호화, 무단 열람·복사·인쇄·유출 방지, 디지털 문서 보안 통합 솔루션 도입`,
     title: 'DRM 제품 개요',
   },
   {
     group: 'DRM 제품군', name: 'DRM',
-    content: `마크애니 DRM 인증 현황: CC인증(EAL2+) 국제 공통평가기준 인증, GS인증(1등급) TTA 소프트웨어 품질 인증, KCMVP 암호모듈 인증(ARIA, SEED, AES 국가 표준 암호 알고리즘), 국가정보원 보안적합성 검증 통과. 국방부, 행정안전부, 방위사업청, 해군본부, 국가정보원 등 최고 보안 등급 기관에서 운용 중.`,
+    content: `마크애니 DRM 인증 현황: CC인증(EAL2+) 국제 공통평가기준 인증, GS인증(1등급) TTA 소프트웨어 품질 인증, KCMVP 암호모듈 인증(ARIA, SEED, AES 국가 표준 암호 알고리즘), 국가정보원 보안적합성 검증 통과. 국방부, 행정안전부, 방위사업청, 해군본부, 국가정보원 등 최고 보안 등급 기관에서 운용 중.
+[용도/유스케이스] 보안 인증 요건 충족(CC인증/GS인증/KCMVP), 공공기관·국방 보안적합성 검증 대응, 국가 표준 암호 알고리즘 적용`,
     title: 'DRM 인증 현황',
   },
   {
     group: 'DRM 제품군', name: 'DRM',
-    content: `마크애니 DRM 맞춤형 구축: 국방부/정부기관(망분리, 보안등급별 문서분류, 감사로그 강화, 오프라인 모드), 대기업(10,000+ User, AD/LDAP, SSO, 그룹웨어 연동), 금융기관(금융보안원 가이드라인, 개인정보 보호, 감사 추적). 구축 기간: 소규모(100 User 이하) 2~4주, 중규모(100~1,000) 4~8주, 대규모(1,000+) 8~16주. 프로세스: 요구사항 분석→설계→개발/커스터마이징→테스트→파일럿→전사 배포→안정화.`,
+    content: `마크애니 DRM 맞춤형 구축: 국방부/정부기관(망분리, 보안등급별 문서분류, 감사로그 강화, 오프라인 모드), 대기업(10,000+ User, AD/LDAP, SSO, 그룹웨어 연동), 금융기관(금융보안원 가이드라인, 개인정보 보호, 감사 추적). 구축 기간: 소규모(100 User 이하) 2~4주, 중규모(100~1,000) 4~8주, 대규모(1,000+) 8~16주. 프로세스: 요구사항 분석→설계→개발/커스터마이징→테스트→파일럿→전사 배포→안정화.
+[용도/유스케이스] 국방/정부기관 맞춤 구축, 대기업 AD/LDAP/SSO 연동, 금융기관 컴플라이언스 대응, 망분리 환경 문서 보안, 대규모 사용자 환경 DRM 구축`,
     title: 'DRM 맞춤형 구축',
   },
   {
     group: 'DRM 제품군', name: 'DRM',
-    content: `마크애니 DRM v3.2 기술 사양: OS(Windows 10/11, Server 2016/2019/2022, macOS 12+, Linux Ubuntu 20.04+/CentOS 7+), 모바일(iOS 15+, Android 12+), 브라우저(Chrome 90+, Edge 90+, Firefox 90+, Safari 15+), 오프라인 모드(로컬 캐시 최대 30일), API(REST/SOAP/SDK C++/Java/.NET), 연동(AD/LDAP, SSO SAML 2.0/OAuth 2.0, 그룹웨어, ERP SAP/Oracle), 암호화(AES-256, ARIA-256, SEED-256), 성능(단일 파일 0.5초, 1,000파일 5분 이내).`,
+    content: `마크애니 DRM v3.2 기술 사양: OS(Windows 10/11, Server 2016/2019/2022, macOS 12+, Linux Ubuntu 20.04+/CentOS 7+), 모바일(iOS 15+, Android 12+), 브라우저(Chrome 90+, Edge 90+, Firefox 90+, Safari 15+), 오프라인 모드(로컬 캐시 최대 30일), API(REST/SOAP/SDK C++/Java/.NET), 연동(AD/LDAP, SSO SAML 2.0/OAuth 2.0, 그룹웨어, ERP SAP/Oracle), 암호화(AES-256, ARIA-256, SEED-256), 성능(단일 파일 0.5초, 1,000파일 5분 이내).
+[용도/유스케이스] 멀티 OS 환경 DRM 적용, 모바일·브라우저 호환 문서 보안, REST/SOAP API 연동 개발, SSO/AD/LDAP 통합 인증 연동, ERP·그룹웨어 연동`,
     title: 'DRM 호환성 및 기술 사양',
   },
   {
     group: 'DRM 제품군', name: 'DRM',
-    content: `마크애니 DRM 주요 레퍼런스: 국방부(군사 기밀 문서 보안, 2020~현재, 5,000+ User), 행정안전부(전자정부 문서 보안 표준, 2018~), 방위사업청(방산 기술 문서 보안, 2019~), 해군본부(함정 설계 문서 보안, 2021~), 국가정보원(기밀 문서 관리, 2017~), SK하이닉스(반도체 설계 문서 보안, 2022~, 10,000+ User), 삼성전자(연구개발 문서 보안, 2020~), LG전자(제품 설계 문서 보안, 2021~), 국민건강보험공단(개인정보 문서 보안, 2023~). 총 1,000+ 고객사, 500,000+ 사용자.`,
+    content: `마크애니 DRM 주요 레퍼런스: 국방부(군사 기밀 문서 보안, 2020~현재, 5,000+ User), 행정안전부(전자정부 문서 보안 표준, 2018~), 방위사업청(방산 기술 문서 보안, 2019~), 해군본부(함정 설계 문서 보안, 2021~), 국가정보원(기밀 문서 관리, 2017~), SK하이닉스(반도체 설계 문서 보안, 2022~, 10,000+ User), 삼성전자(연구개발 문서 보안, 2020~), LG전자(제품 설계 문서 보안, 2021~), 국민건강보험공단(개인정보 문서 보안, 2023~). 총 1,000+ 고객사, 500,000+ 사용자.
+[용도/유스케이스] 국방·공공기관 도입 사례 참고, 대기업(SK하이닉스/삼성전자/LG전자) 도입 사례, 금융·의료 기관 개인정보 문서 보안 사례`,
     title: 'DRM 주요 레퍼런스',
   },
   {
     group: 'DRM 제품군', name: 'Document SAFER',
-    content: `Document SAFER는 기업 문서의 생성부터 폐기까지 전 생명주기를 관리하는 통합 문서 보안 솔루션. 문서 암호화, 접근 제어, 사용 이력 추적, 출력 보안을 하나의 플랫폼에서 제공. v3.2에서 대량 파일 처리 30% 개선, 윈도우 11 완벽 지원, 클라우드 하이브리드 환경 지원 추가.`,
+    content: `Document SAFER는 기업 문서의 생성부터 폐기까지 전 생명주기를 관리하는 통합 문서 보안 솔루션. 문서 암호화, 접근 제어, 사용 이력 추적, 출력 보안을 하나의 플랫폼에서 제공. v3.2에서 대량 파일 처리 30% 개선, 윈도우 11 완벽 지원, 클라우드 하이브리드 환경 지원 추가.
+[용도/유스케이스] 문서 생명주기 관리(생성~폐기), 문서 암호화 및 접근 제어, 사용 이력 추적 및 감사 로그, 출력 보안, 교육자료·설계문서·연구자료 유출 방지, 클라우드 하이브리드 환경 문서 보안`,
     title: 'Document SAFER 제품 개요',
   },
   {
     group: 'DRM 제품군', name: 'Document SAFER',
-    content: `Document SAFER v3.2 주요 기능: 1) AES-256 실시간 투명 암호화 2) RBAC 역할 기반 접근 제어 3) 열람/편집/인쇄/복사/캡처 이력 추적 + 감사 로그 4) 인쇄 시 워터마크 자동 삽입 + 출력물 추적 코드 5) USB/이메일/클라우드 외부 반출 제어 6) 배치 처리 엔진 최적화(1,000파일 30% 속도 개선) 7) On-Premise + Cloud(AWS/Azure/GCP) 하이브리드 배포.`,
+    content: `Document SAFER v3.2 주요 기능: 1) AES-256 실시간 투명 암호화 2) RBAC 역할 기반 접근 제어 3) 열람/편집/인쇄/복사/캡처 이력 추적 + 감사 로그 4) 인쇄 시 워터마크 자동 삽입 + 출력물 추적 코드 5) USB/이메일/클라우드 외부 반출 제어 6) 배치 처리 엔진 최적화(1,000파일 30% 속도 개선) 7) On-Premise + Cloud(AWS/Azure/GCP) 하이브리드 배포.
+[용도/유스케이스] AES-256 실시간 암호화, 역할 기반 접근 제어(RBAC), 감사 로그 및 이력 추적, 워터마크 삽입, USB/이메일/클라우드 반출 제어, 대량 파일 일괄 암호화`,
     title: 'Document SAFER 주요 기능',
   },
   {
     group: 'DRM 제품군', name: 'Document SAFER',
-    content: `Document SAFER v3.1→v3.2 업그레이드: 소요 30분(서버 재시작 포함), 다운타임 약 30분(야간 작업 권장), v3.0 이상 직접 업그레이드 가능(v2.x는 마이그레이션 필요), 자동 백업 + 1시간 이내 롤백, 기존 라이선스 유지(유지보수 계약 내 추가 비용 없음), 업그레이드 후 1시간 온라인 교육 제공.`,
+    content: `Document SAFER v3.1→v3.2 업그레이드: 소요 30분(서버 재시작 포함), 다운타임 약 30분(야간 작업 권장), v3.0 이상 직접 업그레이드 가능(v2.x는 마이그레이션 필요), 자동 백업 + 1시간 이내 롤백, 기존 라이선스 유지(유지보수 계약 내 추가 비용 없음), 업그레이드 후 1시간 온라인 교육 제공.
+[용도/유스케이스] Document SAFER 버전 업그레이드, 기존 v3.0/v3.1에서 v3.2 마이그레이션, 업그레이드 소요 시간 및 다운타임 안내`,
     title: 'Document SAFER 업그레이드 가이드',
   },
   {
     group: 'DRM 제품군', name: 'Document SAFER',
-    content: `Document SAFER v3.2 호환성: Windows 10(21H2+)/11(22H2+) 완벽 지원, Windows Server 2019/2022, macOS 13+ 뷰어 전용, 오피스(MS Office 2016/2019/2021/365, 한컴오피스 2020+), PDF(Adobe Acrobat Reader DC, Foxit Reader), CAD(AutoCAD 2020+, SolidWorks 2020+ 플러그인), 브라우저(Chrome/Edge/Firefox 웹 뷰어). 과거 윈도우 11 호환성 문제(v3.1 이하 커널 드라이버 충돌 블루스크린)가 v3.2에서 완전 해결.`,
+    content: `Document SAFER v3.2 호환성: Windows 10(21H2+)/11(22H2+) 완벽 지원, Windows Server 2019/2022, macOS 13+ 뷰어 전용, 오피스(MS Office 2016/2019/2021/365, 한컴오피스 2020+), PDF(Adobe Acrobat Reader DC, Foxit Reader), CAD(AutoCAD 2020+, SolidWorks 2020+ 플러그인), 브라우저(Chrome/Edge/Firefox 웹 뷰어). 과거 윈도우 11 호환성 문제(v3.1 이하 커널 드라이버 충돌 블루스크린)가 v3.2에서 완전 해결.
+[용도/유스케이스] Windows 11 환경 DRM 호환성 확인, MS Office/한컴오피스/PDF/CAD 지원 범위 확인, macOS 뷰어 지원, 브라우저 웹 뷰어 지원`,
     title: 'Document SAFER 호환성',
   },
   {
     group: 'DRM 제품군', name: 'SafeCopy',
-    content: `SafeCopy는 출력물 보안 솔루션. 인쇄 문서에 비가시적 워터마크를 삽입하여 유출 시 출력자 추적 가능. 복사기/스캐너를 통한 2차 유출도 추적. 주요 기능: 비가시적 워터마크 삽입, 출력자 추적, 출력 정책 관리, 출력 이력 감사, 복사/스캔 추적. 국방부, 금융기관, 대기업 등 보안 중요 환경에서 사용.`,
+    content: `SafeCopy는 출력물 보안 솔루션. 인쇄 문서에 비가시적 워터마크를 삽입하여 유출 시 출력자 추적 가능. 복사기/스캐너를 통한 2차 유출도 추적. 주요 기능: 비가시적 워터마크 삽입, 출력자 추적, 출력 정책 관리, 출력 이력 감사, 복사/스캔 추적. 국방부, 금융기관, 대기업 등 보안 중요 환경에서 사용.
+[용도/유스케이스] 출력물 보안 및 유출 추적, 인쇄 문서 비가시적 워터마크 삽입, 복사/스캔 2차 유출 추적, 출력 이력 감사, 국방·금융·대기업 출력물 보안`,
     title: 'SafeCopy 제품 개요',
   },
   {
     group: '응용보안 제품군', name: 'ContentSAFER',
-    content: `ContentSAFER는 디지털 콘텐츠(영상, 이미지, 음원 등) 저작권 보호 솔루션. 포렌식 워터마킹 기술로 콘텐츠에 비가시적 식별 정보를 삽입하여 불법 복제 및 유출 경로 추적. OTT 플랫폼, 방송사, 영화 배급사 등에서 사용. 주요 기능: 포렌식 워터마킹, 실시간 스트리밍 워터마킹, 콘텐츠 추적, 불법 복제 탐지.`,
+    content: `ContentSAFER는 디지털 콘텐츠(영상, 이미지, 음원 등) 저작권 보호 솔루션. 포렌식 워터마킹 기술로 콘텐츠에 비가시적 식별 정보를 삽입하여 불법 복제 및 유출 경로 추적. OTT 플랫폼, 방송사, 영화 배급사 등에서 사용. 주요 기능: 포렌식 워터마킹, 실시간 스트리밍 워터마킹, 콘텐츠 추적, 불법 복제 탐지.
+[용도/유스케이스] 영상/이미지/음원 저작권 보호, 포렌식 워터마킹, OTT/방송/영화 콘텐츠 불법 복제 방지, 실시간 스트리밍 워터마킹, 콘텐츠 유출 경로 추적`,
     title: 'ContentSAFER 제품 개요',
   },
 ]
@@ -298,6 +338,7 @@ function buildChunkText(product) {
   const parts = [`[제품명] ${product.name}`]
   parts.push(`[제품군] ${product.group}`)
   if (product.version) parts.push(`[버전] ${product.version}`)
+  if (product.useCases) parts.push(`[용도/유스케이스] ${product.useCases}`)
   if (product.features) parts.push(`[주요기능] ${product.features}`)
   if (product.serverEnv) parts.push(`[서버환경] ${product.serverEnv}`)
   if (product.clientEnv) parts.push(`[사용자환경] ${product.clientEnv}`)
