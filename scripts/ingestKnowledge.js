@@ -334,11 +334,15 @@ const LEGACY_CHUNKS = [
 ]
 
 // ── Row-based chunking: 제품별로 모든 정보를 하나의 텍스트 청크로 병합 ──
+// [의도] useCases를 제품명 바로 다음에 배치 + 청크 끝에 한 번 더 반복
+// → 임베딩 공간에서 "용도" 시그널이 기술 스펙에 희석되지 않도록 가중치 강화
+// → ePage SAFER 같은 제품이 "위변조방지" 쿼리에서 제대로 매칭되도록
 function buildChunkText(product) {
   const parts = [`[제품명] ${product.name}`]
   parts.push(`[제품군] ${product.group}`)
-  if (product.version) parts.push(`[버전] ${product.version}`)
+  // useCases를 상단에 배치 — 임베딩 모델은 앞부분 텍스트에 더 높은 가중치 부여
   if (product.useCases) parts.push(`[용도/유스케이스] ${product.useCases}`)
+  if (product.version) parts.push(`[버전] ${product.version}`)
   if (product.features) parts.push(`[주요기능] ${product.features}`)
   if (product.serverEnv) parts.push(`[서버환경] ${product.serverEnv}`)
   if (product.clientEnv) parts.push(`[사용자환경] ${product.clientEnv}`)
@@ -348,6 +352,8 @@ function buildChunkText(product) {
   if (product.integration) parts.push(`[연동 시스템] ${product.integration}`)
   if (product.notes) parts.push(`[비고] ${product.notes}`)
   if (product.docs) parts.push(`[관련 문서] ${product.docs}`)
+  // useCases를 끝에 한 번 더 반복 — 임베딩 벡터에서 용도 시그널 강화
+  if (product.useCases) parts.push(`[핵심 용도 요약] ${product.name}: ${product.useCases}`)
   return parts.join('\n')
 }
 
