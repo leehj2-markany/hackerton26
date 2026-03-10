@@ -88,8 +88,7 @@ export default async function handler(req, res) {
     // [P4 수정] analyzeQuestion 1회 호출 후 결과를 generateAnswer에 전달
     // 기존: chat.js에서 analyzeQuestion 1회 + generateAnswer 내부에서 1회 = 2중 호출 (비용 낭비 + 일관성 문제)
     // 수정: chat.js에서 1회 호출 → 결과를 options.preAnalysis로 전달 → generateAnswer에서 재사용
-    // [대화 맥락] conversationHistory를 Router에 전달하여 "어쩌라는거죠?" 같은 맥락 의존 질문 처리
-    const analysis = await analyzeQuestion(message, conversationHistory || [])
+    const analysis = await analyzeQuestion(message)
     const thinkingProcess = ['🤔 질문 분석 중...']
 
     if (customerInfo) {

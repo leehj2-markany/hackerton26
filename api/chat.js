@@ -111,7 +111,7 @@ export default async function handler(req, res) {
 
     // RAG 검색 수행 및 thinkingProcess에 반영
     const productHint = customerInfo?.product || null
-    const ragResult = searchKnowledge(message, productHint, 3)
+    const ragResult = await searchKnowledge(message, productHint, 3)
     thinkingProcess.push(`📚 지식 베이스 검색 중... ${ragResult.chunks.length}건 발견 (${ragResult.stores?.join(', ') || ''})`)
     ragResult.chunks.forEach((chunk, i) => {
       thinkingProcess.push(`  참조 ${i + 1}: ${chunk.title}`)
