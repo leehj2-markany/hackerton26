@@ -233,31 +233,7 @@ export const STORES = {
     ]
   },
 
-  safecopy: {
-    id: 'store_safecopy',
-    product: 'SafeCopy',
-    chunks: [
-      {
-        id: 'sc-overview',
-        title: 'SafeCopy 제품 개요',
-        content: `SafeCopy는 출력물 보안 솔루션으로, 인쇄 문서에 비가시적 워터마크를 삽입하여 유출 시 출력자를 추적할 수 있습니다. 복사기/스캐너를 통한 2차 유출도 추적 가능합니다. 주요 기능: 비가시적 워터마크 삽입, 출력자 추적, 출력 정책 관리, 출력 이력 감사, 복사/스캔 추적. 국방부, 금융기관, 대기업 등 보안이 중요한 환경에서 널리 사용됩니다.`,
-        keywords: ['SafeCopy', '출력물', '워터마크', '추적', '인쇄']
-      },
-    ]
-  },
-
-  content_safer: {
-    id: 'store_content_safer',
-    product: 'ContentSAFER',
-    chunks: [
-      {
-        id: 'cs-overview',
-        title: 'ContentSAFER 제품 개요',
-        content: `ContentSAFER는 디지털 콘텐츠(영상, 이미지, 음원 등)의 저작권을 보호하는 솔루션입니다. 포렌식 워터마킹 기술로 콘텐츠에 비가시적 식별 정보를 삽입하여 불법 복제 및 유출 경로를 추적합니다. OTT 플랫폼, 방송사, 영화 배급사 등에서 사용됩니다. 주요 기능: 포렌식 워터마킹, 실시간 스트리밍 워터마킹, 콘텐츠 추적, 불법 복제 탐지.`,
-        keywords: ['ContentSAFER', '콘텐츠', '워터마킹', '포렌식', '저작권', 'OTT']
-      },
-    ]
-  },
+  // SafeCopy, ContentSAFER 삭제 — 시트 원본에 없는 제품
 }
 
 
