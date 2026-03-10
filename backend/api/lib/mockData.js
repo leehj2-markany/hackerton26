@@ -26,7 +26,7 @@ export const customers = {
     references: ['릴리스 노트 v3.2', '과거 문의 #2025-02-10', '성능 최적화 가이드'],
     opportunities: [
       { name: 'Document SAFER v3.2 업그레이드', stage: '제안', amount: '₩1.2억', closeDate: '2026-06-30' },
-      { name: 'SafeCopy 추가 도입', stage: '탐색', amount: '₩5,000만', closeDate: '2026-09-30' },
+      { name: 'Print SAFER 추가 도입', stage: '탐색', amount: '₩5,000만', closeDate: '2026-09-30' },
     ],
   },
   defense: {

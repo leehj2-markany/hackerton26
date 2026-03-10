@@ -57,7 +57,7 @@ echo ""
 test_question 1 "DRM과 개인정보추출 솔루션 250유저 구축검토 중입니다"
 
 # 2. 두 제품 동시 구축
-test_question 2 "DRM 300유저 도입하면서 SafeCopy도 같이 구축하고 싶습니다"
+test_question 2 "DRM 300유저 도입하면서 Print SAFER도 같이 구축하고 싶습니다"
 
 # 3. 제품 비교
 test_question 3 "Document SAFER와 DRM의 차이점이 뭔가요? 어떤 걸 도입해야 할지 모르겠어요"
@@ -66,13 +66,13 @@ test_question 3 "Document SAFER와 DRM의 차이점이 뭔가요? 어떤 걸 도
 test_question 4 "500명 규모 망분리 환경에서 DRM이랑 Document SAFER 동시 도입 검토 중입니다"
 
 # 5. 기술 + 영업 혼합 질문
-test_question 5 "DRM API 연동 방법이랑 SafeCopy 견적을 같이 알고 싶습니다"
+test_question 5 "DRM API 연동 방법이랑 Print SAFER 견적을 같이 알고 싶습니다"
 
 # 6. 3개 제품 동시 언급
-test_question 6 "DRM, Document SAFER, SafeCopy 세 가지 제품 전체 도입 시 구축 기간이 얼마나 걸리나요?"
+test_question 6 "DRM, Document SAFER, Print SAFER 세 가지 제품 전체 도입 시 구축 기간이 얼마나 걸리나요?"
 
 # 7. 업그레이드 + 신규 도입 혼합
-test_question 7 "기존 DRM을 업그레이드하면서 ContentSAFER도 새로 도입하려고 합니다"
+test_question 7 "기존 DRM을 업그레이드하면서 Screen SAFER도 새로 도입하려고 합니다"
 
 # 8. 인증 + 기술 복합
 test_question 8 "CC인증 받은 DRM 제품의 SDK 연동 방법과 Document SAFER 모바일 뷰어 지원 여부를 알고 싶습니다"

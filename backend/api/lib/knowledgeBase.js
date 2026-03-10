@@ -311,8 +311,6 @@ export function selectStore(productName) {
   const normalized = (productName || '').toLowerCase()
   if (normalized.includes('drm') || normalized.includes('저작권')) return STORES.drm
   if (normalized.includes('document') || normalized.includes('safer') || normalized.includes('문서 보안')) return STORES.document_safer
-  if (normalized.includes('safecopy') || normalized.includes('출력') || normalized.includes('워터마크')) return STORES.safecopy
-  if (normalized.includes('content') || normalized.includes('콘텐츠')) return STORES.content_safer
   return null
 }
 

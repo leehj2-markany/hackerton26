@@ -85,7 +85,7 @@ results.push(await testQuery('문서 암호화도 하고 인쇄할 때 워터마
 results.push(await testQuery('모바일에서 문서 보고 화면 캡처 방지하면서 워터마크도 넣고 싶습니다', ['Mobile DOCS', 'Mobile Capture SAFER', 'Mobile STICKER']))
 results.push(await testQuery('USB로 파일 반출 통제하고 PC에서 정보 유출도 방지하고 싶습니다', ['SafeUSB', 'SafePC Enterprise']))
 results.push(await testQuery('서버에서 문서 암호화하고 웹 브라우저에서 DRM 걸어서 보여주고 싶어요', ['Document SAFER I/F (Server)', 'Web SAFER']))
-results.push(await testQuery('영상 콘텐츠 저작권 보호하면서 출력물도 추적하고 싶습니다', ['ContentSAFER', 'Print TRACER']))
+results.push(await testQuery('영상 콘텐츠 저작권 보호하면서 출력물도 추적하고 싶습니다', ['Print TRACER']))
 results.push(await testQuery('국방 환경에서 모바일 문서 보안하고 KCMVP 인증 암호모듈 적용하고 싶습니다', ['국방모바일보안', 'MACRYPTO V3.0 (KCMVP)']))
 
 // ── 3. 결과 요약 ──

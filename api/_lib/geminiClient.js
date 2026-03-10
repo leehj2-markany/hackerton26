@@ -60,8 +60,10 @@ const KNOWLEDGE_BASE = `
 [마크애니 제품 정보]
 1. Document SAFER: 문서 보안 솔루션. v3.2 최신. 대량 파일 처리 30% 개선. 윈도우 11 완벽 지원.
 2. DRM: 디지털 저작권 관리. CC인증(EAL2+), GS인증(1등급) 보유. 국방부/정부기관 맞춤형 구축 가능.
-3. SafeCopy: 출력물 보안. 워터마크 + 추적 기능.
-4. ContentSAFER: 콘텐츠 보안 플랫폼.
+3. Print SAFER: 출력보안. 인쇄 시 워터마크 삽입 및 출력 정책 제어.
+4. Screen SAFER: 화면보안. 캡처 차단 + Screen Tracer 기능 제공.
+5. Privacy SAFER: 개인정보 파일 탐지/암호화.
+6. Print TRACER / Screen TRACER: 비가시성 워터마크 기반 출력물/화면 추적.
 
 [인증 현황]
 - CC인증 (EAL2+), GS인증 (1등급), KCMVP 암호모듈 인증
@@ -84,7 +86,7 @@ const SYSTEM_PROMPT = `당신은 마크애니의 AI 프리세일즈 어시스턴
 
 역할:
 - 고객의 기술 문의에 정확하고 친절하게 답변합니다
-- 마크애니 제품(Document SAFER, DRM, SafeCopy 등)에 대한 전문 지식을 바탕으로 답변합니다
+- 마크애니 제품(Document SAFER, DRM, Print SAFER, Screen SAFER 등)에 대한 전문 지식을 바탕으로 답변합니다
 - 답변할 수 없는 질문은 솔직히 인정하고 담당자 연결을 제안합니다
 
 규칙:
@@ -134,7 +136,7 @@ const ROUTER_PROMPT = `당신은 고객 질문의 복잡도를 판단하고, 서
 복잡도 판단 기준:
 - simple: 인사, 단일 제품에 대한 질문, 단순 기능 문의, 짧은 질문 (예: "DRM이 뭐예요?", "DRM 300유저 도입하려고요")
 - complex: 아래 중 하나라도 해당하면 반드시 complex로 판단:
-  ① 2개 이상의 서로 다른 제품이 동시에 언급된 질문 (예: "DRM과 SafeCopy", "Document SAFER랑 개인정보추출")
+  ① 2개 이상의 서로 다른 제품이 동시에 언급된 질문 (예: "DRM과 Print SAFER", "Document SAFER랑 개인정보보호")
   ② 여러 독립적 주제가 결합된 질문 (예: "도입하면서 연동도 하고 싶은데")
   ③ 비교 요청 (예: "DRM과 Document SAFER 차이점")
   ④ 환경 조건이 복잡한 질문 (예: "500명 규모 망분리 환경에서")
@@ -149,7 +151,7 @@ const ROUTER_PROMPT = `당신은 고객 질문의 복잡도를 판단하고, 서
 
 고객 조건 추출 (extractedContext):
 - 질문에서 고객이 명시적으로 언급한 조건만 추출하세요. 추측하지 마세요.
-- product: 언급된 제품명 (DRM, Document SAFER, SafeCopy 등). 없으면 null
+- product: 언급된 제품명 (DRM, Document SAFER, Print SAFER 등). 없으면 null
 - userScale: 사용자 규모 (예: "300유저", "1000명"). 없으면 null
 - intent: 고객의 의도 (예: "구매 검토", "도입", "업그레이드", "장애 문의", "기능 문의"). 없으면 null
 - environment: 운영 환경 (예: "망분리", "클라우드", "윈도우 11"). 없으면 null
@@ -235,7 +237,7 @@ export async function analyzeQuestion(question, conversationHistory = []) {
 // [의도] LLM Router가 타임아웃/에러로 실패해도 복합질문을 놓치지 않도록
 // 2개 이상 제품 키워드가 감지되면 complex로 판단하여 DESV 파이프라인 진입 보장
 function fallbackAnalyze(question) {
-  const productKeywords = ['drm', 'document safer', 'safecopy', 'safe copy', 'contentsafer', 'content safer', '개인정보', '워터마크', '출력물 보안', '문서 보안', '콘텐츠 보안', '저작권']
+  const productKeywords = ['drm', 'document safer', 'privacy safer', '개인정보', 'print safer', '출력보안', 'screen safer', '화면보안', 'print tracer', 'screen tracer', '워터마크', '문서 보안', '저작권', 'safepc', 'safeusb', 'epage', 'web safer', 'mobile']
   const q = question.toLowerCase()
   const matchedProducts = productKeywords.filter(k => q.includes(k))
   // 2개 이상 제품 키워드 → complex (DESV 파이프라인 진입)
@@ -398,7 +400,7 @@ JSON: {"consistent": true/false, "score": 0-100, "differences": ["차이점"]}`
 
 // 신뢰도 평가
 function evaluateConfidence(question, answer) {
-  const highKeywords = ['Document SAFER', 'DRM', 'SafeCopy', '인증', '호환', '업그레이드', '버전']
+  const highKeywords = ['Document SAFER', 'DRM', 'Print SAFER', 'Screen SAFER', 'Privacy SAFER', '인증', '호환', '업그레이드', '버전']
   const matchCount = highKeywords.filter(k => question.includes(k) || answer.includes(k)).length
   if (matchCount >= 2) return { level: 'high', score: 85 + Math.floor(Math.random() * 10) }
   if (matchCount >= 1) return { level: 'medium', score: 65 + Math.floor(Math.random() * 15) }

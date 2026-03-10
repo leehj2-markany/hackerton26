@@ -173,7 +173,7 @@
 
 **제리 리우 → 카파시에게:**
 > 좋은 지적입니다. Gemini File Search는 store 단위로 분리 가능합니다.
-> 제품별로 별도 store를 만들면 됩니다: store_drm, store_safecopy, store_document_safer 등.
+> 제품별로 별도 store를 만들면 됩니다: store_drm, store_screen_safer, store_document_safer 등.
 > 질문이 들어오면 먼저 제품 분류 → 해당 store에서만 검색.
 > 이게 해리슨이 말한 Agentic RAG의 라우팅과 자연스럽게 결합됩니다.
 > 단, store당 쿼리 5개 제한이 있으니 store 수는 5개 이하로 유지해야 합니다.
@@ -237,7 +237,7 @@
 > ```
 > [정책기능서 PDF/문서들]
 >     ↓ 업로드
-> [Gemini File Search Store] (제품별 분리: store_drm, store_safecopy, ...)
+> [Gemini File Search Store] (제품별 분리: store_drm, store_screen_safer, ...)
 >     ↓ 자동 chunking + embedding + indexing
 > [Gemini API 호출 시 tool로 연결]
 >     ↓

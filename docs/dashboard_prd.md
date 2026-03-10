@@ -90,7 +90,7 @@ Salesforce Agentforce Command Center 패턴을 레퍼런스로 설계했으며, 
 | `HeroKPICard` | KPI 카드 1개. 아이콘, 값, 단위, 변화량 배지, Before 값 표시 |
 | `CaseHistoryTable` | AI vs 휴먼 처리 이력 테이블. `useMemo`로 필터링, 스크롤 가능(max-h-80) |
 | `MonthlyChart` | 월별 AI/휴먼/진행중 CSS 스택 바 차트. 범례 포함 |
-| `ProductDistribution` | 제품별 AI vs 휴먼 프로그레스 바. 4개 제품(DRM, Document SAFER, SafeCopy, Content SAFER) |
+| `ProductDistribution` | 제품별 AI vs 휴먼 프로그레스 바. 4개 제품(DRM, Document SAFER, Print SAFER, Screen SAFER) |
 | `AgentStatusCards` | AI 에이전트 3개(RAG, Safety, Escalation) 상태 카드. 정확도/응답시간/오늘 처리건 |
 | `EventLog` | 실시간 이벤트 로그. 타입별 컬러 코딩(AI=파랑, 휴먼=주황, Safety=보라) |
 

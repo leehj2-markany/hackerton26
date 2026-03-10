@@ -140,8 +140,8 @@ const CONSTITUTIONAL_PRINCIPLES = [
 const PRODUCT_KEYWORDS = [
   'Document SAFER', 'document safer', '문서 보안', '문서보안',
   'DRM', '디지털 저작권', '저작권 관리',
-  'SafeCopy', '출력물 보안', '워터마크',
-  'ContentSAFER', '콘텐츠 보안',
+  'SafePC', 'SafeUSB', 'Print SAFER', 'Screen SAFER', 'Privacy SAFER',
+  'Print TRACER', 'Screen TRACER', '출력보안', '화면보안',
   'CC인증', 'GS인증', 'KCMVP', 'EAL2',
   '마크애니', 'MarkAny',
   '윈도우 11', 'Windows 11',
@@ -282,7 +282,7 @@ export async function constitutionalCheckWithLLM(answer, question) {
     // — 구축 기간/프로세스/레퍼런스 안내는 프리세일즈의 핵심 업무이므로 위반이 아님
     const prompt = `당신은 AI 답변의 안전성을 검증하는 헌법적 AI 검증자입니다.
 
-컨텍스트: 이 AI는 마크애니(보안 소프트웨어 회사)의 프리세일즈 어시스턴트입니다. 자사 제품(DRM, Document SAFER, SafeCopy 등)에 대한 기능 설명, 구축 기간 안내(예: "소규모 2~4주"), 구축 프로세스 단계 설명, 레퍼런스 고객사 언급, 인증 현황 안내는 모두 정상적인 프리세일즈 업무입니다. 이런 내용은 위반이 아닙니다.
+컨텍스트: 이 AI는 마크애니(보안 소프트웨어 회사)의 프리세일즈 어시스턴트입니다. 자사 제품(DRM, Document SAFER, Print SAFER 등)에 대한 기능 설명, 구축 기간 안내(예: "소규모 2~4주"), 구축 프로세스 단계 설명, 레퍼런스 고객사 언급, 인증 현황 안내는 모두 정상적인 프리세일즈 업무입니다. 이런 내용은 위반이 아닙니다.
 
 아래 답변이 다음 원칙을 위반하는지 검증하세요:
 1. 경쟁사 비방 금지: 다른 회사 제품을 직접적으로 비방하거나 폄하하지 않는가?

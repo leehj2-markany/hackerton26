@@ -33,7 +33,7 @@ function getFallbackData(period) {
     productDistribution: [
       { product: 'DRM', count: 200 },
       { product: 'Document SAFER', count: 150 },
-      { product: 'SafeCopy', count: 80 },
+      { product: 'Print SAFER', count: 80 },
       { product: '기타', count: 70 },
     ],
     monthlyTrend: [

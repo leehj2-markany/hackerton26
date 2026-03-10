@@ -71,8 +71,8 @@ const queries = [
   ['출력물이랑 화면 둘 다 비가시성 워터마크로 추적하고 싶어요', ['Print TRACER', 'Screen TRACER']],
   // 11. 국방 + 암호모듈
   ['국방 환경에서 모바일 보안하면서 KCMVP 암호모듈도 써야 합니다', ['국방모바일보안', 'MACRYPTO V3.0 (KCMVP)']],
-  // 12. 콘텐츠보호 + 출력추적
-  ['영상 콘텐츠 보호하면서 출력물 추적도 하고 싶습니다', ['ContentSAFER', 'Print TRACER']],
+  // 12. 출력추적 + 화면추적
+  ['출력물 추적하면서 화면도 비가시성 워터마크로 추적하고 싶습니다', ['Print TRACER', 'Screen TRACER']],
   // 13. iOS + 모바일캡처
   ['아이폰이랑 안드로이드 둘 다 캡처 방지해야 합니다', ['iScreen SAFER', 'Mobile Capture SAFER']],
   // 14. 외부반출 + DRM
@@ -101,8 +101,8 @@ const queries = [
   ['전자문서 위변조 방지하고 원본 검증하면서 웹에서도 보안 적용하고 싶어요', ['ePage SAFER', 'ePS Document DNA', 'ePage SAFER for Web DRM']],
   // 25. 서버DRM + 클라이언트DRM + 웹
   ['서버 클라이언트 양쪽 DRM 연동하고 웹에서도 보여줘야 합니다', ['Document SAFER I/F (Server)', 'Document SAFER I/F (Client)', 'Web SAFER']],
-  // 26. 출력추적 + 화면추적 + 콘텐츠
-  ['출력물 추적, 화면 추적, 영상 콘텐츠 보호 전부 필요합니다', ['Print TRACER', 'Screen TRACER', 'ContentSAFER']],
+  // 26. 출력추적 + 화면추적 + 화면보안
+  ['출력물 추적, 화면 추적, 화면 캡처 차단 전부 필요합니다', ['Print TRACER', 'Screen TRACER', 'Screen SAFER']],
   // 27. DRM + 외부반출 + USB
   ['문서 암호화하고 협력사 반출 제어하면서 USB도 통제해야 합니다', ['Document SAFER', 'Cowork SAFER', 'SafeUSB']],
   // 28. 국방 + 모바일뷰어 + 암호모듈
@@ -150,7 +150,7 @@ const queries = [
   // 48. 국방 종합 시나리오
   ['군에서 모바일 문서 보안하고 KCMVP 적용하면서 화면 캡처도 방지해야 합니다', ['국방모바일보안', 'MACRYPTO V3.0 (KCMVP)', 'Mobile Capture SAFER']],
   // 49. 방송/미디어 시나리오
-  ['방송사에서 영상 콘텐츠 보호하면서 대본 문서 유출도 막고 출력물도 추적하고 싶습니다', ['ContentSAFER', 'Document SAFER', 'Print TRACER']],
+  ['방송사에서 대본 문서 유출 막고 출력물도 추적하면서 화면 캡처도 방지하고 싶습니다', ['Document SAFER', 'Print TRACER', 'Screen SAFER']],
   // 50. 연구소 종합 보안
   ['연구소에서 연구문서 암호화하고 서버 DRM 연동하면서 화면 캡처 방지랑 출력 추적도 해야 합니다', ['Document SAFER', 'Document SAFER I/F (Server)', 'Screen SAFER', 'Print TRACER']],
 ]
