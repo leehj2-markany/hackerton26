@@ -88,7 +88,8 @@ export default async function handler(req, res) {
     // [P4 수정] analyzeQuestion 1회 호출 후 결과를 generateAnswer에 전달
     // 기존: chat.js에서 analyzeQuestion 1회 + generateAnswer 내부에서 1회 = 2중 호출 (비용 낭비 + 일관성 문제)
     // 수정: chat.js에서 1회 호출 → 결과를 options.preAnalysis로 전달 → generateAnswer에서 재사용
-    const analysis = await analyzeQuestion(message)
+    // [대화 맥락] conversationHistory를 Router에 전달하여 "어쩌라는거죠?" 같은 맥락 의존 질문 처리
+    const analysis = await analyzeQuestion(message, conversationHistory || [])
     const thinkingProcess = ['🤔 질문 분석 중...']
 
     if (customerInfo) {
@@ -111,7 +112,7 @@ export default async function handler(req, res) {
 
     // RAG 검색 수행 및 thinkingProcess에 반영
     const productHint = customerInfo?.product || null
-    const ragResult = searchKnowledge(message, productHint, 3)
+    const ragResult = await searchKnowledge(message, productHint, 3)
     thinkingProcess.push(`📚 지식 베이스 검색 중... ${ragResult.chunks.length}건 발견 (${ragResult.stores?.join(', ') || ''})`)
     ragResult.chunks.forEach((chunk, i) => {
       thinkingProcess.push(`  참조 ${i + 1}: ${chunk.title}`)

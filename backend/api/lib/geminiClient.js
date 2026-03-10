@@ -155,12 +155,19 @@ const ROUTER_PROMPT = `당신은 고객 질문의 복잡도를 판단하고, 서
 - environment: 운영 환경 (예: "망분리", "클라우드", "윈도우 11"). 없으면 null
 - urgency: 긴급도 ("urgent" 또는 "normal"). 장애/사고 언급 시 urgent, 그 외 normal
 
-질문: "{QUESTION}"
+대화 이력 (있으면 맥락 파악에 활용하세요):
+{HISTORY}
+
+현재 질문: "{QUESTION}"
+
+중요: 현재 질문이 "그래서?", "어쩌라는거죠?", "구체적으로" 등 맥락 의존적 표현이면, 반드시 대화 이력에서 제품명/의도/조건을 추출하세요. 현재 질문만 보고 판단하지 마세요.
 
 JSON 응답 (이것만 출력):
 {"complexity":"simple|complex|critical","reason":"판단 근거 한 줄","subQuestions":[{"question":"서브질문 내용","assignee":"담당자 이름","product":"관련 제품명 또는 null"}],"extractedContext":{"product":null,"userScale":null,"intent":null,"environment":null,"urgency":"normal"}}`
 
-export async function analyzeQuestion(question) {
+// [의도] Router에 대화 이력을 전달하여 맥락 의존적 질문("그래서 어쩌라는거죠?")에서도
+// 이전 대화의 제품/의도/조건을 정확히 추출 — 단편적 질문만 보고 판단하는 문제 해결
+export async function analyzeQuestion(question, conversationHistory = []) {
   const client = getClient()
 
   // Gemini 클라이언트 없으면 (DEMO_MODE 등) 간단한 길이 기반 fallback
@@ -169,7 +176,11 @@ export async function analyzeQuestion(question) {
   }
 
   try {
-    const prompt = ROUTER_PROMPT.replace('{QUESTION}', question)
+    // 대화 이력을 Router 프롬프트에 포함 — 최근 4턴만 (토큰 절약)
+    const historyText = conversationHistory.length > 0
+      ? conversationHistory.slice(-4).map(h => `${h.role === 'user' ? '고객' : 'AI'}: ${h.content}`).join('\n')
+      : '(첫 질문입니다)'
+    const prompt = ROUTER_PROMPT.replace('{QUESTION}', question).replace('{HISTORY}', historyText)
     const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' })
     const result = await withTimeout(
       model.generateContent(prompt),
@@ -399,13 +410,13 @@ function evaluateConfidence(question, answer) {
 // LLM 추가 호출 0회 — in-memory RAG만 사용하므로 비용/시간 증가 없음
 const RAG_SCORE_THRESHOLD = 5 // 이 점수 미만이면 "컨텍스트 부족"으로 판단
 
-function enrichRAGForSubQuestions(subQuestions, customerProductHint) {
+async function enrichRAGForSubQuestions(subQuestions, customerProductHint) {
   if (!subQuestions || subQuestions.length === 0) return null
 
-  const enriched = subQuestions.map(sq => {
-    // 서브질문별 product 힌트: Router가 추출한 product > 고객 정보 product > null
+  // [의도] searchKnowledge가 async로 변경됨 → map 콜백도 async + Promise.all 필요
+  const enriched = await Promise.all(subQuestions.map(async (sq) => {
     const productHint = sq.product || customerProductHint || null
-    const ragResult = searchKnowledge(sq.question, productHint, 3)
+    const ragResult = await searchKnowledge(sq.question, productHint, 3)
     const topScore = ragResult.scores?.[0] || 0
     const hasContext = topScore >= RAG_SCORE_THRESHOLD
 
@@ -416,12 +427,11 @@ function enrichRAGForSubQuestions(subQuestions, customerProductHint) {
       ragResult,
       ragContext: formatContext(ragResult),
       topScore,
-      hasContext, // CHECK 논문의 semantic verification proxy
+      hasContext,
       stores: ragResult.stores || [],
     }
-  })
+  }))
 
-  // 전체 서브질문 중 컨텍스트 부족한 것이 있는지 요약
   const insufficientSubs = enriched.filter(e => !e.hasContext)
 
   return {
@@ -531,7 +541,7 @@ export async function generateAnswer(question, customerInfo, conversationHistory
     // [P4 수정] Phase 1: Decompose — chat.js에서 이미 분석했으면 재사용, 아니면 여기서 호출
     // 기존: chat.js + generateAnswer 양쪽에서 analyzeQuestion 2중 호출 → LLM 비용 2배 + 결과 불일치 가능
     // 수정: preAnalysis가 있으면 그대로 사용 (LLM 호출 0회 절약)
-    const analysis = preAnalysis || await analyzeQuestion(question)
+    const analysis = preAnalysis || await analyzeQuestion(question, conversationHistory)
     const thinkingProcess = []
     const isComplex = analysis.complexity === 'complex' && analysis.subQuestions?.length > 0
 
@@ -569,7 +579,7 @@ export async function generateAnswer(question, customerInfo, conversationHistory
       // ═══ DESV 파이프라인: 복합질문 전용 ═══
       // Phase 2: Enrich — 서브질문별 독립 RAG (LLM 호출 0회, ~0ms)
       const customerProductHint = customerInfo?.product || null
-      enrichment = enrichRAGForSubQuestions(analysis.subQuestions, customerProductHint)
+      enrichment = await enrichRAGForSubQuestions(analysis.subQuestions, customerProductHint)
 
       if (enrichment) {
         enrichment.enrichedSubs.forEach((sub, i) => {
@@ -593,7 +603,7 @@ export async function generateAnswer(question, customerInfo, conversationHistory
     if (!prompt) {
       if (!skipRAG) {
         const productHint = customerInfo?.product || null
-        const ragResult = searchKnowledge(question, productHint, 3)
+        const ragResult = await searchKnowledge(question, productHint, 3)
         const ragContext = formatContext(ragResult)
         if (ragContext) {
           contextParts.push(`[지식 베이스 검색 결과 — ${ragResult.stores.join(', ')} 제품]\n${ragContext}`)
@@ -604,7 +614,7 @@ export async function generateAnswer(question, customerInfo, conversationHistory
           const stepBackQ = await takeStepBack(question, client)
           if (stepBackQ) {
             thinkingProcess.push(`🔭 Step Back: "${stepBackQ}"`)
-            const stepBackRag = searchKnowledge(stepBackQ, productHint, 2)
+            const stepBackRag = await searchKnowledge(stepBackQ, productHint, 2)
             const stepBackContext = formatContext(stepBackRag)
             if (stepBackContext) {
               contextParts.push(`[Step Back 추가 검색 결과]\n${stepBackContext}`)

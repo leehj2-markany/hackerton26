@@ -1,7 +1,118 @@
-// 마크애니 제품 지식 베이스 — RAG 검색용 문서 청크
-// 정책기능서 기반 제품별 상세 정보 (File Search Store 시뮬레이션)
+// 마크애니 제품 지식 베이스 — pgvector 시맨틱 검색 + 기존 STORES fallback
+// [의도] 하드코딩 STORES → Supabase pgvector 벡터 검색으로 전환
+// searchKnowledge() 시그니처 유지 → chat.js, geminiClient.js 변경 불필요
+// Supabase 실패 시 기존 in-memory STORES로 자동 fallback (안전망)
+import { createClient } from '@supabase/supabase-js'
+import { GoogleGenerativeAI } from '@google/generative-ai'
+import { ENV } from './config.js'
 
-// ── 제품별 Store 분리 (Gemini File Search Store 패턴) ──
+// ── Supabase + Gemini 임베딩 클라이언트 (lazy init) ──
+let supabase = null
+let embeddingModel = null
+let vectorSearchAvailable = false // 벡터 검색 가용 여부 플래그
+
+function initVectorSearch() {
+  if (supabase) return // 이미 초기화됨
+  try {
+    if (ENV.SUPABASE_URL && ENV.SUPABASE_ANON_KEY) {
+      supabase = createClient(ENV.SUPABASE_URL, ENV.SUPABASE_ANON_KEY)
+    }
+    if (ENV.GEMINI_API_KEY) {
+      const genAI = new GoogleGenerativeAI(ENV.GEMINI_API_KEY)
+      embeddingModel = genAI.getGenerativeModel({ model: 'gemini-embedding-001' })
+    }
+    vectorSearchAvailable = !!(supabase && embeddingModel)
+    if (vectorSearchAvailable) {
+      console.log('[knowledgeBase] ✅ pgvector 검색 초기화 완료')
+    } else {
+      console.log('[knowledgeBase] ⚠️ pgvector 불가 — STORES fallback 사용')
+    }
+  } catch (err) {
+    console.error('[knowledgeBase] pgvector 초기화 실패:', err.message)
+    vectorSearchAvailable = false
+  }
+}
+
+// ── 쿼리 임베딩 생성 ──
+async function generateQueryEmbedding(query) {
+  const result = await embeddingModel.embedContent({
+    content: { parts: [{ text: query }] },
+    taskType: 'RETRIEVAL_QUERY',
+  })
+  return result.embedding.values
+}
+
+// ── pgvector 시맨틱 검색 ──
+async function vectorSearch(query, productHint, topK) {
+  const embedding = await generateQueryEmbedding(query)
+
+  // 제품 힌트가 있으면 필터 적용
+  const filter = {}
+  if (productHint) {
+    // productHint를 제품명 또는 제품군으로 매핑
+    const hint = productHint.toLowerCase()
+    if (hint.includes('drm') || hint.includes('document safer') || hint.includes('문서 보안')) {
+      filter.product_group = 'DRM 제품군'
+    } else if (hint.includes('dlp') || hint.includes('safepc') || hint.includes('safeusb')) {
+      filter.product_group = 'DLP 제품군'
+    } else if (hint.includes('tracer')) {
+      filter.product_group = 'TRACER 제품군'
+    } else if (hint.includes('epage') || hint.includes('content') || hint.includes('응용')) {
+      filter.product_group = '응용보안 제품군'
+    }
+  }
+
+  const { data, error } = await supabase.rpc('match_knowledge', {
+    query_embedding: embedding,
+    match_count: topK,
+    filter: Object.keys(filter).length > 0 ? filter : {},
+  })
+
+  if (error) {
+    console.error('[vectorSearch] RPC 실패:', error.message)
+    return null
+  }
+
+  if (!data || data.length === 0) {
+    // 필터가 있었으면 필터 없이 재시도
+    if (Object.keys(filter).length > 0) {
+      console.log('[vectorSearch] 필터 결과 없음 → 전체 검색 재시도')
+      const { data: retryData, error: retryErr } = await supabase.rpc('match_knowledge', {
+        query_embedding: embedding,
+        match_count: topK,
+        filter: {},
+      })
+      if (retryErr || !retryData?.length) return null
+      return retryData
+    }
+    return null
+  }
+
+  return data
+}
+
+// ── 벡터 검색 결과 → searchKnowledge 반환 형식으로 변환 ──
+function formatVectorResults(vectorData) {
+  const chunks = vectorData.map(row => ({
+    id: `vec-${row.id}`,
+    title: row.metadata?.title || row.metadata?.product_name || '제품 정보',
+    content: row.content,
+    keywords: [row.metadata?.product_name, row.metadata?.product_group].filter(Boolean),
+  }))
+
+  const stores = [...new Set(vectorData.map(r => r.metadata?.product_name).filter(Boolean))]
+  const scores = vectorData.map(r => Math.round((r.similarity || 0) * 100))
+
+  return {
+    chunks,
+    stores,
+    scores,
+    totalSearched: vectorData.length,
+    searchType: 'vector', // 디버깅용: 어떤 검색 방식이 사용되었는지
+  }
+}
+
+// ── 기존 제품별 Store (fallback용 — pgvector 실패 시 사용) ──
 export const STORES = {
   drm: {
     id: 'store_drm',
@@ -199,6 +310,7 @@ export function rerankResults(query, searchResults, topK = 3) {
     scores: top.map(r => r.score),
     totalSearched: searchResults.totalSearched,
     reranked: true,
+    searchType: searchResults.searchType || 'keyword',
   }
 }
 
@@ -214,10 +326,10 @@ function generateBigrams(tokens) {
 }
 
 
-// ── RAG 검색 엔진 (Gemini File Search 시뮬레이션) ──
+// ── RAG 검색 엔진 ──
 
 /**
- * 제품명으로 Store 선택
+ * 제품명으로 Store 선택 (fallback용)
  */
 export function selectStore(productName) {
   const normalized = (productName || '').toLowerCase()
@@ -229,17 +341,43 @@ export function selectStore(productName) {
 }
 
 /**
- * 키워드 기반 시맨틱 검색 (TF-IDF 경량 시뮬레이션)
+ * 시맨틱 검색 (pgvector 우선, 실패 시 키워드 fallback)
+ * [의도] 함수 시그니처 유지 → chat.js, geminiClient.js 변경 불필요
  * @param {string} query - 검색 쿼리
  * @param {string|null} productHint - 제품 힌트 (있으면 해당 Store 우선)
  * @param {number} topK - 반환할 최대 청크 수
  * @returns {{ chunks: Array, stores: string[], scores: Array }}
  */
-export function searchKnowledge(query, productHint = null, topK = 3) {
+export async function searchKnowledge(query, productHint = null, topK = 3) {
+  // lazy init
+  initVectorSearch()
+
+  // ── 1차: pgvector 시맨틱 검색 시도 ──
+  if (vectorSearchAvailable) {
+    try {
+      const vectorData = await vectorSearch(query, productHint, topK)
+      if (vectorData && vectorData.length > 0) {
+        const result = formatVectorResults(vectorData)
+        // 벡터 검색 결과에도 재랭킹 적용 (키워드 매칭 보너스 추가)
+        return rerankResults(query, result, topK)
+      }
+      console.log('[searchKnowledge] 벡터 검색 결과 없음 → fallback')
+    } catch (err) {
+      console.error('[searchKnowledge] 벡터 검색 실패:', err.message, '→ fallback')
+    }
+  }
+
+  // ── 2차: 기존 in-memory 키워드 검색 (fallback) ──
+  return searchKnowledgeFallback(query, productHint, topK)
+}
+
+/**
+ * 기존 키워드 기반 검색 (fallback)
+ */
+function searchKnowledgeFallback(query, productHint = null, topK = 3) {
   const queryTokens = tokenize(query)
   const results = []
 
-  // 제품 힌트가 있으면 해당 Store 우선 검색
   const stores = productHint
     ? [selectStore(productHint), ...Object.values(STORES).filter(s => s.product !== productHint)]
     : Object.values(STORES)
@@ -252,7 +390,6 @@ export function searchKnowledge(query, productHint = null, topK = 3) {
     }
   }
 
-  // 점수 내림차순 정렬 후 topK 반환
   results.sort((a, b) => b.score - a.score)
   const topResults = results.slice(0, topK)
 
@@ -261,9 +398,9 @@ export function searchKnowledge(query, productHint = null, topK = 3) {
     stores: [...new Set(topResults.map(r => r.store))],
     scores: topResults.map(r => r.score),
     totalSearched: results.length,
+    searchType: 'keyword',
   }
 
-  // RA-RAG Lite: 자동 재랭킹 적용
   return rerankResults(query, rawResult, topK)
 }
 
@@ -280,7 +417,6 @@ export function formatContext(searchResult) {
 // ── 내부 유틸리티 ──
 
 function tokenize(text) {
-  // 한국어 + 영어 토큰화 (공백 + 조사 분리)
   return (text || '').toLowerCase()
     .replace(/[^\w가-힣\s]/g, ' ')
     .split(/\s+/)
@@ -293,17 +429,14 @@ function computeRelevance(queryTokens, chunk) {
 
   let score = 0
   for (const token of queryTokens) {
-    // 정확 매칭
     if (chunkTokens.has(token)) {
       score += 2
     }
-    // 부분 매칭 (키워드에 포함)
     for (const kw of (chunk.keywords || [])) {
       if (kw.toLowerCase().includes(token) || token.includes(kw.toLowerCase())) {
-        score += 3 // 키워드 매칭은 가중치 높음
+        score += 3
       }
     }
-    // 본문 부분 매칭
     if (chunkText.includes(token)) {
       score += 1
     }

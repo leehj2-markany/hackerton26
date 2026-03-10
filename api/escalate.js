@@ -112,7 +112,7 @@ export default async function handler(req, res) {
       // RAG 검색으로 참조 근거 추출 (내부 담당자용)
       let references = []
       try {
-        const ragResult = searchKnowledge(question, null, 3)
+        const ragResult = await searchKnowledge(question, null, 3)
         references = ragResult.chunks.map(c => ({
           title: c.title,
           snippet: c.content?.slice(0, 150) || '',
