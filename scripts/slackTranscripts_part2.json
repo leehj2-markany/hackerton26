@@ -1,0 +1,12 @@
+[
+  {"customer": "더불어민주당", "transcript": "FETCH_FAILED"},
+  {"customer": "투데이시스템즈", "transcript": "FETCH_FAILED"},
+  {"customer": "드림넷", "transcript": "FETCH_FAILED"},
+  {"customer": "국방", "transcript": "FETCH_FAILED"},
+  {"customer": "미래엠텍", "transcript": "FETCH_FAILED"},
+  {"customer": "리얼타임비쥬얼", "transcript": "FETCH_FAILED"},
+  {"customer": "제이티트러스트1", "transcript": "FETCH_FAILED"},
+  {"customer": "제이티트러스트2", "transcript": "FETCH_FAILED"},
+  {"customer": "나노팀", "transcript": "FETCH_FAILED"},
+  {"customer": "보건연구원", "transcript": "FETCH_FAILED"}
+]
