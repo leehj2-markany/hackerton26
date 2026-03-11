@@ -4,7 +4,7 @@
 > 테스트 스크립트: `scripts/testVectorSearchFull.mjs`
 > 임베딩 모델: `gemini-embedding-001` (3072차원)
 > 검색 방식: Supabase pgvector `match_knowledge` RPC (코사인 유사도)
-> 총 청크 수: 37개 (SHEET_PRODUCTS 28 + LEGACY_CHUNKS 9)
+> 총 청크 수: 54개 (SHEET_PRODUCTS 28 + HYPERLINK_CHUNKS 17 + LEGACY_CHUNKS 9)
 
 ## 결과 요약
 
