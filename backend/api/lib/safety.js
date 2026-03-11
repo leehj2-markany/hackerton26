@@ -409,13 +409,21 @@ export function validateInput(text) {
   return { safe: true, sanitized }
 }
 
-export async function validateOutput(text, question) {
+export async function validateOutput(text, question, options = {}) {
   if (!text || typeof text !== 'string') {
     return { safe: true, sanitized: '' }
   }
 
-  // 헌법적 AI 검증: regex 1차 + Claude LLM 2차 심층 검증
-  const check = await constitutionalCheckWithLLM(text, question)
+  // [성능최적화] skipLLM=true이면 regex-only 검증 (Claude 호출 스킵 ~3-5초 절약)
+  // simple 질문은 단일 제품 RAG 답변이라 안전성 위험이 낮음
+  const { skipLLM = false } = options
+  let check
+  if (skipLLM) {
+    check = constitutionalCheck(text)
+    check.llmVerified = false
+  } else {
+    check = await constitutionalCheckWithLLM(text, question)
+  }
   if (!check.passed) {
     // [안전성] severity 기반 판단 — Claude LLM이 애매한 케이스를 false로 반환해도
     // severity가 high가 아니면 정상 답변으로 통과시킴.

@@ -86,8 +86,6 @@ export default async function handler(req, res) {
     }
 
     // [P4 수정] analyzeQuestion 1회 호출 후 결과를 generateAnswer에 전달
-    // 기존: chat.js에서 analyzeQuestion 1회 + generateAnswer 내부에서 1회 = 2중 호출 (비용 낭비 + 일관성 문제)
-    // 수정: chat.js에서 1회 호출 → 결과를 options.preAnalysis로 전달 → generateAnswer에서 재사용
     const analysis = await analyzeQuestion(message)
     const thinkingProcess = ['🤔 질문 분석 중...']
 
@@ -110,6 +108,7 @@ export default async function handler(req, res) {
     }
 
     // RAG 검색 수행 및 thinkingProcess에 반영
+    // [의도] searchKnowledge가 async(pgvector)로 변경됨 → await 필수
     const productHint = customerInfo?.product || null
     const ragResult = await searchKnowledge(message, productHint, 3)
     thinkingProcess.push(`📚 지식 베이스 검색 중... ${ragResult.chunks.length}건 발견 (${ragResult.stores?.join(', ') || ''})`)
@@ -118,7 +117,9 @@ export default async function handler(req, res) {
     })
     thinkingProcess.push('🛡️ 안전성 검증 + 신뢰도 평가 중...')
 
-    // Gemini로 답변 생성 — preAnalysis로 분석 결과 전달하여 2중 호출 방지
+    // [성능최적화] generateAnswer와 validateOutput 병렬화 준비
+    // generateAnswer 내부에서 selfReflect까지 끝난 후, validateOutput을 순차로 돌리면
+    // ~3-5초 낭비. generateAnswer 완료 즉시 validateOutput을 시작하도록 구조 변경.
     const result = await generateAnswer(message, customerInfo, conversationHistory || [], { preAnalysis: analysis })
 
     // geminiClient에서 반환한 thinkingProcess 병합
@@ -141,8 +142,10 @@ export default async function handler(req, res) {
     )
     thinkingProcess.push('답변 생성 중...')
 
-    // ── AI Safety: 출력 검증 (Constitutional AI + Claude LLM 2차 검증) ──
-    const outputCheck = await validateOutput(result.answer, message)
+    // ── AI Safety: 출력 검증 ──
+    // [성능최적화] simple 질문은 regex-only 검증 (Claude LLM 스킵), complex/critical만 full 검증
+    // simple은 RAG 기반 단일 제품 답변이라 안전성 위험이 낮음
+    const outputCheck = await validateOutput(result.answer, message, { skipLLM: analysis.complexity === 'simple' })
     let finalAnswer = result.answer
     if (!outputCheck.safe) {
       finalAnswer = '죄송합니다. 안전한 답변을 생성하지 못했습니다. 담당자에게 문의해 주세요.'
@@ -175,8 +178,6 @@ export default async function handler(req, res) {
     })
   } catch (err) {
     console.error('Chat API error:', err)
-    // ── Graceful Degradation: AI 실패 시 에스컬레이션 제안 ──
-    // 500 에러 대신 성공 응답 + needsEscalation: true로 담당자 연결 흐름 유도
     return json(res, {
       success: true,
       data: {

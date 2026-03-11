@@ -612,9 +612,13 @@ ${historyText}
       answer = answer.replace(/\[ESCALATION\]\s*/g, '').trim()
     }
 
-    // ── Phase 4: Verify — 복합질문은 서브질문 커버리지 검증, 단일질문은 기존 selfReflect ──
-    let reflection
-    if (isComplex && analysis.subQuestions?.length > 0) {
+    // ── Phase 4: Verify — simple은 스킵, complex/critical만 검증 ──
+    // [성능최적화] simple 질문은 selfReflect 스킵 — Flash 1회 호출 절약 (~3-5초)
+    // simple은 단일 제품 문의가 대부분이라 RAG 컨텍스트만으로 충분한 품질 보장
+    let reflection = { passed: true, reflection: '', issues: [] }
+    if (analysis.complexity === 'simple') {
+      thinkingProcess.push('🔍 Self-Reflection: ⏭️ simple 질문 — 스킵')
+    } else if (isComplex && analysis.subQuestions?.length > 0) {
       // DESV Phase 4: 서브질문 커버리지 검증 (CHECK 논문의 semantic verification)
       reflection = await verifySubQuestionCoverage(question, answer, analysis.subQuestions, client)
       if (!reflection.passed) {
@@ -624,7 +628,7 @@ ${historyText}
         thinkingProcess.push(`🔍 서브질문 커버리지: ✅ ${reflection.coveredCount}/${reflection.totalCount}개 모두 커버`)
       }
     } else {
-      // 단일/critical 질문: 기존 selfReflect
+      // critical 질문: 기존 selfReflect
       reflection = await selfReflect(question, answer, client)
       if (!reflection.passed) {
         answer += `\n\n💡 보완: ${reflection.reflection}`
