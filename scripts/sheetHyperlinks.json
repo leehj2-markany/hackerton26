@@ -1,0 +1,101 @@
+[
+  {
+    "product_name": "Document SAFER (MS오피스 DRM & MIP 저장 정책)",
+    "doc_title": "MS오피스 로컬 & 클라우드 저장 정책",
+    "doc_url": "https://docs.google.com/spreadsheets/d/1KxGMwZd9bdtYF7WZaUhkmIhc2KTLhlTpmDR4esP_OwY/edit?gid=0#gid=0",
+    "content": "MS오피스 로컬 & 클라우드 저장 정책 - 구독형 오피스(M365)와 설치형 오피스(~Office 2021)에 대한 DRM/MIP 정책 정의. DRM만 사용 시와 로컬 DRM & 클라우드 MIP 사용 시의 저장 정책을 구분. 클라우드 저장 금지/허용에 따른 동작 정의: 로컬→로컬(DRM 암호화), 로컬→클라우드(저장 차단 또는 MIP 암호화), 클라우드→로컬(DRM+MIP 이중 암호화), 클라우드→클라우드(저장 차단 또는 MIP 암호화). 관련 정책키: DS_DRM_WITH_MIP(0:DRM만, 1:로컬DRM&클라우드MIP), DS_ALLOW_CLOUD(0:금지, 1:허용), TEAMS_SUPPORT_TYPE, QDRM_EX_n_EXT. MIP 지원확장자: docx|docm|dotx|dotm|xlsx|xlsm|xltx|xltm|pptx|pptm|potx|potm. 파워포인트는 MIP 암호화만 가능(DRM암호화 실패 케이스 존재).",
+    "depth": 1,
+    "source_cell": "O5",
+    "file_id": "1KxGMwZd9bdtYF7WZaUhkmIhc2KTLhlTpmDR4esP_OwY"
+  },
+  {
+    "product_name": "ES SAFER / Document SAFER / Privacy SAFER / Print SAFER / Screen SAFER / Cowork SAFER / Web SAFER / DataLoss SAFER",
+    "doc_title": "IST_표준기능정의서 (Google Sheets 버전)",
+    "doc_url": "https://docs.google.com/spreadsheets/d/1eR74n1FlDsiGL3w3oPiSYkWUeHCwNr676-f4ASwlg68/edit",
+    "content": "마크애니 ES SAFER 제품군 전체 기능정의서. 제품별 시트 구성: Document SAFER(Green/Blue3) - 관리자 기본관리(사용자/부서/결재/OEP/시스템), 정책관리(전사정책: 문서교환/오프라인/화면캡처방지/원격제어/시간동기화/DRM삭제/블록복사/배치암호화/자동암호화/워터마크), 예외정책, 반출정책, 이력조회(사용/반출/설치/배치), 에이전트(로그인/결제신청/알림/패스워드/컨텍스트메뉴/트레이메뉴). QDRM_EX - 실시간 암호화 정책(프로세스 감시, 파일 포맷 비교, 저장매체 대상). Print SAFER - 마스터정책(워터마크 이미지/텍스트), 전사정책(출력허용/워터마크/로그/개인정보검출), 세팅정책(프린터/포트/프로세스/IP 허용금지). Privacy SAFER - 기본정책(CPU점유율/메모리/격리폴더/동작모드), 예약검사/수동검사/실시간검사(필터목록/처리방식/확장자/경로). Screen SAFER - 차단정책(캡처차단+워터마크), 스크린워터마크(텍스트/이미지/농도/위치/각도), 접근탐지(원격감지), 프로세스/URL 워터마크. DataLoss SAFER(USB보안) - 매체제어(병렬포트/IEEE1394/이동식저장장치/안드로이드/아이폰/CD-DVD/Bluetooth/시리얼포트). Web SAFER - URL보호/저장/편집/인쇄/소스보기/캡처/원격프로그램/워터마크/클립보드/확장프로그램 제어. Cowork SAFER - 외부반출 변환(MASDOC/ZIP/EXE), 서버인증/로컬인증, 권한상세설정(저장/열람/인쇄/블록복사/화면캡처/사용기한).",
+    "depth": 1,
+    "source_cell": "E5 (IST_표준기능정의서 - Drive 검색)",
+    "file_id": "1eR74n1FlDsiGL3w3oPiSYkWUeHCwNr676-f4ASwlg68"
+  },
+  {
+    "product_name": "ES SAFER / Document SAFER / Privacy SAFER / Print SAFER / Screen SAFER",
+    "doc_title": "IST_표준기능정의서.xlsx (Excel 버전)",
+    "doc_url": "https://docs.google.com/spreadsheets/d/1Z_PuhHUg1xjAtnEvbkX8qv50dpWJ9iSX/edit",
+    "content": "마크애니 IST 표준기능정의서 Excel 버전. Document SAFER Green/Blue3 상세 기능: 관리자 기본관리(사용자등록/검색/인사연동/부서관리/결재관리/OEP관리/시스템관리), 정책관리 전사정책(문서교환-사내한/개인한/부서한, 오프라인정책, 화면캡처방지, 원격제어툴, 시간동기화, DRM삭제, 가상프린터인쇄방지, 블록복사방지, 백업파일생성, 배치암호화-확장자/예외폴더/동작시간/실행스케줄/실행방식, 암호화툴, 자동암호화, 출력물워터마크정책-로고/출력정보/Copyright/텍스트이미지), 예외정책, 반출정책(사후확인/자가승인/사전승인, 업로드허용사이즈/개수, 다운로드기간/횟수), 이력조회(사용이력/반출이력/설치현황/배치툴이력), 이력통계(반출/사용통계). 에이전트: 로그인후화면숨기기, 자동로그아웃, 결제신청(복호화/PC반출), 알림조회, 패스워드변경, 컨텍스트메뉴(암호화파일속성/문서암호화), 트레이메뉴(로그인/OEP로그인/로그아웃/정책업데이트/종료), 배치암호화툴.",
+    "depth": 1,
+    "source_cell": "E5 (IST_표준기능정의서 - Drive 검색)",
+    "file_id": "1Z_PuhHUg1xjAtnEvbkX8qv50dpWJ9iSX"
+  },
+  {
+    "product_name": "Print SAFER",
+    "doc_title": "IST_표준기능정의서_PrintSAFER.xlsx",
+    "doc_url": "https://docs.google.com/spreadsheets/d/1T2VZcWywtyeJRSjk3UbuXThUfcjMZHag/edit",
+    "content": "Print SAFER 전용 표준기능정의서. Super관리자 마스터정책: 워터마크 타입(이미지/텍스트이미지/텍스트다이렉트/외곽선텍스트), 출력형식/위치(X,Y좌표 0~100)/각도(0~360)/출력개수(1x1,2x2,4x4)/분할단위(1~5)/DIB농도(-5~5)/워터마크농도(0~10)/이미지확대/이미지파일(bmp,jpg,png). 텍스트워터마크: 폰트/크기X축Y축/색상(RGB)/속성(보통/두껍게/이태릭/밑줄)/내용(자동입력-출력자ID/이름/부서/직위/IP/MAC/PC명/문서명/출력일시/프린터명 등). 세팅정책: 인쇄허용/금지, 워터마크허용/금지(프린터/포트/프로세스/IP 리스트). 전사정책 공통: 출력허용여부, 로그인상태체크, 워터마크사용여부, PDF워터마크삽입, 컬러프린터PS방식, 토너절약, Agent삭제허용, 개인정보검출/마스킹/로그저장, 프린터별농도설정, 프린트로그생성, 로그파일암호화, 이미지로그(타입/시작종료페이지), 텍스트로그(타입/시작종료페이지). 지원 어플리케이션: MS-Office(2003~2024), Adobe Acrobat(6.0~25.0), PDF Pro5, PDF XChange, Xodo, Word, Notepad++, ezPDFReader, Polaris Office.",
+    "depth": 1,
+    "source_cell": "E5 (IST_표준기능정의서_PrintSAFER - Drive 검색)",
+    "file_id": "1T2VZcWywtyeJRSjk3UbuXThUfcjMZHag"
+  },
+  {
+    "product_name": "Document SAFER / Print SAFER / Screen SAFER / Privacy SAFER 등 전 제품",
+    "doc_title": "ES사업부_제품개발팀_제품별_모듈담당자_V2.0",
+    "doc_url": "https://docs.google.com/spreadsheets/d/1sB-fhoSu3tsIUF5mQVsrKQc4bN-s_3-X2F2aoHFf9BU/edit",
+    "content": "마크애니 ES사업부 제품개발팀 제품별 모듈 담당자 목록. 제품명/제품버전/모듈명/모듈버전/지원OS/지원플랫폼/빌드환경/담당파트/담당자/기능설명/Git경로 포함. Document SAFER: 서버DRM(Unix/Linux) - MA_PMS/MA_DDS/MA_DEC/MA_FILECHK(양정욱,1파트), 다양한 cipher 버전(51014/multi ccf/3.0/3.1/4.0/C2010R1/C2010R2,R3/blue/cipher2017/nx), 온나라1.0/2.0 인터페이스, 자바코어, Agent(조규선,1파트) - MAAgent.exe(R3/Blue/NX/eGov&Json/금융권), 라이브업데이트(DSU_ServiceV6/DSU_LiveUpdateV6), 수동암호화툴(CipherToolPlus/DeCipherToolPlus), 배치툴(BatchEncDec), 서버인터페이스(MaFileCipherXU/DSFileCipherX), WebSocket SSO, FileServer SAFER(FSSConfig/MFWorker/FSLogger/MFScanner). Print SAFER: v3(MPSAgent/MPS_Core/MPS_Policy_Helper/MPS_SSL_Helper/MPSLog/MPS_PDFConv/MPS_Print/MPS_WM), v4(PS_Control/PS_Log/PS_Watermark/MPSAgent/mps_plugin/PS_Approval/PS_Policy/MPS_Service). Screen SAFER: v2(ScreenSAFER2/MASSFH/ScreenSAFER_SA), CaptureSAFER용(MCS_ScreenSAFER2). Privacy SAFER: v2(PSRAgent/PSR_Core/PSRConfig/PSRPolicy), v3(QPrSfAgent/QPrSfUI/QPrSfScan/QPrSfSvc), v3.1(QPrSfAgent/QPrSfUI/QPrSfScan/QPrSfTaskManager/EvtNotifier), 커널드라이버(mapsftii.sys). Image SAFER: v4/v5(ImageSAFERSvc/ImageSAFERStart/ImageSAFERMgr/ImageSAFERFilter). Web SAFER: v4(WebSAFERControlAX/WebSAFERIE6~11/WSChrome), NonActiveX(mawssvc/mawsmgr). QDRM: v2(mafmftii.sys/QDRM_EX_Agent/QDRM_EX_Core). 웹파트: WEB-BLUE/WEB-ESPRESSO/SERVICE-INTEGRATION/TAKEOUT/PROCESS/LOG/TIMER/RETURNKEY.",
+    "depth": 1,
+    "source_cell": "K5/L5 (ES사업부_제품개발팀_제품별_모듈담당자 - Drive 검색)",
+    "file_id": "1sB-fhoSu3tsIUF5mQVsrKQc4bN-s_3-X2F2aoHFf9BU"
+  },
+  {
+    "product_name": "ES SAFER 전 제품 / SafePC / SafeUSB",
+    "doc_title": "프로젝트_스펙정의서_v2.4.xlsx",
+    "doc_url": "https://docs.google.com/spreadsheets/d/1GyZQlROU73HC4NnLkUdwAJyaC5H54BQ0/edit",
+    "content": "마크애니 프로젝트 사전환경 조사서 템플릿. ES SAFER(DRM) 시트: 프로젝트정보(코드/기간/영업담당/수행형태/환경), 고객정보, 계약제품(Document SAFER BLUE3/Print SAFER 4.0/Privacy SAFER 3.1/Screen SAFER/Mobile Docs), 서버정보(표준OS: Ubuntu Linux, DB: MariaDB, WAS: Tomcat, 이중화 Active-Active/Standby), 클라이언트정보(지원OS Win10/11, VDI/물리PC, 유저수, 망구분), 타SW운영정보(AD/백신/DLP/문서중앙화/개인정보보호/키보드보안), 고객요구사항. SafePC(DLP) 시트: 서버정보(OS: RedHat9.4/Rocky9.4, 이중화: LifeKeeper만 사용), 클라이언트(출력물보안 대상 Application, 개인정보 마스킹), 네트워크정보, 연동정보(그룹웨어/로그인/DRM). Print SAFER 시트: OA Application 목록, 옵션정보(개인정보 마스킹/OCR/텍스트로그/이미지로그). Screen SAFER 시트: 적용대상(모니터/Application/업무시스템), TRACER 수록정보, 캡처방지/이력. Privacy SAFER 시트: 개인정보 종류(주민번호/외국인번호/계좌번호/전화번호), OCR 필요여부. 공통: 사용포트정의(ssh:22, 관리자Web:8080/8443, Agent로그인:40001, 로그:40002, 시간동기화:40003, 프로세스:40004, 반출:40005, 개인정보로그:40006, 라이브업데이트:40007, SafePC포트:10443/5436/5437/5500/5555/5562/5566/8977/9009/9080), 인사연동(AD/DB-to-DB/CSV, 테이블: HR_SYNC_USER/HR_SYNC_DEPT/HR_SYNC_POSI/HR_SYNC_APP), 로그인연동(수동/AD-LDAP/AD-Windows계정/SSO).",
+    "depth": 1,
+    "source_cell": "G4~G25 (프로젝트_스펙정의서 - Drive 검색)",
+    "file_id": "1GyZQlROU73HC4NnLkUdwAJyaC5H54BQ0"
+  },
+  {
+    "product_name": "ES SAFER (Document SAFER / Print SAFER / Privacy SAFER / Screen SAFER)",
+    "doc_title": "DRM_서버_환경_스펙_250610.xlsx",
+    "doc_url": "https://docs.google.com/spreadsheets/d/1ITHOviKSv5PeDRXzqqn-4s4x0ynnkr_4/edit",
+    "content": "DRM 서버 환경 스펙 정의서. User수 기반 서버 하드웨어 스펙 가이드. Document SAFER: 540~40000 User별 CPU/Memory/HDD 스펙(540User: Xeon 2.1GHz 8Core/16GB, 40000User: Xeon Gold 2.3GHz 16Core/64GB). Print SAFER: 1000~40000 User별 스펙(출력로그 관리에 따른 HDD DATA 추가 필요). Privacy SAFER: 1000~40000 User별 스펙. Screen SAFER/TRACER: 2000~50000 User별 스펙(현대자동차 50000User 운영서버 2중화 사례 포함). 공통환경: Ubuntu 22.04, MariaDB 10.4이상, OpenJDK 1.8, Tomcat 8이상. 이중화 구성 시 L4 로드밸런싱 필요.",
+    "depth": 2,
+    "source_cell": "H5~H10 (HW_SPEC 폴더 내)",
+    "file_id": "1ITHOviKSv5PeDRXzqqn-4s4x0ynnkr_4"
+  },
+  {
+    "product_name": "SafePC Enterprise",
+    "doc_title": "SafePC v8.0 관리시스템 요구명세서_v0.9",
+    "doc_url": "https://docs.google.com/document/d/1Sit1uK2aQhn2AOYxjukEWFsUIHuLa393R58VOmq7LyI/edit",
+    "content": "SafePC Enterprise v8.0 관리시스템 요구명세서. MSA/Docker 기반 웹 관리시스템. 주요기능: 사용자인증(JWT), 환경설정(라이선스/서브시스템/접속/인사연동/로그인관리), 조직관리(기업체/부서/사용자/결재), 정책관리(네트워크-사이트차단/메신저차단/공유디렉터리, 디바이스-매체별허용차단, 프린터-가시성/비가시성/개인정보마스킹, 자동암호화, 프로그램실행차단, 클립보드, 캡처방지, PC설정, 개인정보-검출/실시간/격리), 로그관리. 서버: Rocky Linux 9.4/RHEL 9.x, 클라이언트: Windows 10+/MacOS 10+, 브라우저: Chrome/Edge.",
+    "depth": 2,
+    "source_cell": "E24 (SAFEPC_정책정의서 참조)",
+    "file_id": "1Sit1uK2aQhn2AOYxjukEWFsUIHuLa393R58VOmq7LyI"
+  },
+  {
+    "product_name": "SafePC Enterprise",
+    "doc_title": "SafePC Enterprise V7.0 매뉴얼(관리자) v0.2",
+    "doc_url": "https://docs.google.com/document/d/1tM5Lc6Ics8La22uh4ZBhg02A5nrardAm/edit",
+    "content": "SafePC Enterprise V7.0 관리자 매뉴얼. 보안관리: PC보안(방화벽/웹차단/컨텐츠업로드차단/웜차단/네트워크로그/매체제어-플로피/CD/USB/PDA/스마트폰/무선랜/HSDPA/WIBRO/테더링/프린트통제/프로그램실행차단/PC설정제어/BAD USB), 개인정보보호(패턴관리-정규식/키워드, 등급관리, 정책관리, 알림관리, 보안정책적용-기본/그룹/직위/개별), 보조기억매체관리(일반저장매체 등록/배포/회수/불용처리), 공유폴더통제. 자산관리: SW/HW관리, 라이센스관리. 감사로그: PC보안/개인정보보호/보조기억매체/신청이력/운영로그. 보고서: Agent설치현황/패턴등급통계/검출현황/매체제어현황.",
+    "depth": 2,
+    "source_cell": "F24 (SafePC Enterprise V7.0 매뉴얼)",
+    "file_id": "1tM5Lc6Ics8La22uh4ZBhg02A5nrardAm"
+  },
+  {
+    "product_name": "ES SAFER 전 제품 (Document SAFER / Print SAFER / Privacy SAFER / Screen SAFER / Web SAFER / Cowork SAFER / DataLoss SAFER / QDRM_EX)",
+    "doc_title": "마크애니_DRM_SW_표준기능정의서.xlsx",
+    "doc_url": "https://docs.google.com/spreadsheets/d/17KhfAC6c-Vpp89nWvkidsQhFrn8bIy25/edit",
+    "content": "마크애니 DRM SW 표준기능정의서. 제품별 상세 기능 시트 구성: Document SAFER Green/Blue3(관리자-사용자/부서/결재/OEP/시스템관리, 정책-문서교환/오프라인/캡처방지/원격제어/시간동기화/DRM삭제/블록복사/배치암호화/자동암호화/워터마크, 예외정책, 반출정책, 이력조회/통계, 에이전트), QDRM_EX(실시간암호화-프로세스감시/파일포맷비교/저장매체대상/오프라인정책, 프로세스정책), Print SAFER(Super관리자 마스터정책-워터마크타입/출력형식/위치/각도/개수/농도, 세팅정책-인쇄허용금지/워터마크허용금지/프린터/포트/프로세스/IP, 전사정책-출력허용/로그인체크/워터마크/PDF삽입/개인정보검출마스킹/이미지텍스트로그), Privacy SAFER(기본정책-CPU점유율/메모리/격리폴더/동작모드, 예약검사/수동검사/실시간검사-필터목록/처리방식/확장자/경로), Screen SAFER(차단정책-캡처차단+워터마크, 스크린워터마크-텍스트/이미지/농도/위치/각도, 접근탐지-원격감지, 프로세스/URL워터마크), DataLoss SAFER(매체제어-병렬포트/IEEE1394/이동식저장장치/안드로이드/아이폰/CD-DVD/Bluetooth/시리얼포트), Web SAFER(URL보호/저장/편집/인쇄/소스보기/캡처/원격프로그램/워터마크/클립보드/확장프로그램 제어), Cowork SAFER(외부반출변환-MASDOC/ZIP/EXE, 서버인증/로컬인증, 권한상세설정).",
+    "depth": 2,
+    "source_cell": "E4 ((PQG_QAT)_ES SAFER_표준기능정의서 참조)",
+    "file_id": "17KhfAC6c-Vpp89nWvkidsQhFrn8bIy25"
+  },
+  {
+    "product_name": "ES SAFER 전 제품 (Document SAFER / Print SAFER / Privacy SAFER / Screen SAFER / QDRM_EX)",
+    "doc_title": "[IST]정책정의서_v1",
+    "doc_url": "https://docs.google.com/spreadsheets/d/1K418mxEs1VwE1ulyvlCMyzNStjx2daG60_WJL3eZ7PI/edit",
+    "content": "ES SAFER 제품별 정책정의서 인덱스. 20개 이상의 시트로 구성된 상세 정책 정의서. 제품별 정책 시트: Json2019(표준)/espresso(표준)/Blue2(표준)/Blue_web(표준)/NX_web(표준)/ExchangePolicy/MADRMAgent/ESAgent/배치암호화툴/CipherTool/MASHLMGR/MaPrint옵션/LocalPolicy/자동암호화번호/PrintSAFER_WEB/Privacy SAFER 3.1_web_Blue/Privacy SAFER 3.1_web_ESPRESSO/ScreenSAFER_2.0_WEB/QDRM_EX_WEB/MIP정책정의서/ES SAFER정책정의서. 참고시트: 표준모듈리스트/DocSAFER 2019 설정값사용현황/구CCF정책정의서/스크린세이퍼정책정의서(2.0/3.0)/개인정보QPRSF정책정의서/QDRM정책/PrintSAFER정책정의서/제품담당자리스트/Espresso_WEB_테이블명세서/Blue_WEB_테이블명세서/eGov_WEB_테이블명세서/배치툴코드설명/ES Agent Config정책정의서/ESSAFER_WEB_테이블명세서. 내부에 다수의 외부 스프레드시트 참조 링크 포함.",
+    "depth": 3,
+    "source_cell": "IST_표준기능정의서(Google) E2 셀 하이퍼링크",
+    "file_id": "1K418mxEs1VwE1ulyvlCMyzNStjx2daG60_WJL3eZ7PI"
+  }
+]
