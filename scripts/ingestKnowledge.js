@@ -5,6 +5,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { config } from 'dotenv'
+import { DEEP_RESEARCH_CHUNKS } from './deepResearchChunks.js'
 
 config({ path: '.env' })
 
@@ -26,7 +27,7 @@ const SHEET_PRODUCTS = [
     clientEnv: 'Windows 7, 8, 10, 11 (32/64bit)',
     appSupport: '표준 OA(Office, HWP, PDF, Notepad) 최신 버전까지 지원',
     cadSupport: 'ES사업부_제품개발팀_제품별_모듈담당자_V2.0',
-    useCases: '기업 문서 DRM 암호화 및 유출 방지, 문서 생명주기 관리(생성~폐기), 접근 제어(RBAC), 사용 이력 추적 및 감사 로그, 교육자료/설계문서/연구자료 유출 방지, 외부 반출 제어(USB/이메일/클라우드), 대량 문서 일괄 암호화. DRM 암호화된 문서에 한해 워터마크 출력 지원 가능(범용 워터마크 아님). ES SAFER 통합 패키지로 Print SAFER/Privacy SAFER/Screen SAFER와 함께 도입 가능.',
+    useCases: '기업 문서 DRM 암호화 및 유출 방지, 문서 생명주기 관리(생성~폐기), 접근 제어(RBAC), 사용 이력 추적 및 감사 로그, 교육자료/설계문서/연구자료 유출 방지, 외부 반출 제어(USB/이메일/클라우드), 대량 문서 일괄 암호화. DRM 암호화된 문서에 한해 워터마크 출력 지원 가능(범용 워터마크 아님). ES SAFER 통합 패키지로 Print SAFER/Privacy SAFER/Screen SAFER와 함께 도입 가능. USB 반출 시 문서를 DRM 암호화하여 반출 (SafeUSB는 보안USB 매체 관리, Document SAFER는 문서 자체 암호화). 도면 암호화 시 특수OA(CAD 등) 지원 확인 필요 — 어떤 도면 어플리케이션/버전을 사용하는지에 따라 지원 범위가 달라짐. 재택근무/원격근무 환경에서 사내 문서 유출 방지. 주의: 출력 로그 수집은 Print SAFER 영역, 캡처 로그 수집은 Screen SAFER 영역.',
     notes: 'MS오피스 DRM & MIP 저장 정책. ES SAFER는 Document SAFER의 통합 패키지 명칭(동일 제품).',
     docs: 'IST_표준기능정의서, 프로젝트_스펙정의서_v2.4.xlsx, (PQG_QAT)_ES SAFER_표준기능정의서',
   },
@@ -35,7 +36,7 @@ const SHEET_PRODUCTS = [
     version: 'v3.1',
     serverEnv: '상동 (Document SAFER와 동일)',
     clientEnv: 'Windows 7, 8, 10, 11 (32/64bit)',
-    useCases: '개인정보 포함 문서 자동 탐지 및 암호화, 개인정보보호법/GDPR 컴플라이언스 대응, 개인정보 파일 보유 현황 관리, 비인가자 개인정보 접근 차단. SafePC Enterprise(DLP)와 연계하여 PC 내 개인정보 파일 탐지 및 관리 가능.',
+    useCases: '개인정보 포함 문서 자동 탐지 및 암호화, 개인정보보호법/GDPR 컴플라이언스 대응, 개인정보 파일 보유 현황 관리, 비인가자 개인정보 접근 차단. SafePC Enterprise(DLP)와 연계하여 PC 내 개인정보 파일 탐지 및 관리 가능. SafePC Enterprise에서도 개인정보보호 옵션으로 개인정보 탐지 기능을 제공하므로, 단독 도입 또는 SafePC 옵션으로 도입 가능.',
     docs: 'IST_표준기능정의서',
   },
   {
@@ -43,7 +44,7 @@ const SHEET_PRODUCTS = [
     version: 'v4.0',
     serverEnv: '상동 (Document SAFER와 동일)',
     clientEnv: 'Windows 7, 8, 10, 11 (32/64bit)',
-    useCases: 'Document SAFER로 DRM 암호화된 문서 인쇄 시 워터마크 자동 삽입, 인쇄 정책 제어(인쇄 허용/차단/승인), 출력물 이력 관리 및 감사 로그, 인쇄 매수 제한, 기밀 문서 인쇄 통제. 주의: DRM 암호화 문서에서만 동작하며 범용 출력 워터마크가 아님.',
+    useCases: '출력물 가시성 워터마크 삽입(출력자 이름/부서/일시 등 눈에 보이는 워터마크), 출력 이력 관리콘솔 수집 및 감사 로그, 인쇄 정책 제어(인쇄 허용/차단/승인), 인쇄 매수 제한, 기밀 문서 인쇄 통제. 에이전트 설치 + 사용자 인증 기반으로 동작 — 에이전트 설치가 불가한 환경(외부 협력사 등)에서는 사용 불가. 주의: Print SAFER는 DRM 암호화 문서뿐 아니라 일반 문서 출력에도 적용 가능.',
     docs: 'IST_표준기능정의서',
   },
   {
@@ -51,7 +52,7 @@ const SHEET_PRODUCTS = [
     version: 'v4.0',
     serverEnv: '상동 (Document SAFER와 동일)',
     clientEnv: 'Windows 7, 8, 10, 11 (32/64bit)',
-    useCases: '출력물에 비가시성 워터마크(추적 코드) 삽입, 출력물 유출 시 출력자 추적, 복사/스캔된 출력물 원본 추적. Print SAFER 내 비가시성 기능으로 제공.',
+    useCases: '출력물에 비가시성 워터마크(추적 코드) 삽입, 유출된 출력물이 획득되었을 때 어떤 사용자가 출력했는지 추적(비가시성 워터마크에 사용자 정보 포함), 복사/스캔된 출력물 원본 추적. Print SAFER 내 비가시성 기능으로 제공. 주의: 출력 이력 관리콘솔 수집은 Print SAFER 영역.',
     notes: 'Print SAFER 내 비가시성 기능으로 제공',
   },
   {
@@ -59,7 +60,7 @@ const SHEET_PRODUCTS = [
     version: 'v3.0',
     serverEnv: '상동 (Document SAFER와 동일)',
     clientEnv: 'Windows 7, 8, 10, 11 (32/64bit)',
-    useCases: '화면 캡처 방지(PrintScreen/캡처 도구 차단), 원격 접속 시 화면 유출 방지, 화상회의 중 화면 녹화 차단, 기밀 문서 열람 시 화면 보호. Screen TRACER(비가시성 워터마크) 기능도 함께 제공 가능.',
+    useCases: '화면 캡처 방지(PrintScreen/캡처 도구 차단), 원격 접속 시 화면 유출 방지, 화상회의 중 화면 녹화 차단, 기밀 문서 열람 시 화면 보호. Screen TRACER(비가시성 워터마크/추적) 기능도 함께 제공 가능. 캡처 차단 + 비가시성 워터마크 추적을 동시에 적용 가능. 에이전트 설치 + 사용자 인증 기반으로 동작. 사용자 정보 DB 구성이 가능해야 함. 에이전트 설치/사용자 DB 구성이 불가한 환경에서는 Web DRM(ePage SAFER for Web DRM)이 대안. 캡처 이력 로그 수집.',
     docs: 'IST_표준기능정의서',
   },
   {
@@ -76,7 +77,7 @@ const SHEET_PRODUCTS = [
     serverEnv: '고객사 서버 환경에 따름',
     clientEnv: 'Windows 7, 8, 10, 11 (32/64bit)',
     browserSupport: 'Chrome, Edge, Firefox, Opera, Whale',
-    useCases: '웹화면 캡처방지 제어(PrintScreen/캡처도구 차단), 웹브라우저 보안제어(다운로드/인쇄/소스보기 차단), 웹 기반 그룹웨어/문서 시스템 화면 보안, 웹 환경 콘텐츠 열람 권한 관리. Web DRM과 동일 제품(Web SAFER는 관리자 콘솔 포함, Web DRM은 관리자 콘솔 미포함). 주의: DRM 암호화 문서를 웹브라우저에서 직접 열 수 없음 — 웹 서버 구간에서 복호화 후 평문으로 출력 필요.',
+    useCases: '웹화면 캡처방지 제어(PrintScreen/캡처도구 차단), 웹브라우저 우클릭 메뉴 비활성화, 웹브라우저 보안제어(인쇄/소스보기/클립보드/확장프로그램 제어), 웹 기반 그룹웨어/문서 시스템 화면 보안, 웹 환경 콘텐츠 열람 권한 관리. 주의: 파일 다운로드 차단은 Web SAFER 기능이 아님(JSP 개발단에서 처리해야 할 영역). Web DRM과 동일 제품.',
   },
   {
     group: 'DRM 제품군', name: 'Cowork SAFER',
@@ -84,7 +85,7 @@ const SHEET_PRODUCTS = [
     serverEnv: 'OS: Windows, Ubuntu, Rocky / WAS: Tomcat 9.0.65 / DB: Oracle 19c, MSSQL 2019, MariaDB 11.0.2 / JDK: Java 1.8',
     clientEnv: 'Windows 7, 8, 10, 11 (32/64bit)',
     appSupport: 'MS-Office, 한글, PDF',
-    useCases: '외부 협력사와의 문서 공유 시 보안 유지, 협업 문서 열람 기간/횟수 제한, 외부 반출 문서 회수 및 폐기, 파트너사/하청업체 문서 유출 방지',
+    useCases: '외부 협력사와의 문서 공유 시 보안 유지, 협업 문서 열람 기간/횟수 제한, 외부 반출 문서 회수 및 폐기, 파트너사/하청업체 문서 유출 방지. 보안PDF 형태로 유통하는 솔루션 — 원본 문서(도면 등)를 PDF로 가공한 후 Cowork SAFER 보안 적용 가능. 서버인증/로컬인증 방식 지원.',
     docs: 'IST_표준기능정의서',
   },
   {
@@ -92,7 +93,7 @@ const SHEET_PRODUCTS = [
     version: 'Android: 4.x.x / iOS: 3.x.xx',
     serverEnv: '상동 (Document SAFER와 동일)',
     clientEnv: '최소 OS 사양: Android 7, iOS 14',
-    useCases: '모바일 기기에서 DRM 암호화 문서 열람 전용 뷰어, 스마트폰/태블릿 문서 뷰어, 외근/출장 시 사내 문서 안전 열람',
+    useCases: 'Document SAFER로 DRM 암호화된 문서를 모바일에서 열람/편집하는 전용 뷰어. Document SAFER 도입이 필수 전제조건. 스마트폰/태블릿 문서 뷰어, 외근/출장 시 사내 암호화 문서 안전 열람.',
     docs: 'Mobile Docs_기능정의서_v_0.2.xlsx',
   },
   {
@@ -108,7 +109,7 @@ const SHEET_PRODUCTS = [
     version: 'Android: 1.0.106 / iOS: 1.0.58',
     serverEnv: 'N/A',
     clientEnv: '최소 OS 사양: Android 7, iOS 10',
-    useCases: '모바일 기기 경량 MDM(Mobile Device Management), 관리 콘솔 없는 경량형 보안 에이전트, 모바일 카메라 기능 차단, 모바일 녹음 기능 차단, OS별 지원 범위 차이 있음(Android/iOS). 주의: 모바일 워터마크 제품이 아님 — 모바일 워터마크는 TRACER SDK for Mobile이 담당.',
+    useCases: '모바일 기기 경량 MDM(Mobile Device Management), 모바일 카메라 기능 차단, 모바일 녹음 기능 차단, 모바일 화면에 가시성 워터마크 표시(사용자 정보 워터마크). 관리 콘솔 없는 경량형 보안 에이전트. OS별 지원 범위 차이 있음(Android/iOS). 주의: 모바일 비가시성 워터마크(추적용)는 TRACER SDK for Mobile이 담당.',
     docs: 'Mobile STICKER (요구 명세서).pdf',
   },
   {
@@ -164,7 +165,7 @@ const SHEET_PRODUCTS = [
     serverEnv: '[202506 최신 버전 기준] OS: RedHat 9.4 / Rocky 9.4 / WAS: Tomcat 9.0.102 / DB: MariaDB 11.4.2 / JDK: OpenJDK 21.0.1',
     clientEnv: 'Windows 10 (32/64bit), Windows 11 (64bit). 이하 버전은 EOS로 정식 지원하지 않음.',
     browserSupport: 'Chrome, Edge, Firefox',
-    useCases: 'PC 내 정보 유출 방지(DLP), USB/외장매체 사용 통제, 네트워크 파일 전송 제어, PC 보안 정책 중앙 관리, 매체 제어(USB/블루투스/Wi-Fi), 파일 반출 승인 워크플로우, 개인정보 파일 탐지 및 관리. Privacy SAFER와 연계하여 개인정보 컴플라이언스 대응 가능.',
+    useCases: 'PC 내 정보 유출 방지(DLP), USB/외장매체 사용 통제, 네트워크 파일 전송 제어, PC 보안 정책 중앙 관리, 매체 제어(USB/블루투스/Wi-Fi), 파일 반출 승인 워크플로우, 개인정보 파일 탐지 및 관리. 매체제어, 출력물보안, 개인정보보호 세 가지 기능을 옵션으로 제공하는 통합 DLP 솔루션. Privacy SAFER와 연계하여 개인정보 컴플라이언스 대응 가능.',
     notes: '기존 SecuPrint 기능 신규 제공 불가 (Litech 연동 제품 EOS). PrintSAFER 출력물 제어 기능 연동 개발 중.',
     docs: 'SAFEPC_정책정의서.xlsx, SafePC Enterprise V7.0 매뉴얼, 프로젝트_스펙정의서_v2.4.xlsx',
   },
@@ -174,7 +175,7 @@ const SHEET_PRODUCTS = [
     serverEnv: '[202506 최신 버전 기준] OS: RedHat 9.4 / Rocky 9.4 / WAS: Tomcat 9.0.102 / DB: MariaDB 11.4.2 / JDK: OpenJDK 21.0.1',
     clientEnv: 'Windows 10 (32/64bit), Windows 11 (64bit). 이하 버전은 EOS로 정식 지원하지 않음.',
     browserSupport: 'Chrome, Edge, Firefox',
-    useCases: 'USB 저장매체 암호화 및 접근 제어, 보안 USB 발급 및 관리, USB를 통한 파일 반출 통제, 분실/도난 USB 원격 잠금/삭제, 외부 USB 사용 차단 및 허용 정책 관리',
+    useCases: 'USB 저장매체 암호화 및 접근 제어, 보안 USB 발급 및 관리, USB를 통한 파일 반출 통제, 분실/도난 USB 원격 잠금/삭제, 외부 USB 사용 차단 및 허용 정책 관리. 주의: 문서를 암호화하여 USB로 반출하는 것은 Document SAFER 영역. SafeUSB는 보안USB 매체 자체의 발급/관리/접근제어를 담당.',
     docs: 'SAFEPC_정책정의서.xlsx, SafeUSB+ V7.0 매뉴얼(관리자 사용자), 프로젝트_스펙정의서_v2.4.xlsx',
   },
   // ── 응용보안 제품군 ──
@@ -185,7 +186,7 @@ const SHEET_PRODUCTS = [
     clientEnv: 'Windows 7, 8, 10, 11 (32/64bit) / Linux(Fedora/Ubuntu) (32/64bit) / Mac 10.10 이상. EOS된 환경에서 사용은 가능하나 정식 지원은 아님.',
     browserSupport: 'Chrome, Edge, Firefox, Opera, Whale',
     integration: 'HTML 서식 연동, 리포트 연동(ClipReport_Clipsoft / Crownix_m2soft / OzReport_forcs / UbiReport_유비디시전), PDF 연동(PDF TEXT 추출)',
-    useCases: '전자문서 위변조 방지(마크애니에서 위변조방지는 ePage SAFER 전용 영역), 증명서/수료증/계약서 등 발급 문서 진위 확인, 전자문서에 Document DNA(디지털 지문) 삽입, 웹 기반 전자문서 보안, 리포트/서식 출력물 위변조 방지, PDF 문서 위변조 방지, 웹 출력물/PDF에 2D 바코드 기반 위변조방지',
+    useCases: '전자문서 위변조 방지(마크애니에서 위변조방지는 ePage SAFER 전용 영역), 증명서/수료증/계약서 등 발급 문서 진위 확인, 전자문서에 Document DNA(디지털 지문) 삽입, 웹 기반 전자문서 보안, 리포트/서식 출력물 위변조 방지, PDF 문서 위변조 방지, 웹 출력물/PDF에 2D 바코드 기반 위변조방지. 웹에서 출력하는 출력물 또는 PDF에 2D 바코드로 위변조방지를 적용하는 경우 ePage SAFER for ZeroClient 또는 Noax 버전 사용. PDF 전자문서 유통 시 진위여부 확인은 ePS Document DNA 영역.',
     docs: 'EVM-ePageSAFER v2.5 (요구 명세서).pdf, ePageSAFER 매뉴얼, AIT_ePS_사전조사서.xls',
   },
   {
@@ -251,7 +252,7 @@ const SHEET_PRODUCTS = [
     group: 'TRACER 제품군', name: 'TRACER SDK for Mobile',
     version: 'V1.0',
     clientEnv: '최소 OS 사양: Android 7, iOS 10',
-    useCases: '모바일 네이티브 앱에 비가시성 워터마크/추적 기능 탑재(Add-in SDK), 자체 개발 모바일 앱에 워터마크/추적 기능 연동, 모바일 네이티브 앱에 비가시성 워터마크 적용(하이브리드 앱도 앱 접근 권한/소스 수정 가능 시 지원). 모바일 화면 워터마크가 필요하면 이 제품이 담당 — Mobile STICKER가 아님.',
+    useCases: '모바일 네이티브 앱에 비가시성 워터마크/추적 기능 탑재(Add-in SDK), 자체 개발 모바일 앱에 워터마크/추적 기능 연동, 모바일 네이티브 앱에 비가시성 워터마크 적용(하이브리드 앱도 앱 접근 권한/소스 수정 가능 시 지원). 모바일 화면에 비가시성 워터마크를 적용하여 촬영자 추적이 필요한 경우 이 제품이 담당. 모바일 앱에 SDK를 연동하여 비가시성 워터마크 삽입.',
     notes: 'App Add-in',
   },
 ]
@@ -455,6 +456,108 @@ Privacy SAFER 시트: 개인정보 종류(주민번호/외국인번호/계좌번
 [용도/유스케이스] SafePC DLP 프로젝트 사전환경 조사, 서버 스펙, 포트 정의, 연동 정보`,
     source_url: 'https://docs.google.com/spreadsheets/d/1GyZQlROU73HC4NnLkUdwAJyaC5H54BQ0/edit',
   },
+
+  // ── Doc 7: DRM_서버_환경_스펙 → 제품별 서버 하드웨어 스펙 가이드 (depth 2) ──
+  {
+    group: 'DRM 제품군', name: 'Document SAFER',
+    title: 'Document SAFER — 서버 하드웨어 스펙 가이드',
+    content: `Document SAFER 서버 환경 스펙 (User수 기반 하드웨어 가이드):
+540 User: Xeon 2.1GHz 8Core / 16GB Memory.
+5,000 User: Xeon 2.3GHz 12Core / 32GB Memory.
+10,000 User: Xeon Gold 2.3GHz 16Core / 48GB Memory.
+40,000 User: Xeon Gold 2.3GHz 16Core / 64GB Memory.
+공통환경: Ubuntu 22.04, MariaDB 10.4이상, OpenJDK 1.8, Tomcat 8이상.
+이중화 구성 시 L4 로드밸런싱 필요.
+[용도/유스케이스] Document SAFER 서버 스펙 산정, User수 기반 하드웨어 가이드, 이중화 구성 가이드`,
+    source_url: 'https://docs.google.com/spreadsheets/d/1ITHOviKSv5PeDRXzqqn-4s4x0ynnkr_4/edit',
+  },
+  {
+    group: 'DRM 제품군', name: 'Print SAFER',
+    title: 'Print SAFER — 서버 하드웨어 스펙 가이드',
+    content: `Print SAFER 서버 환경 스펙 (User수 기반 하드웨어 가이드):
+1,000~40,000 User별 CPU/Memory/HDD 스펙 제공.
+출력로그 관리에 따른 HDD DATA 추가 필요 (이미지로그/텍스트로그 저장 시 디스크 용량 증가).
+공통환경: Ubuntu 22.04, MariaDB 10.4이상, OpenJDK 1.8, Tomcat 8이상.
+[용도/유스케이스] Print SAFER 서버 스펙 산정, 출력로그 저장 디스크 용량 계획`,
+    source_url: 'https://docs.google.com/spreadsheets/d/1ITHOviKSv5PeDRXzqqn-4s4x0ynnkr_4/edit',
+  },
+  {
+    group: 'DRM 제품군', name: 'Screen SAFER',
+    title: 'Screen SAFER — 서버 하드웨어 스펙 가이드',
+    content: `Screen SAFER/TRACER 서버 환경 스펙 (User수 기반 하드웨어 가이드):
+2,000~50,000 User별 CPU/Memory/HDD 스펙 제공.
+현대자동차 50,000 User 운영서버 2중화 사례 포함.
+공통환경: Ubuntu 22.04, MariaDB 10.4이상, OpenJDK 1.8, Tomcat 8이상.
+이중화 구성 시 L4 로드밸런싱 필요.
+[용도/유스케이스] Screen SAFER 서버 스펙 산정, 대규모(50,000 User) 운영 사례, 이중화 구성 가이드`,
+    source_url: 'https://docs.google.com/spreadsheets/d/1ITHOviKSv5PeDRXzqqn-4s4x0ynnkr_4/edit',
+  },
+
+  // ── Doc 8: SafePC v8.0 관리시스템 요구명세서 (depth 2) ──
+  {
+    group: 'DLP 제품군', name: 'SafePC Enterprise',
+    title: 'SafePC Enterprise v8.0 — 관리시스템 요구명세서',
+    content: `SafePC Enterprise v8.0 관리시스템 요구명세서. MSA/Docker 기반 웹 관리시스템.
+주요기능: 사용자인증(JWT), 환경설정(라이선스/서브시스템/접속/인사연동/로그인관리).
+조직관리: 기업체/부서/사용자/결재.
+정책관리: 네트워크(사이트차단/메신저차단/공유디렉터리), 디바이스(매체별 허용/차단), 프린터(가시성/비가시성 워터마크/개인정보마스킹), 자동암호화, 프로그램실행차단, 클립보드, 캡처방지, PC설정, 개인정보(검출/실시간/격리).
+로그관리: 전체 보안 이벤트 로그 수집.
+서버: Rocky Linux 9.4/RHEL 9.x, 클라이언트: Windows 10+/MacOS 10+, 브라우저: Chrome/Edge.
+SafePC Enterprise는 매체제어 + 출력물보안 + 개인정보보호 3가지 옵션을 제공하는 통합 DLP 솔루션.
+[용도/유스케이스] SafePC v8.0 관리시스템 기능 상세, MSA/Docker 아키텍처, 정책관리 옵션(매체제어/출력물보안/개인정보보호), 통합 DLP 솔루션 도입`,
+    source_url: 'https://docs.google.com/document/d/1Sit1uK2aQhn2AOYxjukEWFsUIHuLa393R58VOmq7LyI/edit',
+  },
+
+  // ── Doc 9: SafePC Enterprise V7.0 매뉴얼(관리자) (depth 2) ──
+  {
+    group: 'DLP 제품군', name: 'SafePC Enterprise',
+    title: 'SafePC Enterprise V7.0 — 관리자 매뉴얼',
+    content: `SafePC Enterprise V7.0 관리자 매뉴얼.
+보안관리: PC보안(방화벽/웹차단/컨텐츠업로드차단/웜차단/네트워크로그/매체제어-플로피/CD/USB/PDA/스마트폰/무선랜/HSDPA/WIBRO/테더링/프린트통제/프로그램실행차단/PC설정제어/BAD USB), 개인정보보호(패턴관리-정규식/키워드, 등급관리, 정책관리, 알림관리, 보안정책적용-기본/그룹/직위/개별), 보조기억매체관리(일반저장매체 등록/배포/회수/불용처리), 공유폴더통제.
+자산관리: SW/HW관리, 라이센스관리.
+감사로그: PC보안/개인정보보호/보조기억매체/신청이력/운영로그.
+보고서: Agent설치현황/패턴등급통계/검출현황/매체제어현황.
+SafePC Enterprise는 매체제어 + 출력물보안 + 개인정보보호 3가지 옵션을 제공.
+[용도/유스케이스] SafePC 관리자 기능 상세, 매체제어(USB/CD/스마트폰/무선랜), 개인정보보호(패턴/등급/정책), 보조기억매체 관리, 감사로그/보고서 기능`,
+    source_url: 'https://docs.google.com/document/d/1tM5Lc6Ics8La22uh4ZBhg02A5nrardAm/edit',
+  },
+
+  // ── Doc 10: 마크애니_DRM_SW_표준기능정의서 → 제품별 분할 (depth 2) ──
+  {
+    group: 'DRM 제품군', name: 'Document SAFER',
+    title: 'Document SAFER — DRM SW 표준기능정의서 상세',
+    content: `마크애니 DRM SW 표준기능정의서 — Document SAFER Green/Blue3:
+관리자: 사용자/부서/결재/OEP/시스템관리.
+정책: 문서교환/오프라인/캡처방지/원격제어/시간동기화/DRM삭제/블록복사/배치암호화/자동암호화/워터마크.
+예외정책, 반출정책, 이력조회/통계, 에이전트.
+QDRM_EX: 실시간암호화(프로세스감시/파일포맷비교/저장매체대상/오프라인정책, 프로세스정책).
+[용도/유스케이스] Document SAFER DRM SW 표준기능 상세, QDRM_EX 실시간 암호화 정책`,
+    source_url: 'https://docs.google.com/spreadsheets/d/17KhfAC6c-Vpp89nWvkidsQhFrn8bIy25/edit',
+  },
+  {
+    group: 'DRM 제품군', name: 'Cowork SAFER',
+    title: 'Cowork SAFER — DRM SW 표준기능정의서 상세',
+    content: `마크애니 DRM SW 표준기능정의서 — Cowork SAFER:
+외부반출변환: MASDOC/ZIP/EXE 형식.
+인증: 서버인증/로컬인증.
+권한상세설정: 저장/열람/인쇄/블록복사/화면캡처/사용기한 제어.
+보안PDF 형태로 유통 — 원본 문서를 PDF로 가공 후 Cowork SAFER 적용.
+[용도/유스케이스] Cowork SAFER 외부반출 기능 상세, 보안PDF 유통, 권한 제어 옵션`,
+    source_url: 'https://docs.google.com/spreadsheets/d/17KhfAC6c-Vpp89nWvkidsQhFrn8bIy25/edit',
+  },
+
+  // ── Doc 11: [IST]정책정의서_v1 → 정책 인덱스 (depth 3) ──
+  {
+    group: 'DRM 제품군', name: 'Document SAFER',
+    title: 'ES SAFER 제품별 정책정의서 인덱스',
+    content: `ES SAFER 제품별 정책정의서 인덱스 ([IST]정책정의서_v1).
+20개 이상의 시트로 구성된 상세 정책 정의서:
+Json2019(표준)/espresso(표준)/Blue2(표준)/Blue_web(표준)/NX_web(표준)/ExchangePolicy/MADRMAgent/ESAgent/배치암호화툴/CipherTool/MASHLMGR/MaPrint옵션/LocalPolicy/자동암호화번호.
+PrintSAFER_WEB, Privacy SAFER 3.1_web_Blue/ESPRESSO, ScreenSAFER_2.0_WEB, QDRM_EX_WEB, MIP정책정의서, ES SAFER정책정의서.
+참고시트: 표준모듈리스트, DocSAFER 2019 설정값사용현황, 스크린세이퍼정책정의서(2.0/3.0), 개인정보QPRSF정책정의서, QDRM정책, PrintSAFER정책정의서, Espresso/Blue/eGov WEB 테이블명세서.
+[용도/유스케이스] ES SAFER 전 제품 정책 정의서 인덱스, 정책 시트 목록 확인, 제품별 WEB 정책 정의서 참조`,
+    source_url: 'https://docs.google.com/spreadsheets/d/1K418mxEs1VwE1ulyvlCMyzNStjx2daG60_WJL3eZ7PI/edit',
+  },
 ]
 
 // ── 기존 knowledgeBase.js의 STORES 데이터도 함께 적재 (풍부한 설명 텍스트) ──
@@ -608,7 +711,29 @@ async function ingest() {
   }
   console.log(`   ✅ 하이퍼링크 문서: ${HYPERLINK_CHUNKS.length}개 청크\n`)
 
-  // 3. 기존 STORES 데이터 → 청크 (풍부한 설명 텍스트)
+  // 3. Deep Research 청크 → 상세 정책/매뉴얼/SDK/CAD 매트릭스 등
+  console.log('🔬 Deep Research 청크 추가...')
+  for (const chunk of DEEP_RESEARCH_CHUNKS) {
+    const text = [
+      `[제품명] ${chunk.name}`,
+      `[제품군] ${chunk.group}`,
+      `[문서제목] ${chunk.title}`,
+      chunk.content,
+    ].join('\n')
+    allChunks.push({
+      content: text,
+      metadata: {
+        source: 'deep_research',
+        product_group: chunk.group,
+        product_name: chunk.name,
+        title: chunk.title,
+        source_url: chunk.source_url || '',
+      },
+    })
+  }
+  console.log(`   ✅ Deep Research: ${DEEP_RESEARCH_CHUNKS.length}개 청크\n`)
+
+  // 4. 기존 STORES 데이터 → 청크 (풍부한 설명 텍스트)
   console.log('📚 기존 지식 베이스 청크 추가...')
   for (const chunk of LEGACY_CHUNKS) {
     allChunks.push({

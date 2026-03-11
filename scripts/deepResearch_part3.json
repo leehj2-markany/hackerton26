@@ -1,0 +1,124 @@
+[
+  {
+    "file_id": "1sB-fhoSu3tsIUF5mQVsrKQc4bN-s_3-X2F2aoHFf9BU",
+    "file_name": "ES사업부_제품개발팀_제품별_모듈담당자_V2.0",
+    "file_type": "spreadsheet",
+    "sheets": [
+      {
+        "sheet_name": "제품모듈",
+        "data_summary": "제품별 모듈 정보 — 제품명, 제품버전, 모듈명, 모듈버전, 지원OS, 지원플랫폼, 빌드환경, 담당파트, 담당자, 기능설명, Git경로. Document SAFER(서버 데몬, 수동 암복호화 툴, SSO 등), FileServer SAFER 모듈 포함. 991행x31열.",
+        "raw_data": "Headers: 제품명|제품버전|모듈명|모듈버전|지원OS|지원플랫폼(x86/x64)|빌드환경|담당파트|담당자|기능설명|Git경로\nSample rows:\n01_Document SAFER|51014|MA_PMS/MA_DDS/MA_DEC/MA_FILECHK||Sun Solaris/AIX/HP-UX PA/HP-UX IA64/Linux|32/64|make/cc/gcc|1파트|양정욱|파일 암복호화 데몬\n01_Document SAFER|2010,2010R2,2010R3|CipherToolPlus.exe||x86||1파트|현정환|수동 암호화 툴(Cipher Dependency)\n01_Document SAFER|Blue|DSCipherToolPlus.exe||x86||1파트|현정환|수동 암호화 툴(Blue Cipher)\n11_FileServer SAFER|4|FSSConfig.exe||x86||1파트|현정환|FileServerSAFER 설정 관리용\n11_FileServer SAFER|4|MFWorker.exe||x86||1파트|현정환|암복호화 작업 수행\n01_Document SAFER|온나라 1.0|ws_basic_javaclass/.../DrmService.class||eclipse WebService|1파트|양정욱|온나라 1.0 인터페이스\n01_Document SAFER|nx|MANX_PMS/MANX_DDS/MANX_DEC/MANX_FILECHK/MANX_CONF||Linux|64|make/gcc|1파트|양정욱|파일 암복호화 데몬",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "임시(CAD S/W 구분 목적)",
+        "data_summary": "CAD 및 OA 어플리케이션별 제어모듈 상세 — 어플리케이션 종류, 어플리케이션명, 고객수, 지원버전, 실행파일명, 플랫폼, 제어모듈명, 담당파트, 담당개발자, 지원확장자, 사용로그전송, 열람횟수, 인쇄횟수, 자동암호화, 시큐어클립보드, 시큐어프린트, 워터마크, 캡쳐방지, 소스경로(Git), 특이사항. 1006행x30열.",
+        "raw_data": "Headers: 제품구분|어플리케이션종류|어플리케이션명|고객수|지원어플리케이션버전|실행파일명|플랫폼|제어모듈명|담당파트|담당개발자|지원확장자|사용로그전송|열람횟수|인쇄횟수|자동암호화|자동암호화번호|시큐어클립보드|시큐어프린트|워터마크|캡쳐방지|소스경로(Git)|특이사항\nSample:\n01_Document SAFER|03_CAD_AutoDesk|DWG TrueView|2|2013-2023|dwgviewr.exe|x64|DSP_ControlMgr.dll등|2파트|원동진|pdf,dwg,dxf,dwf,dwfx|지원|지원|지원|지원|8|지원|지원|지원|지원\n01_Document SAFER|03_CAD_AutoDesk|Inventor|10|2018-2025|inventor.exe|x86/x64|DSP_Inventor2018~2025.dll|3파트|조규선|dwg,idw,ipt,iam등|지원|미지원|지원|지원|108|지원|지원|지원|지원\n01_Document SAFER|03_CAD_AutoDesk|AutoCAD|48|2004-2026|acad.exe|x86/x64|mds_AutoCAD2019/2024.dll|3파트|김형준|dwg,dxf,dws등|지원|지원|지원|지원|8|지원|지원|지원|지원\n01_Document SAFER|02_OA_MS-Office|Excel||2003-2016|excel.exe|x86/x64|DSP_03~2016.dll|1파트|현정환|xls,xlsx등|지원|지원|지원|지원|3|지원|지원|지원|지원\n01_Document SAFER|03_CAD_CATIA|CATIA|14|V5V14~V5R29|cnext.exe|x86/x64|MaCatiaLdr/DSP_CatiaR*.dll|1파트|양정욱|CATPart,CATProduct등|지원|미지원|미지원|지원|55|지원|지원|지원|지원\n01_Document SAFER|02_OA_Haancom-Office|한컴오피스||2014-2022|hwp.exe|x86|DSP_HOFFICE.dll|2파트|최윤석|hwp,hwpx,pdf등|지원|지원|지원|지원|5|지원|지원|지원|지원",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "제어모듈",
+        "data_summary": "제어모듈 시트 — 제품구분, 어플리케이션종류, 어플리케이션명, 지원버전, 실행파일명, 플랫폼, 제어모듈명, 담당파트, 담당개발자, 지원기능(확장자/로그/열람/인쇄/자동암호화/클립보드/프린트/워터마크/캡쳐방지), 소스경로, 특이사항. 920행x29열. 제품모듈 시트와 유사하나 제어모듈 중심 정리.",
+        "raw_data": "Headers: 제품구분|어플리케이션종류|어플리케이션명|지원어플리케이션버전|실행파일명|플랫폼|제어모듈명|담당파트|담당개발자|지원확장자|사용로그전송|열람횟수|인쇄횟수|자동암호화|자동암호화번호|시큐어클립보드|시큐어프린트|워터마크|캡쳐방지|소스경로(Git)|특이사항\nSample:\n01_Document SAFER|03_CAD_CATIA|CATIA|V5V20~V5R34|cnext.exe|x86/x64|MaCatiaLdr/DSP_CatiaR20~R34.dll|1파트|양정욱\n01_Document SAFER|02_OA_MS-Office|Excel|2003-2016|excel.exe|x86/x64|DSP_03~2016.dll|1파트|현정환\n01_Document SAFER|03_CAD_AutoDesk|AutoCAD|2008-2026|acad.exe|x86/x64|mds_AutoCAD2019/2024.dll|3파트|김형준\n01_Document SAFER|02_OA_Haancom-Office|한컴오피스|2014-2024|hwp.exe|x86|DSP_HOFFICE.dll|1파트|최윤석\n01_Document SAFER|08_others|SAP|750/770/800|saplogon.exe|x86|DSP_SAP_LOGON.dll|1파트|최윤석",
+        "hyperlinks": []
+      }
+    ],
+    "content": "",
+    "status": "collected"
+  },
+  {
+    "file_id": "1Sit1uK2aQhn2AOYxjukEWFsUIHuLa393R58VOmq7LyI",
+    "file_name": "SafePC v8.0 관리시스템 요구명세서_v0.9",
+    "file_type": "document",
+    "sheets": [],
+    "content": "SafePC Enterprise v8.0 관리시스템 요구명세서. 작성: PIO1, (주)마크애니. 버전 0.9 (2025-08-13).\n\n주요 내용:\n1. 문서소개: SafePC Enterprise v8.0 관리시스템의 기능 요구명세서. 개발자/고객 참고용.\n2. 소프트웨어 개요:\n   - 사용자 인증(JWT), 환경설정(라이선스/서브시스템/접속/인사연동/로그인관리/정규식관리), 조직관리(기업체/부서/사용자/결재유형), 정책관리(네트워크/디바이스/프린터/자동암호화/프로그램실행차단/클립보드/캡처방지/PC설정/개인정보), 로그관리\n   - 사용자: 최고관리자(마크애니), 관리자, 정책관리자, 사용자\n   - 수행환경: 서버(Rocky Linux 9.4/RHEL 9.x), 사용자PC(Windows 10+/MacOS 10+), 브라우저(Chrome/Edge)\n   - 특장점: MSA+Docker 기반 오토스케일아웃, 웹기반 AddOn, 통합에이전트\n3. 기능 요구사항:\n   - 3.1 사용자 인증: JWT 방식\n   - 3.2 환경설정: 라이선스(클라이언트/서비스), 서브시스템(NTP/DBMS), 접속관리(IP제한/세션타임아웃), 인사연동(파일업로드/실시간동기화), 사용자로그인(ID/PW/윈도우즈로그온/AD연동), 개인정보정규식관리\n   - 3.3 조직관리: 기업체(SaaS확장대비), 부서(계층구조), 사용자(중복부서가능), 결재유형\n   - 3.4 정책관리: 네트워크(사이트차단Whitelist/Blacklist, 메신저차단, 공유디렉터리), 디바이스(플로피/CD/USB/스마트폰/무선랜/블루투스등), 프린터(가시성워터마크/비가시성워터마크/개인정보마스킹), 자동암호화(MS-Office/한글/메모장/그림판), 프로그램실행차단, 클립보드, 캡처방지, PC설정(IP변경/화면보호기/레지스트리/폴더삭제), 개인정보(검출항목/실시간검출/격리)\n   - 3.5 로그관리: 서비스별 로그 설정/조회/보고서\n4. 외부 인터페이스: 웹브라우저, IP네트워크, NTP, DNS, NAS\n5. 품질 요구사항: 사용성(1시간교육), 성능(2초응답), 견고성(무중단), 보안성(공통보안요구사항), 안전성, 유용성(자동시작/무중단서비스/15분설치), 확장성(선형확장)",
+    "status": "collected"
+  },
+  {
+    "file_id": "1tM5Lc6Ics8La22uh4ZBhg02A5nrardAm",
+    "file_name": "SafePC Enterprise V7.0 매뉴얼(관리자) v0.2_240620.docx",
+    "file_type": "document",
+    "sheets": [],
+    "content": "SafePC Enterprise V7.0 매뉴얼(관리자) v0.2. MarkAny SafePC Enterprise. 서버/에이전트 방식 구성.\n\n주요 구조:\nChapter 1. SafePC Enterprise 소개\n- 특징: 시스템관리(Management Server/Console/User Console), 보안기능(주변장치제어/개인정보제어/네트워크제어/시스템제어/장애대응/프린터제어), 자산관리, 보고서\n- 운영환경: 물리적보안, 인가된관리자, SSL통신, DBMS\n- 설치: Management Server(직접설치), PC Agent(다운로드), USB Agent(자동설치)\n- PC Agent 내/외부 상태: 내부(서버통신가능→내부정책), 외부(서버통신불가→외부정책, 3분후 자동전환)\n\nChapter 2. 보안관리자\n운영관리:\n- 인증: https://xxx.xxx.xxx.xxx:8080/SafeSuite, ID(4~20자)/PW(8~16자), 재시도허용횟수 초과시 계정잠금(기본3분)\n- 환경설정: 업데이트설정(모듈/보안정책 주기), 서버상태정보, 이벤트메시지(SMTP), 이벤트로그, 감사로그백업, 차단페이지, DBMS설정(여유공간/접근제어), 프린트통제, 옵션설정\n- 결재경로설정: 결재종류별 결재권자/보안책임자 추가, 간이결재여부\n- 사용자권한관리: 보안책임자/관리책임자/결재권자/사용자\n- 관리자계정관리: 계정추가/수정/삭제, 권한부여(메뉴별/그룹별), 비밀번호초기화(safepc1@)\n- 조직도관리: 그룹생성/수정/삭제, 그룹EXPORT/인사EXPORT\n- 사용자관리: 생성(내부/외부직원)/수정/삭제, 설치/미설치/NONE/삭제/퇴직자 정보\n- Agent명령전송: 자산정보재전송, 실시간로그전송, 무결성검사, 상태체크, 알림메시지, Agent제거(온라인/오프라인삭제키), 시스템제어(강제종료/로그아웃/리부팅), 원격접속\n- 다운로드서버설정: FTP/HTTP 서버등록, 업데이트서버설정\n- 장애처리: 관리자장애등록, 처리결과등록\n\n보안관리:\n- PC보안: 방화벽정책(허용/차단기반, TCP/UDP/ICMP), 웹차단정책(URL차단), 컨텐츠업로드차단, 웜차단정책(패킷기준치), 네트워크로그정책(HTTP/FTP/TELNET/SMTP/공유폴더/메신저/웹메일), 매체제어정책(플로피/CD/DVD/USB/PDA/스마트폰/무선랜/HSDPA/WIBRO/가상포트/적외선/시리얼/패러럴/테더링 읽기/쓰기통제/로깅), 프린트통제정책(워터마크/표시인식/바코드/오버레이/기타), 프로그램실행차단, PC프로그램보호(프로세스숨김/레지스트리읽기삭제차단/폴더삭제차단), PC설정제어(IP변경/Proxy/화면보호기/제어판차단), BAD USB매체허용\n- 보안정책 대상설정: 기본/그룹/직위/개별/미디어반출 정책, 우선순위(미디어반출>개별>직위>그룹>기본)\n- 보안정책 적용: 내부기본/내부요청/외부요청/외부기본 4가지\n\n- 개인정보보호: 패턴관리(정규식/키워드), 등급관리(매체제어/알림임계값), 정책관리(패턴+등급조합), 알림관리, 보안정책적용(기본/그룹/직위/개별), 기타관리(정책현황/블랙리스트)\n- 보조기억매체관리: 일반저장매체(회사용) 등록/배포/정책설정/불용처리/회수, 일반저장매체(개인용) 사용권한/장치상태변경\n- 공유폴더통제: 조회/해제\n\n자산관리: SW/HW관리, 라이센스관리, BAD USB매체허용리스트\n감사로그: PC보안로그, IP변경히스토리, 개인정보보호로그(자료분석/매체제어/알림/프린트보안/네트워크제어), 보조기억매체관리로그, 신청이력(매체사용/일반저장매체/외부반출/사용자/파일반출/프린트출력/개인정보파일관리대장/공문서출력/과오탐파일/BAD USB), 운영로그(식별인증/관리자운영/무결성검사/시작중지/Agent삭제/이벤트/사용자정보변경)\n보고서: 개인정보보호(Agent설치현황/패턴등급통계/부서별검출추이/사용자별검출추이/매체제어통계/검출현황/매체제어현황), 보조기억매체관리(관리대장/점검대장/반출입대장/불용처리대장)\n\nAppendix: 메시지테이블(msg.mc.001~334), 패턴정보(정규식/키워드), 개인정보보호 지원확장자(zip,tar,gz,bz2,7z,rar,txt,rtf,htm,xml,pdf,doc,ppt,xls,hwp,hwpx,docx,xlsx,pptx,dwg,mdi,msg,swf,jtd,wpd,hml,mdb,dgn,keynote,pages,numbers,pst,nxl,cell,show,xps,xlsb 등)",
+    "status": "collected"
+  },
+  {
+    "file_id": "1rstnn_k2gSZ7Isn8S15lOLaX2PowyBiO",
+    "file_name": "EVM-ePageSAFER v2.5 (요구 명세서).pdf",
+    "file_type": "pdf",
+    "sheets": [],
+    "content": "[PDF 바이너리 — 텍스트 추출 불가. 파일크기: 684,559 bytes. EVM-ePageSAFER v2.5 요구명세서 PDF.]",
+    "status": "collected"
+  },
+  {
+    "file_id": "1KxGMwZd9bdtYF7WZaUhkmIhc2KTLhlTpmDR4esP_OwY",
+    "file_name": "MS오피스 로컬 & 클라우드 저장 정책",
+    "file_type": "spreadsheet",
+    "sheets": [
+      {
+        "sheet_name": "시트1",
+        "data_summary": "MS오피스 로컬 & 클라우드 저장 정책 매트릭스. 구독형 오피스(M365)와 설치형 오피스(~Office 2021)에 대해 MIP정책(DRM만사용/로컬DRM&클라우드MIP사용)과 Cloud정책(저장금지/저장허용) 조합별로 원본경로(로컬/클라우드), 원본상태(DRM/MIP), 저장위치(로컬/클라우드)에 따른 동작(DRM암호화/MIP암호화/이중암호화/저장차단) 정의.",
+        "raw_data": "오피스|MIP정책|Cloud정책|원본경로|원본상태|저장위치|동작|비고\n구독형오피스(M365)|DRM만사용|저장금지|로컬|DRM|로컬|DRM암호화|DS_DRM_WITH_MIP:DRM만사용(0),로컬DRM&클라우드MIP(1); DS_ALLOW_CLOUD:금지(0),허용(1); MIP지원확장자:docx|docm|dotx|dotm|xlsx|xlsm|xltx|xltm|pptx|pptm|potx|potm\n구독형오피스(M365)|DRM만사용|저장금지|로컬|DRM|클라우드|저장차단\n구독형오피스(M365)|DRM만사용|저장금지|클라우드|MIP|로컬|DRM+MIP이중암호화또는MIP암호화|파워포인트:MIP암호화(DRM암호화실패)\n구독형오피스(M365)|DRM만사용|저장금지|클라우드|MIP|클라우드|저장차단\n구독형오피스(M365)|DRM만사용|저장허용|로컬|DRM|로컬|DRM암호화\n구독형오피스(M365)|DRM만사용|저장허용|로컬|DRM|클라우드|DRM+MIP이중암호화또는MIP암호화|DRM암호화못하는케이스있음\n구독형오피스(M365)|DRM만사용|저장허용|클라우드|MIP|로컬|DRM+MIP이중암호화\n구독형오피스(M365)|DRM만사용|저장허용|클라우드|MIP|클라우드|DRM+MIP이중암호화또는MIP암호화|DRM암호화못하는케이스있음\n구독형오피스(M365)|로컬DRM&클라우드MIP사용|저장금지|로컬|DRM|로컬|DRM암호화\n구독형오피스(M365)|로컬DRM&클라우드MIP사용|저장금지|로컬|DRM|클라우드|MIP암호화\n구독형오피스(M365)|로컬DRM&클라우드MIP사용|저장금지|클라우드|MIP|로컬|DRM암호화\n구독형오피스(M365)|로컬DRM&클라우드MIP사용|저장금지|클라우드|MIP|클라우드|MIP암호화또는MIP암호화아닐경우차단\n구독형오피스(M365)|로컬DRM&클라우드MIP사용|저장허용|로컬|DRM|로컬|DRM암호화\n구독형오피스(M365)|로컬DRM&클라우드MIP사용|저장허용|로컬|DRM|클라우드|MIP암호화\n구독형오피스(M365)|로컬DRM&클라우드MIP사용|저장허용|클라우드|MIP|로컬|DRM암호화\n구독형오피스(M365)|로컬DRM&클라우드MIP사용|저장허용|클라우드|MIP|클라우드|MIP암호화\n설치형오피스(~2021)|DRM만사용|저장금지|로컬|DRM|로컬|DRM암호화\n설치형오피스(~2021)|DRM만사용|저장금지|로컬|DRM|클라우드|저장차단\n설치형오피스(~2021)|DRM만사용|저장금지|클라우드|MIP|로컬|DRM+MIP이중암호화또는MIP암호화|파워포인트:MIP암호화\n설치형오피스(~2021)|DRM만사용|저장금지|클라우드|MIP|클라우드|저장차단\n설치형오피스(~2021)|DRM만사용|저장허용|로컬|DRM|로컬|DRM암호화\n설치형오피스(~2021)|DRM만사용|저장허용|로컬|DRM|클라우드|DRM암호화또는복호화(사용금지)|DRM암호화못하는케이스있음\n설치형오피스(~2021)|DRM만사용|저장허용|클라우드|MIP|로컬|DRM+MIP이중암호화\n설치형오피스(~2021)|DRM만사용|저장허용|클라우드|MIP|클라우드|DRM+MIP이중암호화또는MIP암호화|DRM암호화못하는케이스있음\n설치형오피스(~2021)|로컬DRM&클라우드MIP사용|저장금지|로컬|DRM|로컬|DRM암호화\n설치형오피스(~2021)|로컬DRM&클라우드MIP사용|저장금지|로컬|DRM|클라우드|저장차단\n설치형오피스(~2021)|로컬DRM&클라우드MIP사용|저장금지|클라우드|MIP|로컬|DRM+MIP이중암호화\n설치형오피스(~2021)|로컬DRM&클라우드MIP사용|저장금지|클라우드|MIP|클라우드|저장차단\n설치형오피스(~2021)|로컬DRM&클라우드MIP사용|저장허용|로컬|DRM|로컬|DRM암호화\n설치형오피스(~2021)|로컬DRM&클라우드MIP사용|저장허용|로컬|DRM|클라우드|DRM암호화또는복호화(사용금지)|DRM암호화못하는케이스있음\n설치형오피스(~2021)|로컬DRM&클라우드MIP사용|저장허용|클라우드|MIP|로컬|DRM+MIP이중암호화\n설치형오피스(~2021)|로컬DRM&클라우드MIP사용|저장허용|클라우드|MIP|클라우드|DRM+MIP이중암호화또는MIP암호화|DRM암호화못하는케이스있음",
+        "hyperlinks": []
+      }
+    ],
+    "content": "",
+    "status": "collected"
+  },
+  {
+    "file_id": "not_found",
+    "file_name": "SAFEPC_정책정의서.xlsx",
+    "file_type": "spreadsheet",
+    "sheets": [],
+    "content": "Drive 검색 결과 해당 파일을 찾을 수 없음. 'SAFEPC 정책정의서' 및 'SAFEPC_정책정의서' 검색 모두 관련 없는 결과만 반환.",
+    "status": "not_found"
+  },
+  {
+    "file_id": "1MF4d6vENzIbnxFuCaO02HmKBGlM_y7ew",
+    "file_name": "SafeUSB+ V7.0 매뉴얼(관리자) v0.1.pdf",
+    "file_type": "pdf",
+    "sheets": [],
+    "content": "[PDF 바이너리 — 텍스트 추출 불가. 파일크기: 4,351,443 bytes. SafeUSB+ V7.0 관리자 매뉴얼 PDF. 추가로 사용자 매뉴얼도 존재: SafeUSB+ V7.0 매뉴얼(사용자) v0.1.pdf (ID: 1qKEyUmv9RCk2jztw9FteETQEEkutoG4u, 5,240,084 bytes)]",
+    "status": "collected"
+  },
+  {
+    "file_id": "17nUKxPe5FLAM7rRjlKCUg1yqIaWwEPax",
+    "file_name": "Mobile STICKER (요구 명세서).pdf",
+    "file_type": "pdf",
+    "sheets": [],
+    "content": "[PDF 바이너리 — 텍스트 추출 불가. 파일크기: 236,138 bytes. Mobile STICKER 요구명세서 PDF.]",
+    "status": "collected"
+  },
+  {
+    "file_id": "not_found",
+    "file_name": "Mobile SAFER (요구 명세서).pdf",
+    "file_type": "pdf",
+    "sheets": [],
+    "content": "Drive 검색 결과 'Mobile SAFER 요구 명세서' 및 'Mobile SAFER 요구명세서' 검색 모두 해당 파일을 찾을 수 없음. EVM-ePageSAFER v2.5 요구명세서만 검색됨.",
+    "status": "not_found"
+  },
+  {
+    "file_id": "1cOxCqM1J4hiDfaI-QWpyYpVC6F2AJke3",
+    "file_name": "연동IF정의서",
+    "file_type": "folder",
+    "sheets": [],
+    "content": "폴더로 존재. 하위 구조:\n- blue/ 폴더:\n  - [서버연동] UNIX Document SAFER BLUE - C-SDK-KR.Doc (ID: 1S5LRAsk9_ZmJHA4thO53MzZpXvt7gadX)\n  - [서버연동] UNIX Document SAFER BLUE - Java-SDK-KR.Doc (ID: 1r4iUNQQZFHkv9qoB2_7kJliGy010tzZB)\n- c2010r3/ 폴더:\n  - [서버연동] UNIX Document SAFER DS2.5-Java Stream-Encrypt-SDK-KR_20211216.Doc (ID: 1vE9DcmpVWEwGj1QFz7DSeCqUrDx27kKK)\n  - [서버연동] UNIX Document SAFER DS2.5-Java Stream-FileChk-SDK-KR.Doc (ID: 1P66alxiFiLEdnPQnCLION6KBzSdAh9bs)\n  - [서버연동] UNIX Document SAFER DS2.5-Java Stream-Decrypt-SDK-KR.Doc (ID: 1MNp7WM8Ifdsqa44v_F38hZbIEUQ92vY_)",
+    "status": "collected"
+  },
+  {
+    "file_id": "not_found",
+    "file_name": "EVM-e-PageSAFER_V2.5 WebDRM 요구명세서.pdf",
+    "file_type": "pdf",
+    "sheets": [],
+    "content": "Drive 검색 결과 해당 파일을 찾을 수 없음. 'EVM-e-PageSAFER V2.5 WebDRM 요구명세서' 검색 결과 없음. 유사 문서로 'EVM-ePageSAFER v2.5 (요구 명세서).pdf'가 별도 수집됨.",
+    "status": "not_found"
+  },
+  {
+    "file_id": "not_found",
+    "file_name": "02_MMSA_1R14a_요구사항정의서_V1.0.xlsx",
+    "file_type": "spreadsheet",
+    "sheets": [],
+    "content": "Drive 검색 결과 해당 파일을 찾을 수 없음. '02_MMSA_1R14a_요구사항정의서' 및 'MMSA 요구사항정의서 국방모바일보안' 검색 모두 관련 없는 결과만 반환.",
+    "status": "not_found"
+  }
+]

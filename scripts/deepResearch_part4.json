@@ -1,0 +1,582 @@
+[
+  {
+    "folder_name": "4. 메뉴얼 (ES SAFER 전체)",
+    "folder_id": null,
+    "status": "not_found",
+    "notes": "정확한 '4. 메뉴얼' 폴더 미발견. 유사 폴더 다수 존재 (1-4-4-2. 메뉴얼, 1-4-5-2. 매뉴얼 등). 개별 제품 매뉴얼 폴더에서 수집.",
+    "files": []
+  },
+  {
+    "folder_name": "02_Document SAFER",
+    "folder_id": "1HCNj41jsVQLy2aPs6YP4ZVCA1y-oanNb",
+    "status": "found",
+    "notes": "DocumentSAFER 폴더. 사용자/관리자 매뉴얼 PDF 및 Fujifilm Vietnam DRM 소개자료 포함.",
+    "files": [
+      {
+        "file_id": "1JxbD-SdsydlecMBILyCm3I0V0ZfIyhmH",
+        "file_name": "[DocumentSAFER] 사용자매뉴얼_BLUE.pdf",
+        "file_type": "pdf",
+        "content_summary": "Document SAFER 사용자 매뉴얼 BLUE 버전",
+        "raw_content": "",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "1y4sUVYGvns6CBTBM0FLF7bQg8Tm1E_gd",
+        "file_name": "[DocumentSAFER] 관리자매뉴얼_BLUE.pdf",
+        "file_type": "pdf",
+        "content_summary": "Document SAFER 관리자 매뉴얼 BLUE 버전",
+        "raw_content": "",
+        "hyperlinks": []
+      }
+    ]
+  },
+  {
+    "folder_name": "05_Privacy SAFER",
+    "folder_id": "1qkSsQtQr634SUvO04zqEAkY8KJpJtsyY",
+    "status": "found",
+    "files": [
+      {
+        "file_id": "1uQcmarbypFFlqF4vk4jUZ0vrNPPmZj8t",
+        "file_name": "05_00246078400-규격서_PrivacySAFERv3.0(마크애니).pdf",
+        "file_type": "pdf",
+        "content_summary": "Privacy SAFER v3.0 규격서",
+        "raw_content": "",
+        "hyperlinks": []
+      }
+    ]
+  },
+  {
+    "folder_name": "04_Print SAFER",
+    "folder_id": "1HKPPwnHkva2jXnWjwxy0rGAhXLGiMgbF",
+    "status": "found",
+    "files": [
+      {
+        "file_id": "10xHjCQ8Xm_WkEKyfFcHjsclZrG5l6MEH",
+        "file_name": "05_00246211200-규격서_PrintSAFERv4.0(마크애니).pdf",
+        "file_type": "pdf",
+        "content_summary": "Print SAFER v4.0 규격서",
+        "raw_content": "",
+        "hyperlinks": []
+      }
+    ]
+  },
+  {
+    "folder_name": "03_Screen SAFER",
+    "folder_id": "1SYmBVhW3mvCsa5y0G2emyu1JwbF7NemG",
+    "status": "found",
+    "notes": "1-4-6. Screen SAFER 폴더. 하위에 내부교육자료, 매뉴얼, 정책정의서 폴더 포함.",
+    "files": [
+      {
+        "file_id": "1ArZq8atz-Enm5tjRMVnn3IaDA_pXCz-f",
+        "file_name": "[MarkAny] 화면보안_관리자매뉴얼.docx",
+        "file_type": "document",
+        "content_summary": "화면보안(Screen SAFER) 관리자 매뉴얼 v1.0. 접속정보, 사용자/부서관리, 화면보안 기본정책(차단정책, 스크린워터마크, 캡쳐프로세스예외), 예외정책관리, 이력관리(에이전트로그인이력, 캡쳐이력) 포함.",
+        "raw_content": "화면 보안 관리자매뉴얼 Version 1.0 - 접속정보: http://서버IP:8080/, admin/1234qwer! - 메뉴: 기본관리(사용자관리, 부서관리), 화면보안(기본정책-전사정책, 예외정책관리-차단정책/스크린워터마크/캡쳐프로세스예외, 이력관리) - 차단정책: 캡처차단+스크린워터마크적용, 캡처허용+스크린워터마크적용, 캡처차단+스크린워터마크미적용, 모든기능비활성화 - 스크린워터마크: 텍스트워터마크(농도/배경색/간격/기울기/크기), 이미지워터마크(bmp/jpg/png지원)",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "1Cs2keleSR5VkapPV0uD8Eoa_Z6aMPk8Y",
+        "file_name": "[ScreenSAFER] 관리자 매뉴얼_ver2.docx",
+        "file_type": "document",
+        "content_summary": "ScreenSAFER 관리자 매뉴얼 v2.0. v1 대비 캡처 툴 허용 정책 추가, 캡처세이퍼 삭제 허용/차단 기능 추가.",
+        "raw_content": "화면 보안 관리자 메뉴얼 Version 2.0 - 차단정책 상세: 캡처차단+스크린워터마크적용, 캡처허용+스크린워터마크적용, 캡처차단+스크린워터마크미적용, 모든기능비활성화 - 스크린워터마크: 텍스트워터마크(농도/배경색/간격/기울기/크기, 1열/2열 출력유형/문구), 이미지워터마크 - 캡처 툴 허용 정책: 전사 캡처 툴 관리에서 등록한 캡처 프로그램을 예외 추가 가능",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "1NibJLY5TepLQaTz_vDlw2qypRuBDuOT7",
+        "file_name": "[MarkAny] 화면보안_사용자매뉴얼.pptx",
+        "file_type": "presentation",
+        "content_summary": "화면보안 사용자 매뉴얼 (PPT 형식)",
+        "raw_content": "",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "1ZqsP_CadomtVlbeLOFdFsfgEoE0_KbH2",
+        "file_name": "[ScreenSAFER] 사용자 매뉴얼_ver2.pptx",
+        "file_type": "presentation",
+        "content_summary": "ScreenSAFER 사용자 매뉴얼 v2 (PPT 형식)",
+        "raw_content": "",
+        "hyperlinks": []
+      }
+    ]
+  },
+  {
+    "folder_name": "08_Web SAFER",
+    "folder_id": "1h_1ZcVmYXGns4Lhi_TM5lXKytrHxWh8T",
+    "status": "found",
+    "notes": "1-4-10. WebSAFER 폴더 (1-4-9. WebSAFER). 하위에 교육자료, 매뉴얼, 정책정의서 폴더 포함.",
+    "files": [
+      {
+        "file_id": "1miDgElvGAGOWZzK4jGvqDScskmNPZCwC",
+        "file_name": "WebSAFER for Chrome&Edge 적용문서_ver2.docx",
+        "file_type": "document",
+        "content_summary": "WebSAFER for Chrome & Edge 적용 문서 Ver.2. 웹세이퍼 구성/설치/적용 방법. 라이선스 파일, 권한정보(INI) 파일 구조, ACL 설정(save/edit/print/viewsource/contextmenu/imagesafer/visibleprint/secureclipboard/filedownload/protectremotetool/protectallscreen), auto/manual 모드, group 섹션별 URL 보호 권한 설정.",
+        "raw_content": "WebSAFER for Chrome & Edge - 라이선스 및 ACL 적용(setConfigFile), setUserAclFromScript 함수로 정책 적용 - 권한: 편집/저장/인쇄/소스보기/컨텍스트메뉴/이미지세이퍼/VisiblePrint/SecureClipboard/임시파일다운로드/원격제어도구제한/전체화면캡처방지 - INI 파일: main섹션(mode=auto/manual, lastgroup), group섹션(lasturl, url별 권한) - 프로세스/원격/가상머신 검사 기능",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "1Sj2C5H_OCL4FdbOWpEyU2avUyUZd2nqc",
+        "file_name": "WEBSAFER_V5_FAQ.docx",
+        "file_type": "document",
+        "content_summary": "WebSAFER For Edge & Chrome 오류 가이드 V1.0. 설치 오류 해결, 프로세스 확인(mawsmgr.exe, mawssvc.exe), 서비스 확인, setConfigFile() fail 에러 대응.",
+        "raw_content": "WebSAFER 오류 가이드 - 관리자 권한 실행, 설치 경로 C:\\Windows에 WSChrome.dll/WSEdge.dll 확인 - 프로세스: mawsmgr.exe, mawssvc.exe 실행 확인 - 서비스: WebSAFER Non-ActiveX Service 재시작 - SetConfigFile() fail 에러: 모든 브라우저 종료 후 재실행",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "1KYNKrbmj_mjCQzG_HrlvnKrLXWAJJbnO",
+        "file_name": "WebSAFER For Edge 테스트가이드_v2.0.docx",
+        "file_type": "document",
+        "content_summary": "WebSAFER For Edge 테스트 가이드 v2.0",
+        "raw_content": "",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "15Y8IhUbSEY-sUm28nqGGRcwJae4XK2fL",
+        "file_name": "WebSAFER for Chrome&Edge 적용문서.docx",
+        "file_type": "document",
+        "content_summary": "WebSAFER for Chrome&Edge 적용문서 (초기 버전)",
+        "raw_content": "",
+        "hyperlinks": []
+      }
+    ]
+  },
+  {
+    "folder_name": "06_Cowork SAFER",
+    "folder_id": "1F6fRKyxEEbFBf0OX4OE3MxiQXp_djGKz",
+    "status": "found",
+    "notes": "Cowork SAFER 폴더. 관리자매뉴얼, 배포자매뉴얼, 기능리스트, 소개자료 포함.",
+    "files": [
+      {
+        "file_id": "1Pc5-yEQBZtzMFwrjb3BwGF2FSAnLz67u",
+        "file_name": "[Cowork SAFER] 11관리자매뉴얼.docx",
+        "file_type": "document",
+        "content_summary": "Document SAFER 관리자 매뉴얼. 관리자 로그인(http://192.168.1.96:8081, manager/P@ssw0rd), 기본관리(사용자/부서관리), 외부반출보안 정책관리(전사정책-인증방법/저장/열람횟수/인쇄/블록복사/화면캡처/문서사용기한/워터마크 등, 예외정책), 이력조회(변환이력/사용이력).",
+        "raw_content": "Document SAFER 관리자 매뉴얼 - 전사정책: 인증방법(서버/로컬), 저장기능, 열람허용횟수, 인쇄기능/횟수, 블록복사(허용안함), 화면캡처(허용안함), 문서사용기한(만료기간/만료일자/무제한), 1대PC사용제한, 출력물워터마크(출력정보/배경/Copyright), 로그전송(출력/열람/저장) - 예외정책: 부서/사용자별 별도 정책 적용 - 이력조회: 변환이력(패키지명/배포자ID/IP/인증방법), 사용이력(협력사 문서 사용 이력)",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "1l3pzsohjJ_YtXf2j-5s5ZEedr26_N_3f",
+        "file_name": "[Cowork SAFER] 관리자매뉴얼.docx",
+        "file_type": "document",
+        "content_summary": "Document SAFER 관리자 매뉴얼 (동일 구조, 외부반출보안 정책 상세 포함)",
+        "raw_content": "",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "1APbIxIt7SwnETFw77Rzkiid3D0K0iMQi",
+        "file_name": "[Cowork SAFER] 배포자매뉴얼.docx",
+        "file_type": "document",
+        "content_summary": "Cowork SAFER 변환툴 매뉴얼 V1.0. 설치방법, 변환툴 실행(우클릭>Cowork SAFER>MASDOC 변환), 변환형식(MASDOC/ZIP/EXE), 인증방법(서버인증/로컬인증), 권한상세설정(저장/열람/인쇄/워터마크/블록복사/화면캡처/사용기한).",
+        "raw_content": "Cowork SAFER 변환툴 - 변환형식: MASDOC(개별파일), ZIP(묶음), EXE(뷰어통합) - 인증: 서버인증(계정로그인), 로컬인증(비밀번호) - 추가인증: 사용안함/사용자지정/비밀번호 - 권한: 저장/열람횟수/인쇄/인쇄횟수/워터마크(출력정보/배경/Copyright)/블록복사/화면캡처/사용기한/만료시삭제/한기기제한",
+        "hyperlinks": ["http://www.markany.com"]
+      },
+      {
+        "file_id": "18xsOmUtKT13rW6OoLXc3q1qizzbzmhqi",
+        "file_name": "기능리스트.xlsx",
+        "file_type": "spreadsheet",
+        "content_summary": "Cowork SAFER 기능 리스트 스프레드시트",
+        "raw_content": "",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "16zpx1mouPdUyYyFx56OImeJ8KStdnyiD",
+        "file_name": "Cowork SAFER Suite_v1.0_부분발췌.pptx",
+        "file_type": "presentation",
+        "content_summary": "Cowork SAFER Suite v1.0 소개 자료 (부분 발췌)",
+        "raw_content": "",
+        "hyperlinks": []
+      }
+    ]
+  },
+  {
+    "folder_name": "09_Mobile Docs",
+    "folder_id": "1DYOrVzk83Uca5gIpTWHE5HirqGQA1M9i",
+    "status": "found",
+    "notes": "1-4-8. Mobile DOCS 폴더. 하위에 교육자료, 매뉴얼, 정책정의서 폴더.",
+    "files": [
+      {
+        "file_id": "1vYABc5GhkQciXxKsVlUZFXAOA6ANjckX",
+        "file_name": "[Mobile DOCS] 관리자 매뉴얼_ver2.docx",
+        "file_type": "document",
+        "content_summary": "Mobile DOCS 관리자 웹 매뉴얼 Ver2. 관리자 로그인(http://서버IP:8080/, admin/1234), 기본관리(사용자/부서), 모바일보안 정책관리(전사정책/예외정책), 라이센스관리(앱설치/로그인현황), 이력조회(암호화문서 열람/편집/인쇄/미권한 열람시도).",
+        "raw_content": "Mobile DOCS 관리자 웹 매뉴얼 Ver2 - 메뉴: 기본관리(사용자/부서), 모바일보안(전사정책/예외정책/라이센스관리/이력조회) - 라이센스관리: 앱 설치 및 로그인 현황 조회 - 이력조회: 암호화 문서 열람, 편집, 인쇄, 미 권한(오프라인) 열람시도 이력",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "1v-k6ZLDjlDpkOFfl5w-H9K_utZHpD4C5",
+        "file_name": "Mobile DOCS_관리자웹_매뉴얼.docx",
+        "file_type": "document",
+        "content_summary": "Mobile DOCS 관리자웹 매뉴얼 (초기 버전). 동일 구조.",
+        "raw_content": "",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "1UhQDYNoOXFgv-MoXhCOrx1KqizLJXJgO",
+        "file_name": "Mobile DOCS_사용자매뉴얼(iOS).pptx",
+        "file_type": "presentation",
+        "content_summary": "Mobile DOCS iOS 사용자 매뉴얼",
+        "raw_content": "",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "17AB_is2VjOtmkJR7DG_7PhI_Vs7hupX1",
+        "file_name": "Mobile DOCS_사용자매뉴얼(Android).pptx",
+        "file_type": "presentation",
+        "content_summary": "Mobile DOCS Android 사용자 매뉴얼",
+        "raw_content": "",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "18k0tPPC1yuSOZ0cUIATZSQAh_j0mH73a",
+        "file_name": "[Mobile DOCS] 사용자 매뉴얼(iOS)_ver2.pptx",
+        "file_type": "presentation",
+        "content_summary": "Mobile DOCS iOS 사용자 매뉴얼 v2",
+        "raw_content": "",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "12zWrgqFOiW6mUrvh7EbQ9Kla7ApKtnJI",
+        "file_name": "[Mobile DOCS] 사용자 매뉴얼(Android)_ver2.pptx",
+        "file_type": "presentation",
+        "content_summary": "Mobile DOCS Android 사용자 매뉴얼 v2",
+        "raw_content": "",
+        "hyperlinks": []
+      }
+    ]
+  },
+  {
+    "folder_name": "07_Mobile SAFER",
+    "folder_id": "1zotBnsnW1M9zVbBlGpcf4hiWl9bK7_5K",
+    "status": "found",
+    "notes": "Mobile SAFER 폴더. Mobile Capture SAFER SDK 가이드 포함.",
+    "files": [
+      {
+        "file_id": "1X3BDmSRmMf0EvJRBOCRs2OpukzY8fUF9",
+        "file_name": "[MarkAny SDK Guides] Mobile Capture SAFER for Android_v1.52.docx",
+        "file_type": "document",
+        "content_summary": "Mobile Capture SAFER Android SDK 가이드 v1.52. 기본기능(단축키캡처방지, 캡처APP방지, 루팅감지, 에뮬레이터감지), 부가기능(Wi-Fi제어, Bluetooth제어, USB감지, MIRRORING감지, Visual Watermark). API: getInstance, setSecureFlag, addSecureFlag, removeSecureFlag, setEvent, initWatermark, enableCaptureActivity.",
+        "raw_content": "Mobile Capture SAFER Android v1.52 - 기본기능: 단축키 화면캡처방지, 캡처APP방지, 루팅감지, 에뮬레이터감지 - 부가기능: Wi-Fi연결제어(SSID화이트리스트), Bluetooth연결제어, USB연결감지, MIRRORING감지, Visual Watermark - API: getInstance(Activity,Handler,boolean), setSecureFlag(EnumSet), getSecureFlag(), addSecureFlag(flag), removeSecureFlag(flag), setEvent(event), initWatermark(str), enableCaptureActivity(activity,flag) - 지원: Android OS 6 이상, Android Studio",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "1uMoivhhaWZYQZai5_J3chRQUVY-n02i0",
+        "file_name": "[MarkAny SDK Guides] Mobile Capture SAFER for iOS_v1.50d.pdf",
+        "file_type": "pdf",
+        "content_summary": "Mobile Capture SAFER iOS SDK 가이드 v1.50d",
+        "raw_content": "",
+        "hyperlinks": []
+      }
+    ]
+  },
+  {
+    "folder_name": "10_Mobile STICKER",
+    "folder_id": "1WV9td4CkRczA7NnlMmTCf7X4vtywCGa1",
+    "status": "found",
+    "files": [
+      {
+        "file_id": "1azB3daDEOBkrgK3h8GewleaSq1BjNO9Z",
+        "file_name": "05_00246190700-규격명_MobileSTICKERV1.0(마크애니).pdf",
+        "file_type": "pdf",
+        "content_summary": "Mobile STICKER V1.0 규격서",
+        "raw_content": "",
+        "hyperlinks": []
+      }
+    ]
+  },
+  {
+    "folder_name": "13_Mobile Capture SAFER",
+    "folder_id": null,
+    "status": "not_found",
+    "notes": "별도 폴더 미발견. Mobile SAFER 폴더(1zotBnsnW1M9zVbBlGpcf4hiWl9bK7_5K) 내에 Mobile Capture SAFER SDK 가이드 포함.",
+    "files": []
+  },
+  {
+    "folder_name": "11_IScreen SAFER",
+    "folder_id": null,
+    "status": "not_found",
+    "notes": "iScreenSAFER.framework 폴더들은 발견되었으나 매뉴얼 폴더가 아닌 프레임워크 바이너리 폴더. 매뉴얼 전용 폴더 미발견.",
+    "files": []
+  },
+  {
+    "folder_name": "14_국방모바일보안앱",
+    "folder_id": "1m2xdiVieCLEYEETywxXHJqsZtparRXBM",
+    "status": "found",
+    "notes": "국방모바일보안 폴더. iOS/Android 사용자 매뉴얼(직원/외부인) 4종 포함.",
+    "files": [
+      {
+        "file_id": "1rTF1swJU3wfR4T-PQy9DrNcRH3lJw-25",
+        "file_name": "국방모바일보안 iOS 사용자 매뉴얼 (외부인).pptx",
+        "file_type": "presentation",
+        "content_summary": "국방모바일보안 iOS 사용자 매뉴얼 (외부인용)",
+        "raw_content": "",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "18m9cqr6RumCnhObCBVr4pKIKbz2T0PT-",
+        "file_name": "국방모바일보안 iOS 사용자 매뉴얼 (직원).pptx",
+        "file_type": "presentation",
+        "content_summary": "국방모바일보안 iOS 사용자 매뉴얼 (직원용)",
+        "raw_content": "",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "10bbG1v8DH_XKtZPoAjuialny-A7qPHFw",
+        "file_name": "국방모바일보안 안드로이드 사용자 매뉴얼 (직원).pptx",
+        "file_type": "presentation",
+        "content_summary": "국방모바일보안 Android 사용자 매뉴얼 (직원용)",
+        "raw_content": "",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "19UZJpwZlJ8Ut49qhxveQf8Ifl41iNebv",
+        "file_name": "국방모바일보안 안드로이드 사용자 매뉴얼 (외부인).pptx",
+        "file_type": "presentation",
+        "content_summary": "국방모바일보안 Android 사용자 매뉴얼 (외부인용)",
+        "raw_content": "",
+        "hyperlinks": []
+      }
+    ]
+  },
+  {
+    "folder_name": "MaFileCipherXU",
+    "folder_id": "1nRUPqhB0A2itlxq36VdXA11WsPoQVXLn",
+    "status": "found",
+    "notes": "1. NT Server 암복호화 (MaFileCipherXU) 폴더. SDK 문서 및 Blue 연동 매뉴얼 포함.",
+    "files": [
+      {
+        "file_id": "1u2tmd8izFkeL9mPeYwvPYC-oRZEoT4xg",
+        "file_name": "[일반] mafilecipherXU.dll-SDK-KR.doc",
+        "file_type": "document",
+        "content_summary": "MaFileCipherXU DLL SDK 한국어 문서 (바이너리 형식으로 텍스트 추출 불가)",
+        "raw_content": "",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "136nLck9Nt2F1P_r7Mjw_-B5dxuwD4hiR",
+        "file_name": "MafileCipherXU_Blue연동_Manual_배포_20240521.pptx",
+        "file_type": "presentation",
+        "content_summary": "MaFileCipherXU Blue 연동 매뉴얼 (2024.05.21 배포)",
+        "raw_content": "",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "1ozybToilq-82VwDjuOcDGiK-mT3XzL7h",
+        "file_name": "[일반] Document SAFER majniX.dll-Decrypt-SDK-KR.doc",
+        "file_type": "document",
+        "content_summary": "Document SAFER majniX.dll 복호화 SDK 한국어 문서",
+        "raw_content": "",
+        "hyperlinks": []
+      }
+    ]
+  },
+  {
+    "folder_name": "Server DRM",
+    "folder_id": "1SRFOe2jl9fosOb1O--NWlvIbeaFNl1yj",
+    "status": "found",
+    "notes": "2. Unix Server 암복호화 (Server DRM) 폴더. 설치 매뉴얼, 참고자료, 설치요청양식 포함.",
+    "files": [
+      {
+        "file_id": "1tEV0Nw3h9GbP35wP4ESODo-eFb-REqUY",
+        "file_name": "[Daemon]서버DRM_설치 메뉴얼_v20240513.pptx",
+        "file_type": "presentation",
+        "content_summary": "서버DRM Daemon 설치 매뉴얼 (2024.05.13 버전)",
+        "raw_content": "",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "1raBHJCXo5F_u6xMZXeO7xUIweDaevyJz",
+        "file_name": "[Daemon]서버DRM_설치 메뉴얼_v20221215.pptx",
+        "file_type": "presentation",
+        "content_summary": "서버DRM Daemon 설치 매뉴얼 (2022.12.15 버전)",
+        "raw_content": "",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "1iJ4g4QmOBzeAbV-CIZLDIwiJ3JLOceJT",
+        "file_name": "[DocSAFER_BLUE] 서버DRM 연동 및 운영매뉴얼.doc",
+        "file_type": "document",
+        "content_summary": "DocSAFER BLUE 서버DRM 연동 및 운영 매뉴얼 (하위 메뉴얼 폴더)",
+        "raw_content": "",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "1gGdh7RBA885H3yLMOCRw-OrCNIilBzOg",
+        "file_name": "[서버연동] UNIX Document SAFER DS2.5-Java Stream-FileChk-SDK-KR.DOC",
+        "file_type": "document",
+        "content_summary": "UNIX Document SAFER DS2.5 Java Stream FileChk SDK 한국어 문서",
+        "raw_content": "",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "1WL8q5S_adjFxHB6Dz9aKUgjH8IbvuAJA",
+        "file_name": "[서버연동] UNIX Document SAFER DS2.5-Java Stream-Encrypt-SDK-KR.DOC",
+        "file_type": "document",
+        "content_summary": "UNIX Document SAFER DS2.5 Java Stream 암호화 SDK 한국어 문서",
+        "raw_content": "",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "1bNNiewJlAwRpfqbMewfyjl3NqiCK9b0F",
+        "file_name": "[서버연동] UNIX Document SAFER DS2.5-Java Stream-Decrypt-SDK-KR.DOC",
+        "file_type": "document",
+        "content_summary": "UNIX Document SAFER DS2.5 Java Stream 복호화 SDK 한국어 문서",
+        "raw_content": "",
+        "hyperlinks": []
+      }
+    ]
+  },
+  {
+    "folder_name": "DSFileCipherX",
+    "folder_id": null,
+    "status": "not_found",
+    "notes": "DSFileCipherX 폴더 미발견. 검색 키워드: DSFileCipherX, DSFileCipher 모두 결과 없음.",
+    "files": []
+  },
+  {
+    "folder_name": "20_Macrypto V3.00",
+    "folder_id": null,
+    "status": "not_found",
+    "notes": "Macrypto V3.00 폴더 미발견. 검색 키워드: Macrypto, Macrypto V3 모두 결과 없음.",
+    "files": []
+  },
+  {
+    "folder_name": "01_ES SAFER",
+    "folder_id": null,
+    "status": "not_found",
+    "notes": "01_ES SAFER 폴더 미발견. ES SAFER 검색 결과 없음.",
+    "files": []
+  },
+  {
+    "folder_name": "SafePC Enterprise V7.0 매뉴얼",
+    "folder_id": "1vENWORR8Bzc9gInjZIoi43RvyKJ4IEbF",
+    "status": "found",
+    "notes": "SafePC 폴더. 관리자/사용자 매뉴얼 PDF 및 긴급 삭제 도구 포함.",
+    "files": [
+      {
+        "file_id": "1z-XiHZqPN7qjaJcmFkYCbA1GfS0wZVyM",
+        "file_name": "SafePC Enterprise V7.0 매뉴얼(관리자) v0.1.pdf",
+        "file_type": "pdf",
+        "content_summary": "SafePC Enterprise V7.0 관리자 매뉴얼 v0.1 (9.2MB)",
+        "raw_content": "",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "1nxcv9v9Mv7ftnpfwooou4pJlmENBVfuh",
+        "file_name": "SafePC Enterprise V7.0 매뉴얼(사용자) v0.1.pdf",
+        "file_type": "pdf",
+        "content_summary": "SafePC Enterprise V7.0 사용자 매뉴얼 v0.1 (6.0MB)",
+        "raw_content": "",
+        "hyperlinks": []
+      }
+    ]
+  },
+  {
+    "folder_name": "SafeUSB+ V7.0 매뉴얼(관리자 사용자)",
+    "folder_id": null,
+    "status": "not_found",
+    "notes": "SafeUSB 관련 폴더 미발견. 검색 키워드: SafeUSB, SafeUSB 매뉴얼 모두 결과 없음.",
+    "files": []
+  },
+  {
+    "folder_name": "ePageSAFER 매뉴얼",
+    "folder_id": "1OfMdcd4n_IzrVN8R8I6wxQ4fhu2YHluG",
+    "status": "found",
+    "notes": "ePageSAFER 폴더. 매뉴얼, 시스템구성도, 디자인파일, 소개자료, 브로셔 포함.",
+    "files": [
+      {
+        "file_id": "1gwXITu82yruX_2WjB-Gu8ntiBIbAV--0",
+        "file_name": "ePage-SAFER소개자료_V1.3.pdf",
+        "file_type": "pdf",
+        "content_summary": "e-Page SAFER 소개 자료 V1.3",
+        "raw_content": "",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "1PIUtkKVfz3StE9ei3a9MpOJnFY1nL_TH",
+        "file_name": "EPS Web DRM Pack for NoAX_eng.pdf",
+        "file_type": "pdf",
+        "content_summary": "EPS Web DRM Pack for NoAX 영문 문서",
+        "raw_content": "",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "1RuUM-lYSo4VsiRbwKQfzugwLmwBiOozZ",
+        "file_name": "02_브로셔_웹 화면보안 솔루션(e-Page SAFER Web DRM Pack for NoAX).pdf",
+        "file_type": "pdf",
+        "content_summary": "e-Page SAFER Web DRM Pack for NoAX 브로셔",
+        "raw_content": "",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "1gBnbRyPfmGUrVX1ANMayXt5bzU1GYPT2",
+        "file_name": "e-PageSAFER™_V2.5_매뉴얼_WebDRM.docx",
+        "file_type": "document",
+        "content_summary": "e-PageSAFER V2.5 WebDRM 개발자 매뉴얼. 웹 콘텐츠 무단복사/저장/링크 방지 솔루션. 지원 브라우저(Chrome 19+, Firefox 15+, Opera 15+, Edge). 적용방법(MaWebDRM.js include), 라이선스 적용, 정책변수(MA_EXCEPT_SAVE/PRINT/DEV/COPY/ALL/RBTN, bImgsfOn), ICP 워터마크.",
+        "raw_content": "e-PageSAFER WebDRM Pack For NoAX 개발자 매뉴얼 - 웹 콘텐츠 보호: 무단 복사/저장/링크 방지 - 지원: Chrome 19+, Firefox 15+, Opera 15+, Edge - 적용: MaWebDRM.js, MaWebDRM_Common.js, jquery include - 정책변수: MA_EXCEPT_SAVE(저장), MA_EXCEPT_PRINT(인쇄), MA_EXCEPT_DEV(개발자도구), MA_EXCEPT_COPY(복사), MA_EXCEPT_RBTN(우클릭), bImgsfOn(화면캡쳐) - ICP: 화면 워터마크 문구 - 라이선스: 도메인/IP 기반, MaWebDRM_Common.js의 maLicense 값 설정 - 특허: KR 390929, 337954, 333163 등",
+        "hyperlinks": ["http://www.markany.com", "mailto:sales@markany.com"]
+      },
+      {
+        "file_id": "11g-P2Q8mzt6DVgJY_37Imawl097OJ08M",
+        "file_name": "(Eng) e-PageSAFER™_V2.5_매뉴얼_WebDRM.docx",
+        "file_type": "document",
+        "content_summary": "e-PageSAFER V2.5 WebDRM 개발자 매뉴얼 (영문 버전)",
+        "raw_content": "",
+        "hyperlinks": []
+      }
+    ]
+  },
+  {
+    "folder_name": "ePageSAFER WebDRM 매뉴얼",
+    "folder_id": null,
+    "status": "not_found",
+    "notes": "별도 폴더 미발견. ePageSAFER 폴더 내 메뉴얼 하위폴더에서 WebDRM 매뉴얼 발견됨 (위 ePageSAFER 항목 참조).",
+    "files": []
+  },
+  {
+    "folder_name": "ePS DocumentMerger 매뉴얼",
+    "folder_id": "1Pe3xthgVbbeUT63Zrn3KXksCFIkjzryn",
+    "status": "found",
+    "notes": "ePS DocumentMerger 매뉴얼 폴더. e-PageSAFER V2.5 R2(MDM) 관련 매뉴얼 4종 포함.",
+    "files": [
+      {
+        "file_id": "1BoRSpuoPg6h7oajsvZtSIt7rPNC91BSe",
+        "file_name": "[MarkAny] e-PageSAFER™_V2.5_R2(MDM) 서버 운영매뉴얼(NT).pdf",
+        "file_type": "pdf",
+        "content_summary": "e-PageSAFER V2.5 R2(MDM) NT 서버 운영 매뉴얼",
+        "raw_content": "",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "1GjF2yt3n3ILUtfrA3ZoMCe0zQ4o2ttAx",
+        "file_name": "[MarkAny] e-PageSAFER™_V2.5_R2(MDM) 오류메시지 대응가이드.pdf",
+        "file_type": "pdf",
+        "content_summary": "e-PageSAFER V2.5 R2(MDM) 오류메시지 대응 가이드",
+        "raw_content": "",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "1shJvhiXdiNaCIG6BdWdbZh62XjVqwj6q",
+        "file_name": "[MarkAny] e-PageSAFER™_V2.5_R2(MDM) 사용자 매뉴얼.pdf",
+        "file_type": "pdf",
+        "content_summary": "e-PageSAFER V2.5 R2(MDM) 사용자 매뉴얼",
+        "raw_content": "",
+        "hyperlinks": []
+      },
+      {
+        "file_id": "1y4P3Z9XJmhxnBzYdYxMdirjcpaKpM39B",
+        "file_name": "[MarkAny] e-PageSAFER™_V2.5_R2(MDM) 서버 시작 및 중지 매뉴얼.pdf",
+        "file_type": "pdf",
+        "content_summary": "e-PageSAFER V2.5 R2(MDM) 서버 시작/중지 매뉴얼",
+        "raw_content": "",
+        "hyperlinks": []
+      }
+    ]
+  },
+  {
+    "folder_name": "ePS Document DNA 매뉴얼",
+    "folder_id": null,
+    "status": "not_found",
+    "notes": "ePS Document DNA 매뉴얼 폴더 미발견. 검색 키워드: Document DNA, ePS Document DNA 모두 결과 없음.",
+    "files": []
+  }
+]

@@ -1,0 +1,356 @@
+[
+  {
+    "file_id": "1K418mxEs1VwE1ulyvlCMyzNStjx2daG60_WJL3eZ7PI",
+    "file_name": "[IST]정책정의서_v1",
+    "total_sheets": 24,
+    "sheet_names": [
+      "[표지]",
+      "espresso(표준)",
+      "Json2019(표준)",
+      "Blue2(표준)",
+      "Blue_web(표준)",
+      "NX_web(표준)",
+      "MIP정책",
+      "R3 or JSON ExchangePolicy",
+      "MADRMAgent",
+      "ESAgent(Only)",
+      "배치암호화 툴(표준)",
+      "Print SAFER_web(표준)",
+      "MASHLMGR",
+      "CipherTool",
+      "QDRM_EX",
+      "MaPrint옵션",
+      "자동암호화번호",
+      "LocalPolicy",
+      "Print SAFER_web",
+      "Privacy SAFER 3.1_web_Blue",
+      "Privacy SAFER 3.1_web_ESPRESSO",
+      "Screen SAFER_2.0_web",
+      "QDRM_EX_web",
+      "시트11"
+    ],
+    "sheets": [
+      {
+        "sheet_name": "[표지]",
+        "row_count": 26,
+        "data_summary": "정책정의서 표지. 각 제품별 정책 시트 네비게이션 링크",
+        "raw_data": "각 시트(espresso, Json2019, Blue2, Blue_web, NX_web, MIP정책, ExchangePolicy, MADRMAgent, ESAgent, 배치암호화툴, Print SAFER, MASHLMGR, CipherTool, QDRM_EX 등)로의 이동 링크",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "Json2019(표준)",
+        "row_count": 1014,
+        "data_summary": "Json2019 표준 CCF 정책 정의. DRM Agent 전체 정책 필드명/필드값/사용목적 정의. 에이전트 로그인, 배치암호화, OEP, 메뉴설정, 자동암호화, 워터마크, 반출정책 등",
+        "raw_data": "필드명|필드값|사용목적 구조. 주요정책: acapclipdesc(블록카피방지 메시지), agent_auto_login(1사용/0미사용 자동로그인), agent_autoencryptpolicy(자동암호화앱 예:|226|2|3|), agent_batch_enc_app(배치암호화 실행파일), agent_batch_enc_check_gap(동작시간Gap 분), agent_batch_enc_day_of_month/week/schedule_day/time(배치스케줄), agent_hide_after_login(로그인후숨김), agent_login_with_capturesafer2/print/privacy/privacy_v3(타제품SSO연동), agent_menu_idm_close/login/logout/oep/run_call1(트레이메뉴), agent_menu_list(settings|takeout|notice|pwchange), agent_notify_limit_count(알림개수)/time(알림주기분), agent_oep_off_auth_count(OEP횟수)/period(기간)/retry_count(재시도), agent_password_change_rule(8|15|1|1|1 최소|최대|영문|특수|숫자), agent_policy_schedule_time(정책업데이트 180분), agent_with_print_policy(1CCF/0DAT), autoblockcopypolicy(0불가/1허용), autodocexchangepolicy(문서교환정책값), autoencryptpolicy(자동암호화앱), batch_enc_run_flag(0미실행/1실행), batch_enc_run_type(1로그인/2에이전트/3스케줄), batch_enc_support_ext(대상확장자), batch_enc_pass_fd(예외폴더), loadimagesafer(1사용/0미사용 화면캡처방지), offlinepolicy(0App불가/1파일불가/2읽기전용/3자체권한), protectremotetool(1차단/0허용), shell_menu_enc(수동암호화), timesync(시간동기화), vp_option_onoff_00(워터마크사용), vp_option_ci_logo_*(로고), vp_option_info_*(출력정보), vp_option_cr_*(Copyright), vp_option_bg_*(배경워터마크)",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "espresso(표준)",
+        "row_count": 912,
+        "data_summary": "Espresso 표준 WEB-CCF 매핑 정책. 기본정책/반출정책/OEP/전사예외정책",
+        "raw_data": "기본정책: AGENT_LOGIN_WITH_CAPTURESAFER2(0,ScreenSAFER연동), AGENT_LOGIN_WITH_PRIVACY_V3(0,개인정보연동), AGENT_POLICY_SCHEDULE_TIME(180분), CompanyID(PMS발급), DLSInfo(로그서버IP:40002), DTSSInfo(시간동기화IP:40003), HOFFICE_SUPPORT(|hwp.exe|), SECURE_PRINT_AUTOENC(1,가상프린터암호화). 반출: takeoutType(사후확인/자가승인/사전사후선택/사전승인), takeoutupsize(-99무제한byte), takeoutupcnt(-99무제한개수), takeoutdowncnt(1~10횟수), takeoutdownterm(1~30일). OEP: useroeppw(OTP비밀번호), agent_oep_off_auth_count(횟수), agent_oep_off_auth_period(기간). 전사/예외: autodocexchangepolicy(개인한/부서한/사내한 값15), offlinepolicy(0~3), loadimagesafer(화면캡처), protectremotetool(원격제어), DRM삭제(0허용안함/1허용), 가상프린터방지, 블록복사방지, 백업파일(0안함/1사용/2최신10개), batch_enc_*(배치암호화), autoencryptpolicy(자동암호화), vp_option_*(워터마크: 로고/출력정보/Copyright/배경)",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "Blue2(표준)",
+        "row_count": 1015,
+        "data_summary": "Blue2 표준 CCF 정책. CLIENT_POLICY_INFO/SETTINGS 대분류. 암호화 알고리즘, 로그인방식, 한글버전체크 등",
+        "raw_data": "CLIENT_POLICY: TIMESYNC_SERVER_INFO(IP:40003), LOG_SERVER_INFO(IP:40002), USE_TIMESYNC(1동기화/0비동기화), TIMESYNC_INTERVAL(100초), USE_TAKEOUT_POLICY(PC반출), CONTENTS_CIPHER_ALGORITHM(ARIA:0/AES:1/SEED:2), CONTENTS_CIPHER_MODE(ECB:0/CBC:1/CFB128:2/CFB:3/CTR:4), CONTENTS_CIPHER_KEYLENGTH(16), USE_LOGIN(온라인:1/오프라인:2/모두:3/안함:0), ONLINE_LOGIN_METHOD(수동:1/자동:2/AD수동:3/AD자동:4/SSO:5). SETTINGS: DECIPHER_TOOL_*(복호화툴), HWP*_CHECK_VERSION(한글버전체크), USER_DEL(DRM삭제 0허용안함/1허용), CIPHER_TOOL_CONTROL_SETTING_0(등급별 암호화세팅: 등급|열람|인쇄|유효기간|교환|출력|저장|블럭카피|워터마크|캡처|오프라인|열람로그|저장로그|출력로그)",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "Blue_web(표준)",
+        "row_count": 891,
+        "data_summary": "Blue_web 표준 WEB정책. 기본정책/전사정책의 WEB-CCF 매핑. APP별 정책 분류",
+        "raw_data": "기본정책(APP별): AGENT_AUTO_LOGIN(0), AGENT_BATCH_ENC_APP(BatchEncTool.exe), AGENT_PASSWORD_CHANGE_RULE(8|15|1|1|1), BATCH_ENC_ALL_DRIVES_TARGET(1전체드라이브), BATCH_ENC_AUTO_EXIT(0미사용), BATCH_ENC_INCLUDE_NETWORK_DRIVES(0미암호화), BATCH_ENC_SAVE_RESULT_FILE(1로그저장), BATCH_ENC_SEND_EXECUTION_LOG(2표준로그전송), BATCH_ENC_STOPABLE(1중지가능), BATCH_ENC_UI_SILENCE(0UI모드), CIPHER_TOOL_CONTROL_SETTING_0(일반|-99|-99|-99|3|1|1|1|1|1|1|1|1|1), DSH_PMI_NOCHECKDIGITALSIGN(0서명체크), HOFFICE_SUPPORT(|hwp.exe|hcell.exe|hshow.exe|hword.exe|hpdf.exe|), SHELL_MENU_*(쉘메뉴설정)",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "NX_web(표준)",
+        "row_count": 19,
+        "data_summary": "NX_web 표준 정책. WEB분류/정책명/정책값/CCF필드명/사용목적/기능확인여부 구조",
+        "raw_data": "전사정책: default_policy_priority(정책우선순위: 파일교환정책/서버교환정책), default_document_exchange_policy(문서교환정책: 교환불가/machine_key/그룹사한/회사한/부서한 등 다중옵션), default_offline_policy(오프라인: App사용불가/파일사용불가/읽기전용/자체권한), default_enable_count_control(횟수제어), default_deletefile_when_expired(만료시파기), default_enable_secure_print(가상프린터방지), default_enable_secure_clipboard(블록카피방지), default_enable_insert_object(개체삽입허용), default_insert_object_policy(개체삽입범위: pc_drm/server/encrypt_tool/all_file 등), default_enable_message_filter(메시지필터), default_enable_print_check(출력허용), default_enable_image_safer(화면캡처방지), default_protect_remote_tool(원격프로그램방지)",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "MIP정책",
+        "row_count": 49,
+        "data_summary": "MIP(Microsoft Information Protection) 정책. Microsoft 365/Teams 연동 DRM 정책",
+        "raw_data": "기본정책: MIP_AppName(Ma365CoreAgent), MIP_AppVersion(2.0), MIP_ClientId/ClientSecret/TenantGuid(MS Compliance portal 코드), MIP_Password/UserId(MS관리자계정), MIP_SiteUrl(SharePoint URL), MIP_GRADE_DEFAULT(기본레이블), ds_allow_cloud(원드라이브저장 1가능/0불가), MIP_Control_URL(Teams 다운로드시 암호화 URL), TEAMS_BLOCK_FILE_TYPE(팀즈 업로드차단 확장자). MIP정책: ds_drm_with_mip(0:DRM사용/1:로컬DRM&클라우드MIP), dscl_aip_desktop_*(DESKTOP Office MIP 제어: use_drm_control/control_imagesafer/control_visibleprint/control_canprint/control_canblockcopy), WEBSAFER_*(WEB Office MIP 제어: LOCAL_POLICY_ENABLE/USE_WATERMARK/IMAGESAFER/PRINT_BLOCK/SECURE_CLIP/URL_LIST). QDRM: QDRM_EX_ENABLE(실시간암호화), QDRM_EX_EXCEPTION_PROCESS(예외프로세스), QDRM_EX_PROCESS_INVERT(등록프로세스감시), QDRM_EX_FINDFILEFORMAT(파일포맷비교), QDRM_EX_*_PROCESS/ACCESSTYPE/DIR/EXT(감시프로세스별 설정)",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "R3 or JSON ExchangePolicy",
+        "row_count": 30,
+        "data_summary": "문서교환정책(ExchangePolicy) 코드 정의. R3/JSON/Blue 버전별 교환정책 코드값과 설명",
+        "raw_data": "R3/JSON 교환정책: NO_EXCHANGE=0(UserID매칭), COMPANY_WIDE=1(CompanyID매칭), GROUP_WIDE=2(GroupID매칭), DOC_GRADE=3(사용불가), SERVER_SELECT=4(사용불가), COMPANY_WIDE_NO_EXCHANGE_FOR_SELF=5(서버생성문서만 회사한), GROUP_WIDE_NO_EXCHANGE_FOR_SELF=6(그룹한+서버생성), PKI_BASED=7(사용불가), NO_EXCHANGE_MACHINE_KEY=8(MachineKey확인), COMPANY_WIDE_READONLY_WHEN_ID_MISMATCH=9(ID불일치시 읽기전용), MULTIUSER_OR_MULTIGROUP=10(DeptID또는UserID매칭), MACHINE_KEY_AND_USER_ID=11(가장강력-모두매칭), MULTI_DEPTID=15(부서ID매칭), ENTERPRISE_WIDE=16(EnterpriseID만), POSITION_ORDER=17(직급순서), SECURITY_ORDER=18(보안등급순서), NO_EXCHANGE_ONLY_MACHINE_KEY=19(MachineKey만), ENTERPRISE_WIDE_READONLY=20(Enterprise읽기전용), DEPT_WIDE_READONLY=21(부서읽기전용). Blue 교환정책: 1=개인한, 2=직책직급한, 3=부서한, 4=그룹한, 5=사내한, 6=그룹사한",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "MADRMAgent",
+        "row_count": 22,
+        "data_summary": "MADRMAgent CCF 정책. 에이전트 실행/로그인/배치암호화/반출/알림 등 상세 설정",
+        "raw_data": "AGENT_SHOW_MENU_GPSALLOW(GPS기능), AGENT_SHOW_MENU_SELFAPPROVALALLOW(자가승인), AGENT_ADMIN_URL(중간관리자URL), AGENT_ALERT_PCTAKEOUT(반출남은날짜알림), AGENT_AUTO_LOGIN(자동로그인), AGENT_AUTO_LOGIN_CHECKBOX(자동로그인체크박스), AGENT_AUTO_LOGIN_HIDE(체크박스숨김), AGENT_BATCH_CONVERT_APP(문서변환프로그램경로), AGENT_BATCH_ENC_APP(배치툴경로), AGENT_BATCH_ENC_CHECK_GAP(동작시간Gap분), AGENT_BATCH_ENC_DAY_OF_MONTH/WEEK/SCHEDULE_DAY/TIME(배치스케줄), AGENT_CHECK_SYSTEM_IDLE_TIME(자동로그아웃시간 분), AGENT_CLICK_HIDE_ALARM(알림클릭시사라짐)",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "ESAgent(Only)",
+        "row_count": 27,
+        "data_summary": "ES Agent 전용 정책. ma_common.ini 기반 에이전트 동작 설정",
+        "raw_data": "ma_common.ini: auto_login_limited_ip_bands(자동로그인제한IP대역), remove_idle_logout_setting(미사용로그아웃삭제), hide_login/logout_success_msg(로그인/로그아웃메시지숨김), network_error_no_popup_logindlg(네트워크실패시 로그인창미표시), network_error_auto_login(네트워크복구시 자동로그인), network_error_force_sso_login(네트워크복구시 SSO로그인), no_popup_sso/ad_login_error(SSO/AD실패메시지미팝업), disable_duplicate_execution_popup(중복실행미팝업), disable_tray_menu(트레이메뉴미사용), normal_login_id_case(1소문자/2대문자), notification_show_time_second(알림팝업시간초). CCF: AGENT_TAKEOUT_REQUEST_ALERT(반출경고메시지), AGENT_ALLOW_EMPTY_DESTINATION_INFO(반출처미입력허용), AGENT_MENU_IDM_TAKEOUT_NOTICE(반출이력메뉴), AGENT_REQUEST_LIMIT_DAY_*(신청기간최대일), AGENT_BATCH_APPROVAL(일괄결재)",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "배치암호화 툴(표준)",
+        "row_count": 30,
+        "data_summary": "배치암호화 툴 CCF 정책. BatchEnc.exe/MADRMAgent.exe APP별 정책 필드",
+        "raw_data": "BATCH_ENC_SUPPORT_EXT(대상확장자 xls,xlsx,ppt,pptx,docx,pdf 등), BATCH_ENC_SUPPORT_EXT_REGULAREXPRESSION(정규식), BATCH_ENC_ALL_DRIVES_TARGET(0폴더선택/1전체드라이브), BATCH_ENC_AUTO_EXIT(자동종료), BATCH_ENC_INCLUDE_NETWORK_DRIVES(0미암호화/1암호화), BATCH_ENC_PASS_FD(예외폴더 c:\\windows|c:\\program files|), BATCH_ENC_RUN_BY_AGENT(에이전트호출), batch_enc_run_flag(0미실행/1실행), batch_enc_run_type(1로그인시/2에이전트실행시/3스케줄), BATCH_ENC_SAVE_RESULT_FILE(로그저장), BATCH_ENC_STOPABLE(중지가능), BATCH_ENC_UI_SILENCE(1사일런스/0UI), batch_schedule(스케줄동작), BATCH_ENC_RUN_ON_SERVER(서버실행), BATCH_ENC_LOGIN_REQUIRED(0오프라인가능/1온라인필수), BATCH_ENC_SEND_EXECUTION_LOG(0미사용/1이전로그/2표준로그), BATCH_LOGSERVER(로그전송IP:PORT), BATCH_ENC_EXCLUDE_THIRDPARTY_DRM_FILE(타사DRM제외), BATCH_ENC_INCLUDE_USB_DRIVES(USB드라이브암호화), BATCH_ENC_MAX_COUNT_OF_RESULT_FILE(로그최대저장개수), BATCH_ENC_CUSTOM_HEADER_*(커스텀헤더: EXCHANGE_POLICY/CANSAVE/CANEDIT/VISIBLEPRINT/IMAGESAFER/BLOCKCOPY/OPENCOUNT/PRINTCOUNT/VALIDPERIOD/OFFLINE_POLICY)",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "CipherTool",
+        "row_count": 30,
+        "data_summary": "수동 암호화 툴(CipherTool) CCF 정책. Json/Blue 버전별 설정",
+        "raw_data": "공통: SHELL_MENU_ENC(수동암호화 실행권한), cipher_tool_enc_support_ext(암호화확장자). Json: CIPHER_TOOL_CHECK_DOCGRADE(보안등급검사 0안함/1high/2low), cipher_tool_check_createby(재암호화가능 CreateBy값), cipher_tool_custom_createby(0미적용/1적용), cipher_tool_dec_create_new(다른파일생성 체크박스옵션 0~4), cipher_tool_enc_d_dbupdate(DB업데이트 비활성화), cipher_tool_enc_h_*(UI숨김: blockcopy/dbupdate/docgrade/edit/exchange/imgsafer/save/target/wm), cipher_tool_plus_enc_docgrade(기본등급설정: 등급명|등급코드|편집|저장|블록복사|워터마크|캡처|인쇄횟수|열람횟수|유효기간|교환정책), cipher_tool_plus_enc_docgrade_0~N(등급별세팅). Blue: CIPHER_TOOL_CONTROL_SHOW_WINDOW(UI제어: 문서등급|열람|인쇄|유효기간|교환설정|출력|저장|블럭카피|워터마크|캡처|오프라인|열람로그|저장로그|출력로그|조직도|ACL 0disable/1normal/2hide), CIPHER_TOOL_CONTROL_SETTING_0~N(등급별암호화세팅)",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "MASHLMGR",
+        "row_count": 31,
+        "data_summary": "MASHLMGR(쉘메뉴관리자) CCF 정책. 우클릭 컨텍스트 메뉴 설정",
+        "raw_data": "SHELL_MENU_PROP(암호화파일속성 0사용안함/1사용), SHELL_MENU_ENC(암호화 0/1), SHELL_MENU_DEC(복호화 0/1), SHELL_MENU_TAKEOUT(반출 0/1), SHELL_MENU_TAKEOUT_WEB(웹반출 0/1), SHELL_MENU_TAKEOUT_TOOL(커스텀반출 0/1), SHELL_MENU_MAIL(메일세이퍼 0/1), SHELL_MENU_MAIL_PW(메일세이퍼EX 0/1), SHELL_MENU_CHANGE_GRADE_AGENT(등급변경신청 0/1), SHELL_MENU_CHANGE_GRADE_TOOL(등급변경툴 0/1), SHELL_MENU_CHANGE_POLICY_ONEFILE(권한변경 0/1), SHELL_MENU_CONVERT(컨버전 0/1), SHELL_MENU_DISABLE(비활성화메뉴목록), SHELL_MENU_TYPE_NO_POPUP(0팝업/1팝업없음), SHELL_MENU_USE_ICON(아이콘사용), CIPHER_TOOL_ENC_SUPPORT_EXT(암호화확장자), CIPHER_TOOL_DEC_SUPPORT_EXT(복호화확장자), SiteSupportExt(속성확장자)",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "QDRM_EX",
+        "row_count": 991,
+        "data_summary": "QDRM_EX 실시간 암호화 정책. Blue2/JSON 버전별 전사정책 및 프로세스별 정책",
+        "raw_data": "전사정책: 실시간암호화 예외프로세스(전체경로 or 프로세스이름), 예외폴더(디렉토리경로), 예외확장자, 강제암호화경로, 실시간암호화실행여부(0미실행/1실행), 등록프로세스감시여부(0미감시/1감시), CCF미등록프로세스 감시대상확장자, 저장매체대상(1로컬/2네트워크/3USB), 네트워크폴더에이전트사용여부(0미사용/1사용), 파일포맷비교여부, 오프라인정책(0로그인시만/1로그인&로그아웃시). 프로세스정책: 비암호화프로세스AND확장자예외, 감시대상프로세스(프로세스등록), 감시프로세스제어이벤트(5쓰기/6복사/7이동/8이름변경), 감시프로세스제어파일경로(0비암호화/1암호화), 감시프로세스제어파일확장자(0비암호화/1암호화)",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "MaPrint옵션",
+        "row_count": 26,
+        "data_summary": "MaPrint 워터마크 출력 옵션 코드 정의",
+        "raw_data": "워터마크 출력정보 코드: /a=부서명, /b=사용자ID, /c=부서명, /d=사용자ID, /e=사용자명, /f=출력일시, /g=IP주소, /h=MAC주소, /i=PC명, /j=프린터명, /k=문서명, /l=직위명, /m=직책명, /n=이메일, /o=전화번호 등",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "자동암호화번호",
+        "row_count": 26,
+        "data_summary": "자동암호화 어플리케이션 번호 코드 정의",
+        "raw_data": "자동암호화 어플리케이션 코드: 각 어플리케이션(Word, Excel, PowerPoint, HWP, PDF, TXT, AutoCAD, MSPaint 등)에 대한 고유 번호 매핑",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "LocalPolicy",
+        "row_count": 26,
+        "data_summary": "로컬 정책 정의. 에이전트 로컬 동작 관련 정책",
+        "raw_data": "에이전트 로컬 동작 관련 정책 필드 정의",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "Print SAFER_web(표준)",
+        "row_count": 990,
+        "data_summary": "Print SAFER WEB 표준 정책. 출력물보안 워터마크/로그/개인정보 정책",
+        "raw_data": "마스터정책: 워터마크타입(이미지/텍스트이미지/텍스트다이렉트/외곽선텍스트), 워터마크출력형식(중앙기본), 위치X/Y좌표(0~100), 출력각도(0~360), 출력개수(1x1/2x2/4x4), 분할단위(1~5), DIB워터마크농도(-5~5), 워터마크농도(0~10), 이미지확대, 이미지파일(bmp/jpg/png), 텍스트폰트(Arial권장), 폰트크기X/Y축, 폰트색상(RGB 0~255|0~255|0~255), 폰트속성(보통/두껍게/이태릭/밑줄), 텍스트내용(/NI00~14 사용자정보, /SI00~03 시스템정보, /DI00~02 문서정보, /PI01~03 프린터정보). 세팅정책: 인쇄허용/금지프린터, 워터마크허용/금지프린터(프린터명/포트/프로세스/IP). 전사정책: 출력허용여부, 로그인상태체크, 워터마크사용여부, PDF워터마크삽입, 컬러프린터PS방식, 토너절약, 에이전트삭제허용, 개인정보검출(적용안함/승인프로세스/출력금지), 개인정보마스킹, 프린트로그생성(사용안함/사용/암호화문서만), 이미지로그생성/타입(페이지설정/모든페이지), 텍스트로그생성/타입(DB저장/Txt파일)",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "Privacy SAFER 3.1_web_Blue",
+        "row_count": 1017,
+        "data_summary": "Privacy SAFER 3.1 Blue WEB 정책. 개인정보보호 검사/처리 정책",
+        "raw_data": "기본정책: CPU점유율(10단위 Max100), 검사가능최대파일크기(Byte), 메모리검사단위(Byte), 격리폴더경로, 격리폴더접근프로세스, 검사로그저장(1로깅/2미로깅), 개인정보동작모드(0x1검사/0x2실시간암호화/0x3검사+암호화), 이전파일재검사(1안함/2함), 로그전송주기(분), UI메뉴활성화(예약/수동/실시간/수동검사/로그/현황), 메모리점유율(%), 전체파일메모리로드(1로드/2안함). 예약검사: 적용여부, 대상필터(주민번호/전화번호/카드번호 등), 검출후처리(0x00작동안함/0x01삭제/0x02알림/0x04암호화/0x08격리/0x10완전삭제), 암호화파일재검사(1검사/2미검사), 파일포맷검사(1검사/2미검사), 엑셀셀통합검사(1수행/2안함), 검사유형(예약/정기요일별/정기월별), 검사경로대상(1포함/2제외), 검사확장자대상(1포함/2제외). 수동검사: 동일구조. 실시간검사: 동일구조+예외프로세스/경로/확장자, 검사대상시스템(0x1로컬/0x2네트워크/0x4USB), 개별프로세스선택",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "Privacy SAFER 3.1_web_ESPRESSO",
+        "row_count": 1020,
+        "data_summary": "Privacy SAFER 3.1 Espresso WEB 정책. Blue 버전과 동일 구조의 Espresso 버전",
+        "raw_data": "Blue 버전과 동일한 구조. 기본정책/예약검사/수동검사/실시간검사/예외정책/정규식설정/프로세스설정 포함",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "Screen SAFER_2.0_web",
+        "row_count": 1011,
+        "data_summary": "Screen SAFER 2.0 WEB 정책. 화면보안 캡처차단/워터마크/프로세스보호 정책",
+        "raw_data": "기본기능: 로그인방법(ON/OFF, 캡처세이퍼/AD로그인), SSO재시도간격/횟수, 로그인재시도간격/횟수, 정책갱신주기(분), 로그데이터암호화(AES/ARIA/CBC/ECB/128bit/256bit), 기능비활성화키(비상키), 라이브업데이트. 전사정책-차단: 차단유형(캡처차단+워터마크/캡처허용+워터마크/캡처차단+워터마크미적용/모든기능비활성화). 프로세스보호: 보호방식(비활성화/프로세스보호/파일보호/레지스트보호), 보호파일폴더/프로세스/예외프로세스/레지스트리. 스크린워터마크: 농도(0~255), 배경색(RGB), 간격(0~1000px), 텍스트사용여부, 출력유형(%UserID%_%UserName% 등), 출력문구(255자), 폰트, 기울기(0~360), 글자크기(0~300), 글자색(RGB), 테두리크기(0~10)/색(RGB), 위치(최대9개 x,y/로구분), 동일형태출력. 이미지워터마크: 파일경로(BMP/JPG/PNG 16x16이상), 확대축소비율, 위치(최대9개). 접근탐지: 원격접근감지워터마크, 프로세스/URL워터마크사용여부",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "QDRM_EX_web",
+        "row_count": 993,
+        "data_summary": "QDRM_EX WEB 정책. Blue2/JSON WEB 버전 실시간 암호화 정책",
+        "raw_data": "QDRM_EX 시트와 동일 구조의 WEB 버전. 전사정책 및 프로세스별 실시간 암호화 정책",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "Print SAFER_web",
+        "row_count": 1006,
+        "data_summary": "Print SAFER WEB 정책 (비표준). Print SAFER_web(표준)의 이전/커스텀 버전",
+        "raw_data": "Print SAFER_web(표준)과 유사한 구조. 워터마크/로그/세팅정책 포함",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "시트11",
+        "row_count": 26,
+        "data_summary": "빈 시트 또는 임시 시트",
+        "raw_data": "",
+        "hyperlinks": []
+      }
+    ]
+  },
+  {
+    "file_id": "17KhfAC6c-Vpp89nWvkidsQhFrn8bIy25",
+    "file_name": "마크애니_DRM_SW_표준기능정의서.xlsx",
+    "total_sheets": 7,
+    "sheet_names": [
+      "문서보안(Document SAFER)",
+      "문서보안(Document SAFER) R2",
+      "QDRM_EX",
+      "출력물보안(Print SAFER)",
+      "개인정보보호(Privacy SAFER)",
+      "화면보호(Screen SAFER)",
+      "USB보안(DataLoss SAFER)",
+      "웹보안(Web SAFER)",
+      "외부반출보안(Cowork SAFER)"
+    ],
+    "sheets": [
+      {
+        "sheet_name": "문서보안(Document SAFER)",
+        "row_count": 200,
+        "data_summary": "Document SAFER 표준기능정의서. 관리자(공통)/문서보안서버/문서보안에이전트/기타툴 구분. 구분/메뉴명/기능명/기능상세/기능설명/필수선택/비고 구조",
+        "raw_data": "관리자(공통): 기본관리(사용자관리-등록/검색/인사연동, 부서관리-등록수정삭제/검색, 결재관리-승인자지정/승인기간/대체승인자/대상설정, OEP관리-비상인증비밀번호, 시스템관리-접속IP등록). 문서보안서버 정책관리: 전사정책(문서교환-사내한/개인한/부서한, 오프라인정책-사용불가/읽기전용/자체권한, 화면캡처방지, 원격제어툴차단, 시간동기화, DRM삭제허용, 가상프린터인쇄방지, 블록복사방지, 백업파일생성, 배치암호화-확장자/예외폴더/동작시간/실행스케줄/실행방식, 암호화툴-수동암호화, 자동암호화-Word/Excel/PPT/HWP/PDF/TXT 등, 출력물워터마크-로고/출력정보/Copyright/텍스트이미지워터마크 위치/크기/각도/농도), 예외정책(부서별/사용자별 정책예외), 반출정책(반출방식-사후확인/자가승인/사전승인, 업로드허용사이즈/개수, 다운로드기간/횟수), 정책조회, 이력조회(사용이력/반출이력/설치현황/배치툴이력), 이력통계(반출통계/사용통계). 에이전트: 로그인후숨기기, 자동로그아웃, 결재신청(복호화/PC반출), 알림조회, 패스워드변경, 컨텍스트메뉴(암호화파일속성/문서암호화), 트레이메뉴(로그인/OEP/로그아웃/정책업데이트/종료). 기타툴: 배치암호화툴(자동검사/암호화)",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "문서보안(Document SAFER) R2",
+        "row_count": 200,
+        "data_summary": "Document SAFER R2 버전 표준기능정의서. R2 이후 변경사항 반영",
+        "raw_data": "R2 버전 기준 Document SAFER 기능정의. 기본 구조는 동일하나 MaDrmAgent R2 이후 미지원 기능 표시, 외부반출이력 추가(인증방식: 인증안함/비밀번호인증/서버인증), 수동복호화툴 관련 정책(사용여부/시작일/종료일) 추가",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "QDRM_EX",
+        "row_count": 100,
+        "data_summary": "QDRM_EX 실시간 암호화 표준기능정의서. Blue2/JSON 버전별 WEB정책",
+        "raw_data": "Blue2_QDRM_EX WEB: 전사정책(실시간암호화 예외프로세스/폴더/확장자, 강제암호화경로, 실행여부 0/1, 등록프로세스감시 0/1, 감시대상확장자, 저장매체 1로컬/2네트워크/3USB, 네트워크폴더에이전트, 파일포맷비교, 오프라인정책 0로그인시만/1항상). 프로세스정책(비암호화프로세스AND확장자예외, 감시대상프로세스, 제어이벤트 5쓰기/6복사/7이동/8이름변경, 제어파일경로 0비암호화/1암호화, 제어파일확장자 0비암호화/1암호화). JSON_QDRM_EX: 동일구조",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "출력물보안(Print SAFER)",
+        "row_count": 300,
+        "data_summary": "Print SAFER 표준기능정의서. 관리자/에이전트/클라이언트 기능 정의",
+        "raw_data": "관리자: Super관리자 마스터정책(워터마크정책-이미지/텍스트 타입별 설정, 위치X/Y 0~100, 각도0~360, 출력개수1x1/2x2/4x4, 분할단위1~5, DIB농도-5~5, 워터마크농도0~10, 이미지확대/파일, 텍스트폰트/크기X/Y/색상RGB/속성/내용, 세팅정책-인쇄허용금지/워터마크허용금지 프린터/포트/프로세스/IP). 전사정책: 공통(출력허용여부, 로그인상태체크, 워터마크사용, PDF워터마크, 컬러프린터PS, 토너절약, 에이전트삭제, 개인정보검출/마스킹/로그, 프린트로그생성, 이미지로그생성/타입/시작종료페이지, 텍스트로그생성/타입/시작종료페이지). 에이전트: 트레이메뉴(로그인/로그아웃/정책업데이트/종료). 클라이언트: 출력제어(인쇄허용/차단), 예외출력(프린터/포트/프로세스별), 로그인체크, DRM연동(암호화문서워터마크), 출력로그/출력물데이터, 워터마크출력(텍스트/이미지/특수QR바코드), 개인정보(승인프로세스/마스킹)",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "개인정보보호(Privacy SAFER)",
+        "row_count": 400,
+        "data_summary": "Privacy SAFER 표준기능정의서. 관리자/에이전트/사용자툴/알림/컨텍스트메뉴 기능",
+        "raw_data": "관리자 정책관리: 기본정책(CPU점유율10단위, 검사최대파일크기Byte, 메모리검사단위Byte, 격리폴더경로/접근프로세스, 검사로그저장, 동작모드 0x1검사/0x2실시간암호화/0x3검사+암호화, 이전파일재검사, 로그전송주기분, UI메뉴활성화, 메모리점유율%, 전체파일메모리로드, 반출소명파일수정시검사, 소명서버주소). 예약검사(적용여부, 대상필터-주민번호/전화번호/카드번호, 검출후처리-0x00작동안함/0x01삭제/0x02알림/0x04암호화/0x08격리/0x10완전삭제, 암호화파일재검사, 파일포맷검사, 엑셀셀통합검사, 검사유형-예약/정기요일별/정기월별, 검사경로대상-포함/제외, 검사확장자대상-포함/제외, 재시도여부날짜/시간). 수동검사(동일구조). 실시간검사(동일구조+예외프로세스/경로/확장자, 검사대상시스템 0x1로컬/0x2네트워크/0x4USB, 개별프로세스). 예외정책/정규식설정/프로세스설정/프로세스예외설정. 이력조회(예약수동/실시간툴/보유현황사용자별/패턴별/이력통계). 에이전트: 실시간검사, 파일처리(암호화/삭제/격리/알림). 사용자툴: 예약검사/정기검사/수동검사(전체/폴더지정), 정책확인, 로그확인, 개인정보현황, 소명신청. 알림: 검출결과알림/실시간검출알림/이벤트목록/소명목록관리",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "화면보호(Screen SAFER)",
+        "row_count": 250,
+        "data_summary": "Screen SAFER 표준기능정의서. 관리자/에이전트 화면보안 기능 정의",
+        "raw_data": "관리자: Super관리자 기본정책(로그인방법ON/OFF, SSO재시도간격/횟수, 로그인재시도간격/횟수, 정책갱신주기분, SSO인터페이스모듈명, 로그데이터암호화AES/ARIA, 기능비활성화키/허용횟수, 성공로그, 라이브업데이트). 전사정책: 차단정책(캡처차단+워터마크/캡처허용+워터마크/캡처차단+워터마크미적용/모든기능비활성화), 프로세스보호(비활성화/프로세스보호/파일보호/레지스트보호, 보호파일폴더/프로세스/예외프로세스/레지스트리), 스크린워터마크(농도0~255, 배경색RGB, 간격0~1000px, 텍스트-출력유형%UserID%등/출력문구255자/폰트/기울기0~360/글자크기0~300/글자색RGB/테두리크기0~10/색RGB/위치최대9개/동일형태출력, 이미지-파일경로BMP/JPG/PNG/확대축소/위치최대9개/동일형태), 접근탐지(원격접근감지워터마크), 프로세스워터마크/URL워터마크, 캡처툴허용정책. 예외정책(차단/워터마크/캡처프로그램 부서사용자별). 이력관리(로그인이력/캡처이력). 승인관리(예외신청/승인). 에이전트: 로그인/로그아웃/비활성화/예외신청/정책업데이트/환경설정(캡처단축키/방식)/정보/전체화면캡처/선택윈도우캡처/선택영역캡처",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "USB보안(DataLoss SAFER)",
+        "row_count": 150,
+        "data_summary": "DataLoss SAFER(USB보안) 표준기능정의서. 매체제어 정책",
+        "raw_data": "관리자: 기본관리(사용자/부서/결제/시스템관리). 전사정책: 공통(정책사용여부), 병렬포트(온라인/오프라인 차단/허용), IEEE1394(온라인/오프라인), 이동식저장장치(온라인/오프라인 읽기/허용/읽기전용/로그저장), 안드로이드폰(차단/허용), 아이폰(차단/허용), CD/DVD(차단/허용), Bluetooth(차단/허용), 시리얼포트(차단/허용). 예외정책(부서/사용자별). 이력조회(사용이력-장치유형별/결제이력). 에이전트: 결제신청(장치권한신청/DataLoss해제신청), 결재승인(승인/반려), 알림조회, 패스워드변경, 트레이메뉴(로그인/로그아웃/정책업데이트/매체제어정책보기-온라인/오프라인/종료)",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "웹보안(Web SAFER)",
+        "row_count": 50,
+        "data_summary": "Web SAFER 표준기능정의서. 브라우저 보안 정책",
+        "raw_data": "관리자: 권한정보파일관리(등록/수정). 전사정책: 보호URL설정, 보호모드(auto:전체페이지기본권한/manual:지정페이지만), 버전관리, 저장제어(yes/no Ctrl+S차단), 편집제어(yes/no 복사잘라내기붙여넣기), 인쇄제어(yes/no Ctrl+P차단), 소스보기제어(yes/no 개발자도구차단), 컨텍스트메뉴제어(yes/no 우클릭차단), 캡처제어(yes/no PrintScreen차단), 전체화면캡처제어(yes/no), 원격프로그램제어(yes/no), 워터마크제어(yes/no 인쇄시워터마크), 클립보드보호(yes/no 외부붙여넣기차단), 확장프로그램제어(yes/no). 예외정책: 허용확장프로그램(GUID), 그룹별정책(URL경로별 권한부여)",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "외부반출보안(Cowork SAFER)",
+        "row_count": 200,
+        "data_summary": "Cowork SAFER 표준기능정의서. 외부반출 문서 보안 정책",
+        "raw_data": "관리자: 기본관리(사용자-내부/외부직원구분, 부서, 관리자로그). 전사정책: 인증방법(서버인증-계정/로컬인증-비밀번호), 저장기능(허용/허용안함), 열람허용횟수(횟수/무제한), 인쇄기능(허용/허용안함), 인쇄허용횟수, 블록복사(허용/허용안함), 화면캡처(허용/허용안함), 문서사용기한(만료기간DD/만료일자YYMMDD/무제한), 열람기간만료시문서삭제, 1대PC사용제한, 출력물워터마크(출력정보-날짜/IP/위치/크기/강도, 배경워터마크-각도/크기/강도/텍스트, Copyright-위치/크기/강도/텍스트), 출력/열람/저장로그전송. 예외정책(부서/사용자별). 이력조회(변환이력-패키지명/배포자/인증방법/변환종류MASDOC/ZIP/EXE, 상세정보-파일개수/열람횟수/출력횟수, 정책수정-강제삭제/열람허용/만료기한/횟수, 사용이력). 변환툴: 로그인, 파일추가, 변환형식(MASDOC/ZIP/EXE), 인증방법(서버인증-추가인증없음/사용자지정/비밀번호, 로컬인증-비밀번호), 권한상세설정(저장/열람횟수/인쇄/인쇄횟수/워터마크/블록복사/화면캡처/사용기한/만료시삭제/한기기제한). 뷰어: MASDOC/ZIP전용뷰어, EXE자체실행. 인증: 서버인증(추가인증없음/지정계정/비밀번호), 로컬인증(비밀번호)",
+        "hyperlinks": []
+      }
+    ]
+  },
+  {
+    "file_id": "1GyZQlROU73HC4NnLkUdwAJyaC5H54BQ0",
+    "file_name": "프로젝트_스펙정의서_v2.4.xlsx",
+    "total_sheets": 8,
+    "sheet_names": [
+      "DRM스펙정의서",
+      "SafePC스펙정의서",
+      "Mobile SDK",
+      "Print SAFER",
+      "Screen SAFER",
+      "Privacy SAFER",
+      "공통(인사연동,로그인연동,포트정의)",
+      "SafePC 인사연동"
+    ],
+    "sheets": [
+      {
+        "sheet_name": "DRM 스펙정의서",
+        "row_count": 300,
+        "data_summary": "DRM(Document SAFER) 프로젝트 스펙정의서. 프로젝트정보/계약제품/서버정보/클라이언트정보/타SW운영정보/고객요구사항",
+        "raw_data": "프로젝트정보: 프로젝트명/코드/기간/영업담당/수행형태(상주/비상주)/프로젝트환경(산출물반출/노트북반입/원격). 고객정보: 고객사/구분(공공/제조)/위치/담당자/부서/연락처/메일. 1.계약제품: Document SAFER BLUE3, Print SAFER(TRACER포함) 4.0, Privacy SAFER 3.1, Screen SAFER(TRACER포함), Mobile Docs. 2.서버정보: 정책서버(Linux Ubuntu 22, 2EA), DB서버(Linux MARIA 8, 1EA), 이중화(Active-Active/Active-Standby), 서버인프라(클라우드/VM/물리서버), OS설치주체, 운영구분(개발/검증/운영). 3.클라이언트: 지원OS(Win10/11, win7/8미지원), 단말환경(VDI/물리PC), 유저수, 망구분(내부/외부). 4.타SW: AD, 백신, DLP, 문서중앙화, 개인정보보호, 키보드보안. 5.고객요구사항. 연동정보: 그룹웨어/로그인/DRM 연동. 인사연동: AD/DB to DB/CSV File to DB/수동Upload, 테이블정의(HR_SYNC_USER-USER_ID/PASSWORD/USER_NM/DEPT_ID/POSI_ID, HR_SYNC_DEPT-DEPT_ID/DEPT_NM/UPPER_DEPT_ID, HR_SYNC_POSI-POSI_ID/POSI_NM, HR_SYNC_APP-USER_ID/DEPT_ID/LOWER_DEPT_FL). 포트정의: 공통(22ssh/8080web/8443https), DRM(40001로그인/40002로그/40003시간동기화/40004프로세스/40005반출/40007라이브업데이트/40009인사연동), Privacy(40006개인정보로그), SafePC(10443/5436/5437/5500/5555/5562/5566/8977 등)",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "SafePC 스펙정의서",
+        "row_count": 200,
+        "data_summary": "SafePC(DLP) 프로젝트 스펙정의서. SafePC/SafePrivacy/SafeUSB/Print SAFER 계약제품",
+        "raw_data": "계약제품: SafePC(DLP) V7.0, SafePrivacy V7.0, SafeUSB V7.0, Print SAFER V4.0. 서버정보: 서버장비(마크애니/고객사제공), OS(RHEL9.4/9.6 또는 Rocky9.4/9.6), 이중화(LifeKeeper만 사용). 클라이언트: 지원OS(Win10/11, EOS된 OS미지원), 망구분(내부/외부/DMZ), 출력물보안대상Application(MS-Office/PDF/한컴/뷰어/메모장/그림판/Browser), 개인정보마스킹(일반문서/DRM문서). 타SW: 백신/NAC/DRM/AD/개인정보/출력물/권한관리/문서중앙화. 네트워크: Server Host/IP/Subnet/Gateway/DNS/Bonding. 연동: 그룹웨어/로그인/DRM/기타. 인사연동: SafePC 테이블(ORG_PERSON-person_id/Password/name/dept_cd/dept_duty_cd/regi_type, ORG_GROUP_INFO-group_id/group_name/parent_id/type, ORG_BIZ_DUTY-biz_duty/biz_duty_nm, TA_DEPT_CAPTAIN-dept_cd/person_id/subdivision/role)",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "Mobile SDK",
+        "row_count": 50,
+        "data_summary": "Mobile SDK 스펙정의서. 모바일 TRACER SDK 정보",
+        "raw_data": "SDK정보: 적용대상OS(Android/iOS), 단말종류(스마트폰/태블릿), TRACER수록정보(매칭ID/IP C,D Class/시/분), TRACER수록정보제공주체(고객사APP/제조사처리), 패턴서버구성(단일서버/고객사모바일업무시스템서버)",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "ES SAFER(Document SAFER 상세)",
+        "row_count": 300,
+        "data_summary": "ES SAFER 상세 스펙. 사업구분/클라이언트/연동정보 상세",
+        "raw_data": "클라이언트: 사업구분(신규/업그레이드/마이그레이션-타사복호화미지원), 단말환경(로컬), 유저수, 망구분(내부/외부), OA Application(MS-Office 2016~2024/한컴 2014,2018,2024/Adobe PDF/그림판/메모장), CAD Application(AutoCAD/CATIA-별도협의필요), MIP사용여부, QDRM(미사용시 대상프로세스지정필요, USB제외-오류케이스많음), Mguard, 클라우드저장소(원드라이브/구글드라이브-저장시복호화가능성있어 기본차단), 암호화방식(자동암호화PCDRM/서버암호화ServerDRM), 배치암호화(미지원). 연동정보: 시스템명/제품명제조사/연동OS/언어/형태/환경/커스텀(API연동불가시 연동대상제외), WAS서버수량확인(License 1:1매칭), 개발서버DRM설치여부, 클라우드서버 머신정보고정필요",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "Print SAFER 스펙",
+        "row_count": 100,
+        "data_summary": "Print SAFER 프로젝트 스펙. 출력물보안 대상 어플리케이션/옵션정보",
+        "raw_data": "클라이언트: OA Application(MS-Office 2016~2024/한컴 2014,2018,2024/Adobe PDF/알PDF/그림판/메모장), OA Viewer(MS-Office Viewer/한컴Viewer/한워드viewer), CAD Application(AutoCAD/CATIA), TRACER수록정보(매칭ID/IP/시/분). 옵션정보: 개인정보(키워드포함문서 인쇄시출력제어-미사용/사용, 개인정보마스킹-사용, 이미지OCR마스킹-사용), 로그(텍스트로그-미사용/사용, 이미지로그-사용). 로그용량참고: 200명/텍스트만/3개월=2GB, 3000명/이미지+텍스트/1개월=50GB, 2700명/이미지1~3페이지+텍스트/1개월=이미지22GB+텍스트10GB, 3000명/이미지전체/6개월=4TB",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "Screen SAFER 스펙",
+        "row_count": 80,
+        "data_summary": "Screen SAFER 프로젝트 스펙. 화면보안 적용대상/연동정보",
+        "raw_data": "클라이언트: 적용대상(모니터/Application/업무시스템-복합요건확인필요), TRACER수록정보(매칭ID/IP/시/분), 캡처방지(전용캡처툴제공여부), 캡처이력(관리여부). 연동정보: 그룹웨어(.net 결재화면워터마크), VPN(Java VPN로그인시워터마크) - 커스텀API연동불가시 제외",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "Privacy SAFER 스펙",
+        "row_count": 80,
+        "data_summary": "Privacy SAFER 프로젝트 스펙. 개인정보보호 대상/옵션",
+        "raw_data": "클라이언트: OA Application(MS-Office 2016~2024/한컴 2014,2018,2024/Adobe PDF/알PDF/그림판/메모장), 개인정보종류(주민번호/외국인번호/계좌번호/전화번호 등). 옵션: 이미지OCR개인정보마스킹(사용)",
+        "hyperlinks": []
+      },
+      {
+        "sheet_name": "공통(인사연동/로그인연동/포트정의)",
+        "row_count": 200,
+        "data_summary": "공통 스펙. 인사연동/로그인연동/포트정의/DB통합관리",
+        "raw_data": "DB통합관리: DB계정생성(markany), DB권한(R/W/U/D), 정책서버접근포트(방화벽오픈), DB서버IP, DB용량(500GB~1TB, Print/Screen별도스토리지). 로그인연동: 수동로그인(ID/PW입력), AD(LDAP)(AD연동자동로그인), AD(Windows계정)(Windows로그인계정획득-PW불필요), SSO(SSO솔루션연동-제품/우선순위/연동방법/조건/시도횟수확인필요). 인사연동: AD연동/DB to DB(I/F Table)/CSV File to DB(spoon툴)/CSV수동Upload. 인사연동테이블: HR_SYNC_USER(USER_ID VARCHAR2(20) PK, EMAIL_ADRS VARCHAR2(50), PASSWORD VARCHAR2(50) SHA256+base64, USER_NM VARCHAR2(20), DEPT_ID VARCHAR2(20), POSI_ID VARCHAR2(20)), HR_SYNC_DEPT(DEPT_ID/DEPT_NM/DEPT_ORD/UPPER_DEPT_ID), HR_SYNC_POSI(POSI_ID/POSI_NM/POSI_ORD), HR_SYNC_APP(USER_ID/DEPT_ID/LOWER_DEPT_FL). 포트정의: 공통(22ssh/8080web), DRM(8443https/40001~40009), Privacy(40006), SafePC(10443/5436/5437/5500/5555/5562/5566/8009/8977/9009/9080/ICMP), SERVER→AGENT(5560정책전송)"
+      }
+    ]
+  }
+]

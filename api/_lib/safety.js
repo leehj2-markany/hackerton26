@@ -42,7 +42,7 @@ const INJECTION_PATTERNS = [
   /필터.*우회/,
 ]
 
-const MAX_INPUT_LENGTH = 500
+const MAX_INPUT_LENGTH = 1000 // [의도] 복합질문(다중 제품 + 환경 조건)이 500자를 초과할 수 있어 확장
 
 // 위험한 특수문자 패턴 (제어 문자, 유니코드 트릭)
 const DANGEROUS_CHARS = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\u200B-\u200F\u2028-\u202F\uFEFF]/g

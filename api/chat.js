@@ -86,8 +86,6 @@ export default async function handler(req, res) {
     }
 
     // [P4 수정] analyzeQuestion 1회 호출 후 결과를 generateAnswer에 전달
-    // 기존: chat.js에서 analyzeQuestion 1회 + generateAnswer 내부에서 1회 = 2중 호출 (비용 낭비 + 일관성 문제)
-    // 수정: chat.js에서 1회 호출 → 결과를 options.preAnalysis로 전달 → generateAnswer에서 재사용
     const analysis = await analyzeQuestion(message)
     const thinkingProcess = ['🤔 질문 분석 중...']
 
@@ -110,6 +108,7 @@ export default async function handler(req, res) {
     }
 
     // RAG 검색 수행 및 thinkingProcess에 반영
+    // [의도] searchKnowledge가 async(pgvector)로 변경됨 → await 필수
     const productHint = customerInfo?.product || null
     const ragResult = await searchKnowledge(message, productHint, 3)
     thinkingProcess.push(`📚 지식 베이스 검색 중... ${ragResult.chunks.length}건 발견 (${ragResult.stores?.join(', ') || ''})`)
@@ -175,8 +174,6 @@ export default async function handler(req, res) {
     })
   } catch (err) {
     console.error('Chat API error:', err)
-    // ── Graceful Degradation: AI 실패 시 에스컬레이션 제안 ──
-    // 500 에러 대신 성공 응답 + needsEscalation: true로 담당자 연결 흐름 유도
     return json(res, {
       success: true,
       data: {

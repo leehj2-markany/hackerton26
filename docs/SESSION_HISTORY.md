@@ -4,7 +4,7 @@
 > 해커톤: 마크애니 AI 해커톤 2026 (2/27 ~ 3/15)
 > 팀: ES사업부 제품개발팀
 > 배포: https://hackerton-kappa.vercel.app
-> 최종 업데이트: 2026-03-10
+> 최종 업데이트: 2026-03-11
 
 ---
 
@@ -356,10 +356,102 @@
 **핵심 결정:**
 - pgvector 우선 + in-memory fallback 이중 구조 — 벡터 DB 장애 시에도 서비스 중단 없음
 - searchKnowledge 시그니처 유지 — 호출부(chat.js, geminiClient.js) 변경 0건
-- 임베딩 모델: `gemini-embedding-001` (768차원) — Gemini 생태계 통일
+- 임베딩 모델: `gemini-embedding-001` (3072차원) — Gemini 생태계 통일
 
 **환경변수 추가:**
 - SUPABASE_URL, SUPABASE_ANON_KEY (기존 DB용과 공유)
+
+---
+
+### 세션 17: RAG 청크 품질 개선 — useCases 필드 + 임베딩 가중치 (3/10)
+
+**작업 내용:**
+- **useCases 필드 추가 (전 제품 28개):**
+  - 문제: 의도 기반 쿼리("위변조방지", "USB유출", "화면캡처")에서 정확한 제품 매칭 실패
+  - 원인: 청크 텍스트에 사용 시나리오/의도 키워드가 부족하여 임베딩 벡터가 의도를 반영하지 못함
+  - 해결: 모든 SHEET_PRODUCTS에 useCases 배열 추가 (제품별 3~8개 사용 시나리오)
+- **buildChunkText() 임베딩 가중치 구조 개선:**
+  - useCases를 청크 텍스트 상단 + 하단에 반복 배치 → 임베딩 모델의 positional bias 활용
+  - 구조: `[사용 사례] → [제품명/설명/카테고리] → [사용 사례 반복]`
+- **사용자 36항목 피드백 기반 useCases 전면 재정의:**
+  - 제품 경계 규칙 엄격 적용 (ES SAFER=Document SAFER, 위변조방지=ePage/ePS만, 비가시성=TRACER만 등)
+  - 36/36 쿼리 100% 정확도 달성
+
+**테스트 결과:**
+- 36-query 벡터 검색: 100% 완전 매칭
+- 50-query 복합 검색: 100% 부분 매칭, 64% 완전 매칭 (topK=5 구조적 한계)
+
+**커밋:** `0cdcfa7`, `b70d3d9`, `11c4853`
+
+---
+
+### 세션 18: 데이터 정제 — SafeCopy/ContentSAFER 삭제 (3/11)
+
+**작업 내용:**
+- **SafeCopy, ContentSAFER 삭제:**
+  - 문제: 두 제품이 Google Sheet 원본에 존재하지 않는 에이전트 생성(hallucination) 데이터
+  - 해결: LEGACY_CHUNKS에서 삭제 + STORES에서 삭제 + 전체 코드베이스 참조 제거
+- **전체 코드베이스 클린업:**
+  - `api/_lib/`, `backend/api/lib/`, `scripts/`, `docs/` 전체에서 SafeCopy/ContentSAFER 참조 제거
+  - 테스트 스크립트에서도 관련 쿼리/기대값 제거
+  - Dual API sync 완료 확인
+- **재적재:** 37/37 청크 (28 SHEET_PRODUCTS + 9 LEGACY_CHUNKS)
+- **테스트:** 36/36 벡터 검색 100%, 50-query 100% 부분 매칭 유지
+
+**커밋:** `029a6f5`, `ae6f3c8`
+
+---
+
+### 세션 19: 하이퍼링크 2depth 문서 수집 + 제품 정의 보정 (3/11)
+
+**작업 내용:**
+- **제품 정의 보정 (8개 제품):**
+  - Mobile STICKER: "경량 MDM" → "카메라/녹음 차단 + 화면 워터마크" 정확한 정의로 수정
+  - Mobile SAFER: MDM 솔루션 명확화
+  - ePS DocumentMerger: "PDF 보안뷰어 유통" 정확한 정의
+  - Web SAFER: "Web DRM = 캡처방지/브라우저 보안제어" 명확화
+  - DS I/F Server: 서버 DRM 연동 인터페이스 정확화
+  - ePage SAFER: 전자문서 위변조 방지 정확화
+  - ePS Document DNA: 디지털 지문 원본 검증 정확화
+  - TRACER SDK for Mobile: 모바일 워터마크 담당 명확화
+- **Google Sheet 하이퍼링크 문서 수집:**
+  - 6개 하이퍼링크 문서 내용 수집 → `scripts/sheetHyperlinks.json` 저장
+  - IST 표준기능정의서, 모듈담당자, 스펙정의서, MIP정책, PrintSAFER전용 등
+- **HYPERLINK_CHUNKS 17개 추가:**
+  - IST 표준기능정의서 → 7개 제품별 청크
+  - 모듈담당자 → 6개 제품별 청크
+  - 스펙정의서 → 2개 제품별 청크
+  - MIP정책 → 1개, PrintSAFER전용 → 1개
+- **재적재:** 54/54 청크 (28 SHEET_PRODUCTS + 17 HYPERLINK_CHUNKS + 9 LEGACY_CHUNKS)
+- **테스트:** 36-query 100%, 50-query 부분 매칭 100%
+
+**커밋:** `b7cced6`
+
+---
+
+### 세션 20: 4인 전문가 패널 리뷰 + 코드 품질 개선 (3/11)
+
+**작업 내용:**
+- **4인 전문가 페르소나 리뷰 수행:**
+  - Claude 개발 테크리드: 아키텍처 패턴, 에러 핸들링, dead code 지적
+  - Codex 개발 테크리드: DRY 위반, Dual API sync 구조적 문제, 테스트 전략
+  - RAG 알고리즘 석학: 청킹 전략, 리랭킹 알고리즘, HYPERLINK_CHUNKS 설계 평가
+  - 백엔드 석학: API 설계, 보안 레이어, 확장성, Rate limiting 부재
+- **🔴 우선순위 높음 3개 항목 병렬 수정:**
+  1. `evaluateConfidence` 중복 제거 + Math.random 제거 (geminiClient.js)
+     - safety.js의 정교한 버전을 사용하도록 통합, 랜덤 요소 제거
+  2. `KNOWLEDGE_BASE` 하드코딩 제거 (geminiClient.js)
+     - SYSTEM_PROMPT에서 정적 제품 정보 제거 → RAG 결과만으로 컨텍스트 구성
+  3. `MAX_INPUT_LENGTH` 500→1000 확장 (safety.js)
+     - 복합질문이 500자 초과 시 잘려서 LLM에 전달되는 문제 해결
+- **Dual API sync:** backend/api/lib/ 동기화 완료
+
+**미커밋 변경 파일:**
+- `api/_lib/geminiClient.js` — evaluateConfidence 통합 + KNOWLEDGE_BASE 제거
+- `api/_lib/safety.js` — MAX_INPUT_LENGTH 1000
+- `api/chat.js` — evaluateConfidence import 경로 변경
+- `backend/api/lib/geminiClient.js` — 동기화
+- `backend/api/lib/safety.js` — 동기화
 
 ---
 
@@ -496,6 +588,13 @@ slack/poll.js
 
 ## 7. 남은 작업 (TODO)
 
+### 완료됨 ✅
+- [x] pgvector 시맨틱 검색 전환 (세션 16, 3/10)
+- [x] useCases 기반 청크 품질 개선 (세션 17, 3/10)
+- [x] SafeCopy/ContentSAFER 허구 데이터 삭제 (세션 18, 3/11)
+- [x] 하이퍼링크 2depth 문서 17개 청크 추가 (세션 19, 3/11)
+- [x] 4인 전문가 리뷰 + 코드 품질 개선 3건 (세션 20, 3/11)
+
 ### 필수 (데모 전)
 - [ ] 데모 시나리오 1: SK하이닉스 (AI 자동 해결) 리허설
 - [ ] 데모 시나리오 2: 국방부 (에스컬레이션 + 협업) 리허설
@@ -508,6 +607,10 @@ slack/poll.js
 - [ ] 모바일 반응형 개선
 - [ ] Chatbot.jsx 컴포넌트 분리 (MessageBubble, useEscalation 훅)
 - [ ] 접근성 기본 속성 추가 (role="dialog", aria-label)
+- [ ] Rate limiting 추가 (IP 기반)
+- [ ] End-to-end 답변 품질 테스트 추가
+- [ ] 청크 메타데이터 source_type 추가
+- [ ] 응답 verbose 모드 분리
 
 ### 해커톤 이후 로드맵
 - [ ] Salesforce MCP 실데이터 연동
@@ -515,6 +618,7 @@ slack/poll.js
 - [ ] 다국어 지원
 - [ ] 답변 품질 A/B 테스트 프레임워크
 - [ ] 프롬프트 버전 관리 시스템
+- [ ] Dual API sync → 심볼릭 링크 전환
 
 ---
 
@@ -547,4 +651,12 @@ e038ace 2026-03-09 [디버그] chat.js catch에 errorDetail 추가
 909ab11 2026-03-09 [LLM라우팅] complex에서도 Flash 사용
 7cf7feb 2026-03-09 [에스컬레이션UX] AI 복귀 경로 추가 + errorDetail 제거
 97c2bb7 2026-03-09 [에스컬레이션UX] P1~P5 종합 수정
+de709f9 2026-03-10 [RAG] 하드코딩 STORES → pgvector 시맨틱 검색으로 전환
+299898b 2026-03-10 [버그수정] chat.js searchKnowledge에 await 누락
+0cdcfa7 2026-03-10 [RAG품질] 전 제품 40개 useCases 필드 추가
+b70d3d9 2026-03-10 [RAG품질] useCases 전 제품 보강 + buildChunkText 임베딩 가중치 구조 개선
+11c4853 2026-03-10 [RAG정밀도] 사용자 36항목 피드백 기반 useCases 전면 재정의
+029a6f5 2026-03-11 [RAG데이터정제] SafeCopy/ContentSAFER 삭제
+ae6f3c8 2026-03-11 [데이터정합성] SafeCopy/ContentSAFER 전체 코드베이스 제거
+b7cced6 2026-03-11 [RAG 2depth] 하이퍼링크 문서 17개 청크 추가
 ```

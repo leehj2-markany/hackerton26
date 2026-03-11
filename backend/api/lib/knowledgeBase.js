@@ -42,9 +42,35 @@ async function generateQueryEmbedding(query) {
   return result.embedding.values
 }
 
+// ── [의도] 같은 제품이 top 결과를 독점하는 것을 방지 — 복합 시나리오에서 다양한 제품이 노출되도록
+// SHEET_PRODUCTS + HYPERLINK_CHUNKS + LEGACY_CHUNKS 등 같은 제품의 청크가 여러 개 있을 때
+// 제품당 best 1개만 남기고 나머지는 제거하여 다양한 제품이 top 슬롯에 들어오게 함
+function dedupByProduct(vectorData, topK) {
+  const seen = new Map() // product_name → best entry
+  const deduped = []
+
+  for (const item of vectorData) {
+    const productName = item.metadata?.product_name
+    if (!productName) {
+      deduped.push(item)
+      continue
+    }
+    if (!seen.has(productName)) {
+      seen.set(productName, true)
+      deduped.push(item)
+    }
+    if (deduped.length >= topK) break
+  }
+
+  return deduped
+}
+
 // ── pgvector 시맨틱 검색 ──
 async function vectorSearch(query, productHint, topK) {
   const embedding = await generateQueryEmbedding(query)
+
+  // [의도] dedup을 위해 더 많은 후보를 가져옴 — topK * 3 (최소 15)
+  const fetchCount = Math.max(topK * 3, 15)
 
   // 제품 힌트가 있으면 필터 적용
   const filter = {}
@@ -64,7 +90,7 @@ async function vectorSearch(query, productHint, topK) {
 
   const { data, error } = await supabase.rpc('match_knowledge', {
     query_embedding: embedding,
-    match_count: topK,
+    match_count: fetchCount,
     filter: Object.keys(filter).length > 0 ? filter : {},
   })
 
@@ -79,16 +105,16 @@ async function vectorSearch(query, productHint, topK) {
       console.log('[vectorSearch] 필터 결과 없음 → 전체 검색 재시도')
       const { data: retryData, error: retryErr } = await supabase.rpc('match_knowledge', {
         query_embedding: embedding,
-        match_count: topK,
+        match_count: fetchCount,
         filter: {},
       })
       if (retryErr || !retryData?.length) return null
-      return retryData
+      return dedupByProduct(retryData, topK)
     }
     return null
   }
 
-  return data
+  return dedupByProduct(data, topK)
 }
 
 // ── 벡터 검색 결과 → searchKnowledge 반환 형식으로 변환 ──
