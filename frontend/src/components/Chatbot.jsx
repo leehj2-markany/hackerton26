@@ -406,8 +406,8 @@ const Chatbot = () => {
     }])
 
     // 3. 실제 Slack 전송
-    const pollStartTs = String(Date.now() / 1000)
-    // [버그수정] setSlackPollSince → ref 직접 할당 — state→ref 전환 시 누락된 부분
+    // [버그수정] pollStartTs를 2분 전으로 설정 — 시퀀스 진행 중 담당자가 먼저 답변해도 누락 방지
+    const pollStartTs = String((Date.now() / 1000) - 120)
     slackPollSinceRef.current = pollStartTs
     const realAgents = REAL_SLACK_AGENTS.map(name => ({ name, role: (AGENT_MAP[name] || {}).role || '담당자' }))
     sendSlackQuestion(
@@ -423,9 +423,13 @@ const Chatbot = () => {
     // [버그수정] 폴링 대기 구간에서 입력 활성화 — 사용자가 대기 중에도 추가 질문 가능하도록
     setIsEscalationBusy(false)
 
-    // 4-A. 가상 에이전트 (박우호) — LLM으로 답변 생성
+    // 4. 가상 + 실제 에이전트 병렬 답변 수집
+    // [구조 변경] 기존: 가상→실제 순차 처리 → 변경: 병렬 처리
+    // 이유: 가상 에이전트 LLM 응답(~5초) 동안 실제 에이전트 폴링이 시작되지 않아 답변 누락
     let answeredCount = 0
-    for (const vName of VIRTUAL_AGENTS) {
+
+    // 4-A. 가상 에이전트 (박우호) — LLM 답변 생성
+    const virtualPromises = VIRTUAL_AGENTS.map(async (vName) => {
       const vInfo = AGENT_MAP[vName] || { role: '담당자', avatar: '👤' }
       setTypingAgent({ name: vName, avatar: vInfo.avatar })
       let virtualAnswer = ''
@@ -443,48 +447,52 @@ const Chatbot = () => {
         text: virtualAnswer, timestamp: new Date()
       }])
       answeredCount++
-    }
+    })
 
-    // 4-B. 실제 Slack 사용자 — 폴링 (1명 답변 시 추가 대기 30초로 단축)
+    // 4-B. 실제 Slack 사용자 — 통합 폴링 (모든 실제 에이전트를 한 루프에서 감시)
     const answeredAgents = new Set()
-    const maxPollTime = 90000 // 90초 (기존 3분에서 단축)
-    const shortenedWait = 30000 // 1명 답변 후 나머지 대기 시간
-    const pollInterval = 3000
-    const startTime = Date.now()
-    let firstAnswerTime = null
+    const realPollingPromise = (async () => {
+      if (REAL_SLACK_AGENTS.length === 0) return
+      const maxPollTime = 90000
+      const shortenedWait = 30000
+      const pollInterval = 3000
+      const startTime = Date.now()
+      let firstAnswerTime = null
 
-    setTypingAgent({ name: '담당자', avatar: '💬' })
+      setTypingAgent({ name: '담당자', avatar: '💬' })
 
-    while (answeredAgents.size < REAL_SLACK_AGENTS.length) {
-      const elapsed = Date.now() - startTime
-      // 전체 타임아웃 체크
-      if (elapsed > maxPollTime) break
-      // 1명 이상 답변 후 추가 대기 시간 초과 체크
-      if (firstAnswerTime && (Date.now() - firstAnswerTime) > shortenedWait) break
+      while (answeredAgents.size < REAL_SLACK_AGENTS.length) {
+        const elapsed = Date.now() - startTime
+        if (elapsed > maxPollTime) break
+        if (firstAnswerTime && (Date.now() - firstAnswerTime) > shortenedWait) break
 
-      await delay(pollInterval)
-      try {
-        const pollResult = await pollSlackMessages(pollStartTs, 20, slackChannelId)
-        const newMessages = pollResult?.data?.messages || []
-        for (const msg of newMessages) {
-          if (!answeredAgents.has(msg.agentName) && REAL_SLACK_AGENTS.includes(msg.agentName)) {
-            answeredAgents.add(msg.agentName)
-            if (!firstAnswerTime) firstAnswerTime = Date.now()
-            setTypingAgent(null)
-            const aInfo = AGENT_MAP[msg.agentName] || {}
-            setMessages(prev => [...prev, {
-              type: 'agent', agentName: msg.agentName, agentRole: aInfo.role || msg.agentRole,
-              agentAvatar: aInfo.avatar || msg.agentAvatar, text: msg.text, isLive: true, timestamp: new Date(msg.timestamp)
-            }])
-            answeredCount++
-            if (answeredAgents.size < REAL_SLACK_AGENTS.length) {
-              setTypingAgent({ name: '담당자', avatar: '💬' })
+        await delay(pollInterval)
+        try {
+          const pollResult = await pollSlackMessages(pollStartTs, 20, slackChannelId)
+          const newMessages = pollResult?.data?.messages || []
+          for (const msg of newMessages) {
+            if (!answeredAgents.has(msg.agentName) && REAL_SLACK_AGENTS.includes(msg.agentName)) {
+              answeredAgents.add(msg.agentName)
+              if (!firstAnswerTime) firstAnswerTime = Date.now()
+              setTypingAgent(null)
+              const aInfo = AGENT_MAP[msg.agentName] || {}
+              setMessages(prev => [...prev, {
+                type: 'agent', agentName: msg.agentName, agentRole: aInfo.role || msg.agentRole,
+                agentAvatar: aInfo.avatar || msg.agentAvatar, text: msg.text, isLive: true, timestamp: new Date(msg.timestamp)
+              }])
+              answeredCount++
+              if (answeredAgents.size < REAL_SLACK_AGENTS.length) {
+                setTypingAgent({ name: '담당자', avatar: '💬' })
+              }
             }
           }
-        }
-      } catch (err) { console.error('Slack poll error:', err) }
-    }
-    setTypingAgent(null)
+        } catch (err) { console.error('Slack poll error:', err) }
+      }
+      setTypingAgent(null)
+    })()
+
+    // 가상 + 실제 에이전트 병렬 대기
+    await Promise.all([...virtualPromises, realPollingPromise])
 
     // 5. 마무리 메시지
     await delay(1500)
@@ -887,8 +895,10 @@ const Chatbot = () => {
     }])
 
     // Step 6: 실제 Slack으로 질문 전송 + channelId 캡처
-    const escalationPollStartTs = String(Date.now() / 1000)
-    // [버그수정] setSlackPollSince → ref 직접 할당 — state→ref 전환 시 누락된 부분
+    // [버그수정] pollStartTs를 Slack 전송 전으로 앞당김 — 에스컬레이션 시퀀스(~15초) 동안
+    // 담당자가 이미 답변하면 sinceTs보다 이전이라 폴링에서 누락되는 문제 해결
+    // 시퀀스 시작 시점(handleEscalation 진입)부터의 메시지를 모두 캡처하도록 변경
+    const escalationPollStartTs = String((Date.now() / 1000) - 120) // 2분 전부터 캡처 (안전 마진)
     slackPollSinceRef.current = escalationPollStartTs
     let activeChannelId = slackChannelId
     try {
@@ -910,20 +920,26 @@ const Chatbot = () => {
     // [버그수정] 폴링 대기 구간에서 입력 활성화 — 사용자가 대기 중에도 추가 질문 가능하도록
     // 초기 시퀀스(채소희 입장~질문 분류~Slack 전송)는 busy 유지했고, 이제 폴링 루프 진입 전 해제
     setIsEscalationBusy(false)
+    // 에스컬레이션 모드 즉시 활성화 — 폴링 중에도 사용자 입력을 에스컬레이션 경로로 처리
+    setEscalationMode(true)
 
-    // Step 7: 담당자별 답변 루프 (서브질문 기반 동적)
+    // Step 7: 담당자별 답변 수집 (가상 에이전트 LLM + 실제 에이전트 Slack 폴링 병렬)
+    // [구조 변경] 기존: 서브질문별 순차 처리 → 변경: 가상/실제 에이전트 병렬 처리
+    // 이유: 순차 처리 시 가상 에이전트 LLM 응답(~5초) 동안 실제 에이전트 폴링이 시작되지 않아
+    // 담당자가 이미 답변해도 캡처하지 못하는 타이밍 이슈 발생
     let answeredCount = 0
-    for (const sq of subQuestions) {
-      const agentName = sq.assignee
-      const agentInfo = AGENT_MAP[agentName] || { role: '담당자', avatar: '👤' }
 
-      if (VIRTUAL_AGENTS.includes(agentName)) {
-        // 가상 에이전트 (박우호) — LLM으로 답변 생성
+    // 7-A. 가상 에이전트 (박우호 등) — LLM 답변 생성 (병렬 시작)
+    const virtualPromises = subQuestions
+      .filter(sq => VIRTUAL_AGENTS.includes(sq.assignee))
+      .map(async (sq) => {
+        const agentName = sq.assignee
+        const agentInfo = AGENT_MAP[agentName] || { role: '담당자', avatar: '👤' }
         setTypingAgent({ name: agentName, avatar: agentInfo.avatar })
         let virtualAnswer = ''
         try {
           const result = await sendMessage(
-            `당신은 ${agentName} (${agentInfo.role})입니다. 개발자 스타일로 간결하고 기술적으로 답변하세요. 반말이나 구어체를 섬어도 됩니다. 질문: "${sq.question}". 고객: ${customerInfo?.name || '고객'}, 제품: ${customerInfo?.product || 'DRM'}. 원래 질문: ${lastUserMsg?.text || ''}`,
+            `당신은 ${agentName} (${agentInfo.role})입니다. 개발자 스타일로 간결하고 기술적으로 답변하세요. 반말이나 구어체를 섞어도 됩니다. 질문: "${sq.question}". 고객: ${customerInfo?.name || '고객'}, 제품: ${customerInfo?.product || 'DRM'}. 원래 질문: ${lastUserMsg?.text || ''}`,
             customerInfo?.id || null, `esc_${Date.now()}`, []
           )
           if (result?.data?.answer) virtualAnswer = result.data.answer
@@ -935,27 +951,69 @@ const Chatbot = () => {
           text: virtualAnswer, timestamp: new Date()
         }])
         answeredCount++
-      } else {
-        // 실제 Slack 사용자 — 폴링 대기
-        setTypingAgent({ name: agentName, avatar: agentInfo.avatar })
-        const agentAnswer = await pollForAgent(agentName, escalationPollStartTs, 60000, activeChannelId)
-        setTypingAgent(null)
-        if (agentAnswer) {
-          setMessages(prev => [...prev, {
-            type: 'agent', agentName, agentRole: agentInfo.role, agentAvatar: agentInfo.avatar,
-            text: agentAnswer.text, isLive: true, timestamp: new Date(agentAnswer.timestamp)
-          }])
-          answeredCount++
-        } else {
-          // 타임아웃 안내
+      })
+
+    // 7-B. 실제 Slack 에이전트 — 통합 폴링 (모든 실제 에이전트를 한 루프에서 감시)
+    // [구조 변경] 기존: 에이전트별 순차 pollForAgent(60초씩) → 변경: 단일 폴링 루프에서 모든 에이전트 동시 감시
+    // 이유: 순차 폴링은 첫 에이전트 타임아웃(60초) 동안 두 번째 에이전트 답변을 놓침
+    const realSubQuestions = subQuestions.filter(sq => !VIRTUAL_AGENTS.includes(sq.assignee))
+    const realAgentNames = [...new Set(realSubQuestions.map(sq => sq.assignee))]
+    const answeredRealAgents = new Set()
+
+    const realPollingPromise = (async () => {
+      if (realAgentNames.length === 0) return
+      setTypingAgent({ name: '담당자', avatar: '💬' })
+      const maxPollTime = 90000 // 90초
+      const shortenedWait = 30000 // 1명 답변 후 나머지 대기
+      const pollInterval = 3000
+      const startTime = Date.now()
+      let firstAnswerTime = null
+
+      while (answeredRealAgents.size < realAgentNames.length) {
+        const elapsed = Date.now() - startTime
+        if (elapsed > maxPollTime) break
+        if (firstAnswerTime && (Date.now() - firstAnswerTime) > shortenedWait) break
+
+        await delay(pollInterval)
+        try {
+          const pollResult = await pollSlackMessages(escalationPollStartTs, 20, activeChannelId)
+          const newMessages = pollResult?.data?.messages || []
+          for (const msg of newMessages) {
+            if (!answeredRealAgents.has(msg.agentName) && realAgentNames.includes(msg.agentName)) {
+              answeredRealAgents.add(msg.agentName)
+              if (!firstAnswerTime) firstAnswerTime = Date.now()
+              const aInfo = AGENT_MAP[msg.agentName] || { role: '담당자', avatar: '👤' }
+              setTypingAgent(null)
+              setMessages(prev => [...prev, {
+                type: 'agent', agentName: msg.agentName, agentRole: aInfo.role,
+                agentAvatar: aInfo.avatar, text: msg.text, isLive: true,
+                timestamp: new Date(msg.timestamp)
+              }])
+              answeredCount++
+              // 아직 대기 중인 에이전트가 있으면 typing indicator 복원
+              if (answeredRealAgents.size < realAgentNames.length) {
+                setTypingAgent({ name: '담당자', avatar: '💬' })
+              }
+            }
+          }
+        } catch (err) { console.error('Slack poll error:', err) }
+      }
+      setTypingAgent(null)
+
+      // 타임아웃된 에이전트 안내
+      for (const name of realAgentNames) {
+        if (!answeredRealAgents.has(name)) {
           setMessages(prev => [...prev, {
             type: 'agent', agentName: '채소희', agentRole: '고객센터', agentAvatar: '👩‍💼',
-            text: `${agentName}님이 현재 다른 업무 중입니다. 슬랙 채널에서 확인 후 답변드릴 예정입니다. 📩`,
+            text: `${name}님이 현재 다른 업무 중입니다. 슬랙 채널에서 확인 후 답변드릴 예정입니다. 📩`,
             timestamp: new Date()
           }])
         }
       }
-    }
+    })()
+
+    // 가상 + 실제 에이전트 병렬 대기
+    await Promise.all([...virtualPromises, realPollingPromise])
 
     // Step 8: 채소희 마무리 + 선택지
     await delay(2000)
@@ -971,8 +1029,6 @@ const Chatbot = () => {
       timestamp: new Date()
     }])
 
-    // 에스컬레이션 모드 활성화 (이후 질문은 담당자가 답변)
-    setEscalationMode(true)
     setIsEscalationBusy(false)
     setShowQuickReplies(true)
   }
@@ -1255,11 +1311,20 @@ const Chatbot = () => {
               </div>
             )}
             
-            {/* Processing indicator (no specific agent) */}
-            {isProcessing && !typingAgent && (
+            {/* Processing indicator — 에스컬레이션 초기 시퀀스(채소희 입장~Slack 전송) 중에만 표시 */}
+            {isEscalationBusy && !typingAgent && (
               <div className="flex justify-start">
                 <div className="bg-gray-200 text-gray-600 rounded-lg p-3 text-sm animate-pulse">
-                  담당자가 답변을 준비하고 있습니다...
+                  담당자를 연결하고 있습니다...
+                </div>
+              </div>
+            )}
+            
+            {/* AI 응답 생성 중 indicator */}
+            {isAIProcessing && !showThinking && (
+              <div className="flex justify-start">
+                <div className="bg-gray-200 text-gray-600 rounded-lg p-3 text-sm animate-pulse">
+                  AI가 답변을 생성하고 있습니다...
                 </div>
               </div>
             )}
@@ -1275,14 +1340,14 @@ const Chatbot = () => {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !e.nativeEvent.isComposing && handleSend()}
-                placeholder={showIntakeForm ? '위 정보를 입력해 주세요' : isProcessing ? '담당자 답변 대기 중...' : sessionClosed ? '상담이 종료되었습니다' : '메시지를 입력하세요...'}
-                disabled={isProcessing || showIntakeForm || sessionClosed}
+                placeholder={showIntakeForm ? '위 정보를 입력해 주세요' : isAIProcessing ? 'AI 답변 생성 중...' : isEscalationBusy ? '담당자 연결 중...' : sessionClosed ? '상담이 종료되었습니다' : escalationMode ? '담당자에게 질문하기...' : '메시지를 입력하세요...'}
+                disabled={isAIProcessing || isEscalationBusy || showIntakeForm || sessionClosed}
                 className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-markany-blue disabled:bg-gray-100 disabled:text-gray-400"
                 aria-label="메시지 입력"
               />
               <button
                 onClick={handleSend}
-                disabled={isProcessing || showIntakeForm || sessionClosed}
+                disabled={isAIProcessing || isEscalationBusy || showIntakeForm || sessionClosed}
                 className="bg-markany-blue text-white px-6 py-2 rounded-lg hover:bg-markany-dark transition font-semibold disabled:opacity-50"
                 aria-label="메시지 전송"
               >
