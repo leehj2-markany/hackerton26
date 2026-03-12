@@ -407,7 +407,8 @@ const Chatbot = () => {
 
     // 3. 실제 Slack 전송
     const pollStartTs = String(Date.now() / 1000)
-    setSlackPollSince(pollStartTs)
+    // [버그수정] setSlackPollSince → ref 직접 할당 — state→ref 전환 시 누락된 부분
+    slackPollSinceRef.current = pollStartTs
     const realAgents = REAL_SLACK_AGENTS.map(name => ({ name, role: (AGENT_MAP[name] || {}).role || '담당자' }))
     sendSlackQuestion(
       question,
@@ -418,6 +419,9 @@ const Chatbot = () => {
     ).then(res => {
       if (res?.data?.channelId) setSlackChannelId(res.data.channelId)
     }).catch(err => console.error('Slack send error:', err))
+
+    // [버그수정] 폴링 대기 구간에서 입력 활성화 — 사용자가 대기 중에도 추가 질문 가능하도록
+    setIsEscalationBusy(false)
 
     // 4-A. 가상 에이전트 (박우호) — LLM으로 답변 생성
     let answeredCount = 0
@@ -884,7 +888,8 @@ const Chatbot = () => {
 
     // Step 6: 실제 Slack으로 질문 전송 + channelId 캡처
     const escalationPollStartTs = String(Date.now() / 1000)
-    setSlackPollSince(escalationPollStartTs)
+    // [버그수정] setSlackPollSince → ref 직접 할당 — state→ref 전환 시 누락된 부분
+    slackPollSinceRef.current = escalationPollStartTs
     let activeChannelId = slackChannelId
     try {
       const sendResult = await sendSlackQuestion(
@@ -901,6 +906,10 @@ const Chatbot = () => {
     } catch (err) {
       console.error('Slack send error:', err)
     }
+
+    // [버그수정] 폴링 대기 구간에서 입력 활성화 — 사용자가 대기 중에도 추가 질문 가능하도록
+    // 초기 시퀀스(채소희 입장~질문 분류~Slack 전송)는 busy 유지했고, 이제 폴링 루프 진입 전 해제
+    setIsEscalationBusy(false)
 
     // Step 7: 담당자별 답변 루프 (서브질문 기반 동적)
     let answeredCount = 0
