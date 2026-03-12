@@ -1147,8 +1147,9 @@ const Chatbot = () => {
         </div>
       )}
 
-      {/* Info Panel - Desktop Only */}
-      {isOpen && !isMinimized && customerInfo && (
+      {/* Info Panel - Desktop Only: Salesforce 매칭된 고객 정보가 있을 때만 표시 */}
+      {/* [의도] IntakeForm 기본 입력(company/email)만으로는 InfoPanel을 띄우지 않음 — product 필드가 있어야 Salesforce 매칭된 것 */}
+      {isOpen && !isMinimized && customerInfo?.product && (
         <div className="hidden xl:block">
           <InfoPanel customerInfo={customerInfo} />
         </div>
