@@ -10,6 +10,7 @@ export default {
         'markany-blue': '#0066CC',
         'markany-dark': '#003366',
         'markany-light': '#E6F2FF',
+        'markany-accent': '#0052A3',
       },
     },
   },

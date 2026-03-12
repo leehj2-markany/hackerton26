@@ -9,37 +9,52 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Smooth scrolling */
 html {
   scroll-behavior: smooth;
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 4px;
+  background: #cbd5e1;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #94a3b8;
 }
 
-/* Custom animations */
+/* Message slide-up animation */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slideUp {
+  animation: slideUp 0.3s ease-out forwards;
+}
+
+/* Fade in animation */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -55,23 +70,109 @@ html {
   animation: fadeIn 0.5s ease-out forwards;
 }
 
-/* Chatbot message slide-up animation */
-@keyframes slideUp {
+/* Scale in for buttons */
+@keyframes scaleIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: scale(0.9);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: scale(1);
   }
 }
 
-/* Hide scrollbar for quick reply horizontal scroll */
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+.animate-scaleIn {
+  animation: scaleIn 0.2s ease-out forwards;
 }
-.scrollbar-hide::-webkit-scrollbar {
+
+/* Bounce limited - only 3 times */
+@keyframes bounceLimited {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.animate-bounce-limited {
+  animation: bounceLimited 0.6s ease-in-out 3;
+}
+
+/* Shimmer effect for loading */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Typing cursor blink */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}
+
+/* Gradient text */
+.text-gradient {
+  background: linear-gradient(135deg, #0066CC 0%, #0052a3 50%, #003d7a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glass morphism for chatbot header */
+.glass-header {
+  background: linear-gradient(135deg, rgba(0, 102, 204, 0.95) 0%, rgba(0, 51, 102, 0.95) 100%);
+  backdrop-filter: blur(10px);
+}
+
+/* Markdown content styling inside chatbot */
+.markdown-content h1, .markdown-content h2, .markdown-content h3 {
+  font-weight: 700;
+  margin-top: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+.markdown-content h1 { font-size: 1.1rem; }
+.markdown-content h2 { font-size: 1rem; }
+.markdown-content h3 { font-size: 0.95rem; }
+.markdown-content p { margin-bottom: 0.5rem; line-height: 1.6; }
+.markdown-content p:last-child { margin-bottom: 0; }
+.markdown-content ul, .markdown-content ol {
+  padding-left: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+.markdown-content li { margin-bottom: 0.2rem; line-height: 1.5; }
+.markdown-content strong { font-weight: 600; color: #1e293b; }
+.markdown-content code {
+  background: #f1f5f9;
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.25rem;
+  font-size: 0.85em;
+  color: #0066CC;
+}
+.markdown-content a {
+  color: #0066CC;
+  text-decoration: underline;
+}
+.markdown-content blockquote {
+  border-left: 3px solid #0066CC;
+  padding-left: 0.75rem;
+  margin: 0.5rem 0;
+  color: #64748b;
+}
+
+/* Quick reply horizontal scroll */
+.quick-reply-scroll {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.quick-reply-scroll::-webkit-scrollbar {
   display: none;
 }
