@@ -50,21 +50,8 @@ const formatTimestamp = (ts) => {
   return d.toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit', hour12: true })
 }
 
-// [P11] 신뢰도 배지 컴포넌트 — 🟢높음/🟡중간/🔴낮음
-const ConfidenceBadge = ({ confidence }) => {
-  if (!confidence) return null
-  const map = {
-    high: { emoji: '🟢', label: '높은 신뢰도', cls: 'text-green-600 bg-green-50' },
-    medium: { emoji: '🟡', label: '중간 신뢰도', cls: 'text-yellow-600 bg-yellow-50' },
-    low: { emoji: '🔴', label: '낮은 신뢰도 — 정확하지 않을 수 있습니다', cls: 'text-red-600 bg-red-50' },
-  }
-  const info = map[confidence] || map.medium
-  return (
-    <span className={`inline-flex items-center text-[10px] px-1.5 py-0.5 rounded-full ${info.cls}`}>
-      {info.emoji} {info.label}
-    </span>
-  )
-}
+// [P11] 신뢰도 배지 — 제거됨 (UI에서 고객에게 신뢰도를 노출하면 오히려 불신을 유발)
+// confidence 데이터는 msg 객체에 여전히 저장되므로 디버깅 시 콘솔에서 확인 가능
 
 // [의도] AI 메시지를 마크다운으로 렌더링하기 위한 커스텀 컴포넌트
 // 챗봇 버블 안에서 적절한 크기/간격으로 표시되도록 tailwind 클래스 조정
@@ -328,6 +315,39 @@ const Chatbot = () => {
     if (slackChannelName) sessionStorage.setItem('anybridge_channelName', slackChannelName)
   }, [slackChannelName])
 
+  // [버그수정] 에스컬레이션 모드 백그라운드 폴링 — 초기 폴링 루프(90초) 종료 후에도
+  // 담당자 답변을 지속적으로 캡처. 폴링 루프 타임아웃 후 답변이 도착하면 UI에 안 나타나는 문제 해결.
+  // AGENT_MAP은 함수 내부에서만 정의되므로 여기서는 REAL_SLACK_AGENTS만 사용
+  useEffect(() => {
+    if (!escalationMode || !slackChannelId || sessionClosed) return
+    const POLL_INTERVAL = 10000 // 10초
+    const intervalId = setInterval(async () => {
+      try {
+        const sinceTs = slackPollSinceRef.current || '0'
+        const result = await pollSlackMessages(sinceTs, 20, slackChannelId)
+        const newMessages = result?.data?.messages || []
+        for (const msg of newMessages) {
+          // 이미 표시한 메시지는 건너뜀 (ts 기반 중복 방지)
+          if (seenSlackTsRef.current.has(msg.ts)) continue
+          if (!REAL_SLACK_AGENTS.includes(msg.agentName)) continue
+          seenSlackTsRef.current.add(msg.ts)
+          setMessages(prev => [...prev, {
+            type: 'agent',
+            agentName: msg.agentName,
+            agentRole: msg.agentRole || '',
+            agentAvatar: msg.agentAvatar || '👤',
+            text: msg.text,
+            isLive: true,
+            timestamp: new Date(msg.timestamp)
+          }])
+        }
+      } catch (err) {
+        console.error('[background-poll] error:', err)
+      }
+    }, POLL_INTERVAL)
+    return () => clearInterval(intervalId)
+  }, [escalationMode, slackChannelId, sessionClosed])
+
   // 초기 정보 수집 완료 핸들러
   const handleIntakeSubmit = (info) => {
     const custInfo = {
@@ -473,6 +493,7 @@ const Chatbot = () => {
           for (const msg of newMessages) {
             if (!answeredAgents.has(msg.agentName) && REAL_SLACK_AGENTS.includes(msg.agentName)) {
               answeredAgents.add(msg.agentName)
+              seenSlackTsRef.current.add(msg.ts) // 백그라운드 폴링과 중복 방지
               if (!firstAnswerTime) firstAnswerTime = Date.now()
               setTypingAgent(null)
               const aInfo = AGENT_MAP[msg.agentName] || {}
@@ -863,6 +884,13 @@ const Chatbot = () => {
     // escalation API 응답 대기 (최대 5초)
     await Promise.race([escalationPromise, delay(5000)])
 
+    // [버그수정] escalateCase가 생성한 channelId를 즉시 반영
+    // 이전: channelName만 추출하고 channelId는 무시 → sendSlackQuestion이 null channelId로 호출되어
+    // 새 채널을 또 생성하거나 기본 채널로 전송 → 폴링 채널과 답변 채널 불일치
+    if (escalationResult?.data?.channelId) {
+      setSlackChannelId(escalationResult.data.channelId)
+    }
+
     // 채널명: 백엔드 응답 기반 동적 생성, 없으면 고객명 기반 폴백
     const channelName = escalationResult?.data?.channelName
       || `${customerInfo?.name || '고객'}-문의`
@@ -900,14 +928,15 @@ const Chatbot = () => {
     // 시퀀스 시작 시점(handleEscalation 진입)부터의 메시지를 모두 캡처하도록 변경
     const escalationPollStartTs = String((Date.now() / 1000) - 120) // 2분 전부터 캡처 (안전 마진)
     slackPollSinceRef.current = escalationPollStartTs
-    let activeChannelId = slackChannelId
+    // [버그수정] escalateCase에서 받은 channelId를 우선 사용 — state 업데이트는 비동기라 slackChannelId가 아직 반영 안 됨
+    let activeChannelId = escalationResult?.data?.channelId || slackChannelId
     try {
       const sendResult = await sendSlackQuestion(
         lastUserMsg?.text || '고객 문의',
         assignees.map(a => ({ name: a.name, role: a.role })),
         customerInfo?.name || '고객',
         { decomposition: subQuestions.map(sq => ({ assignee: sq.assignee, subQuestion: sq.question })) },
-        slackChannelId
+        activeChannelId  // [버그수정] slackChannelId 대신 escalateCase에서 받은 channelId 사용
       )
       if (sendResult?.data?.channelId) {
         activeChannelId = sendResult.data.channelId
@@ -981,6 +1010,7 @@ const Chatbot = () => {
           for (const msg of newMessages) {
             if (!answeredRealAgents.has(msg.agentName) && realAgentNames.includes(msg.agentName)) {
               answeredRealAgents.add(msg.agentName)
+              seenSlackTsRef.current.add(msg.ts) // 백그라운드 폴링과 중복 방지
               if (!firstAnswerTime) firstAnswerTime = Date.now()
               const aInfo = AGENT_MAP[msg.agentName] || { role: '담당자', avatar: '👤' }
               setTypingAgent(null)
@@ -1219,15 +1249,7 @@ const Chatbot = () => {
                   ) : (
                     <p className={`whitespace-pre-wrap ${msg.type === 'user' ? 'leading-relaxed' : ''}`}>{formatSlackText(msg.text)}</p>
                   )}
-                  {/* [P11] 신뢰도 배지 — AI 메시지 하단에 표시 */}
-                  {msg.type === 'ai' && msg.confidence && (
-                    <div className="mt-2 flex items-center space-x-1">
-                      <span className="text-xs">{msg.confidence === 'high' ? '🟢' : msg.confidence === 'medium' ? '🟡' : '🔴'}</span>
-                      <span className={`text-xs font-medium ${msg.confidence === 'high' ? 'text-green-600' : msg.confidence === 'medium' ? 'text-yellow-600' : 'text-red-500'}`}>
-                        {msg.confidence === 'high' ? '높은 신뢰도' : msg.confidence === 'medium' ? '보통 신뢰도' : '낮은 신뢰도 — 정확하지 않을 수 있습니다'}
-                      </span>
-                    </div>
-                  )}
+                  {/* [P11] 신뢰도 배지 — 제거됨 (고객에게 "정확하지 않을 수 있습니다"는 신뢰를 깎음, 내부 디버깅용으로만 유지) */}
                   {/* [P10] 에러 재시도 버튼 */}
                   {msg.isError && (
                     <button
