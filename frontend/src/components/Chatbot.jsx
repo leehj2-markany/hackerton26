@@ -42,11 +42,44 @@ const formatSlackText = (text) => {
     .replace(/<!subteam\^[A-Z0-9]+\|@([^>]+)>/g, '@$1')    // 유저그룹 멘션
 }
 
+// [P3] 타임스탬프 포맷 헬퍼 — "오후 2:30" 형식
+const formatTimestamp = (ts) => {
+  if (!ts) return ''
+  const d = ts instanceof Date ? ts : new Date(ts)
+  if (isNaN(d.getTime())) return ''
+  return d.toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit', hour12: true })
+}
+
+// [P11] 신뢰도 배지 컴포넌트 — 🟢높음/🟡중간/🔴낮음
+const ConfidenceBadge = ({ confidence }) => {
+  if (!confidence) return null
+  const map = {
+    high: { emoji: '🟢', label: '높은 신뢰도', cls: 'text-green-600 bg-green-50' },
+    medium: { emoji: '🟡', label: '중간 신뢰도', cls: 'text-yellow-600 bg-yellow-50' },
+    low: { emoji: '🔴', label: '낮은 신뢰도 — 정확하지 않을 수 있습니다', cls: 'text-red-600 bg-red-50' },
+  }
+  const info = map[confidence] || map.medium
+  return (
+    <span className={`inline-flex items-center text-[10px] px-1.5 py-0.5 rounded-full ${info.cls}`}>
+      {info.emoji} {info.label}
+    </span>
+  )
+}
+
 // [의도] AI 메시지를 마크다운으로 렌더링하기 위한 커스텀 컴포넌트
 // 챗봇 버블 안에서 적절한 크기/간격으로 표시되도록 tailwind 클래스 조정
+// [P6] blockquote를 경고 박스(노란 배경)로 렌더링 — 전제조건/주의사항 시각적 강조
 const markdownComponents = {
   p: ({children}) => <p className="mb-2 last:mb-0">{children}</p>,
-  strong: ({children}) => <span className="font-bold text-gray-900">{children}</span>,
+  strong: ({children}) => {
+    const text = typeof children === 'string' ? children : Array.isArray(children) ? children.join('') : String(children || '')
+    const PRODUCT_KEYWORDS = ['Screen SAFER', 'Document SAFER', 'NX_SAFER', 'MarkAny', '마크애니', 'DRM', 'Anybridge', 'SafeConsole', 'SafePC', 'ContentSAFER', 'ServerSAFER', 'WebSAFER']
+    const isProduct = PRODUCT_KEYWORDS.some(kw => text.toLowerCase().includes(kw.toLowerCase()))
+    if (isProduct) {
+      return <span className="inline-flex items-center bg-blue-100 text-blue-800 text-xs font-bold px-2 py-0.5 rounded-full">{children}</span>
+    }
+    return <span className="font-bold text-gray-900">{children}</span>
+  },
   ul: ({children}) => <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>,
   ol: ({children}) => <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>,
   li: ({children}) => <li className="text-sm">{children}</li>,
@@ -57,6 +90,62 @@ const markdownComponents = {
     ? <code className="bg-gray-100 text-red-600 px-1 py-0.5 rounded text-xs font-mono">{children}</code>
     : <pre className="bg-gray-800 text-green-400 p-2 rounded text-xs font-mono overflow-x-auto my-2"><code>{children}</code></pre>,
   a: ({href, children}) => <a href={href} className="text-blue-600 underline hover:text-blue-800" target="_blank" rel="noopener noreferrer">{children}</a>,
+  blockquote: ({children}) => <div className="bg-amber-50 border-l-4 border-amber-400 rounded-r-lg p-3 my-2 text-sm text-amber-900">{children}</div>,
+}
+
+// [P3] 타임스탬프 포맷 헬퍼 — "오후 2:30" 형식
+const formatTime = (date) => {
+  if (!date) return ''
+  const d = date instanceof Date ? date : new Date(date)
+  if (isNaN(d.getTime())) return ''
+  return d.toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit', hour12: true })
+}
+
+// [P1] AI 답변 접기/펼치기 — 6줄 이상 또는 300자 이상이면 접기 적용
+const CollapsibleAIMessage = ({ text, thinkingProcess }) => {
+  const [expanded, setExpanded] = useState(false)
+  const [showThinkingDetail, setShowThinkingDetail] = useState(false)
+  const lines = text.split('\n')
+  const shouldCollapse = lines.length > 6 || text.length > 300
+  const displayText = shouldCollapse && !expanded ? lines.slice(0, 4).join('\n') + '...' : text
+  return (
+    <div>
+      <div className="prose prose-sm max-w-none">
+        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+          {displayText}
+        </ReactMarkdown>
+      </div>
+      {shouldCollapse && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="mt-1 text-xs text-blue-600 hover:text-blue-800 font-medium transition"
+        >
+          {expanded ? '▲ 접기' : '▼ 더보기'}
+        </button>
+      )}
+      {thinkingProcess && thinkingProcess.length > 0 && (
+        <>
+          <button
+            onClick={() => setShowThinkingDetail(!showThinkingDetail)}
+            className="mt-1 ml-2 text-xs text-gray-500 hover:text-gray-700 font-medium transition inline-flex items-center space-x-1"
+          >
+            <span>🧠</span>
+            <span>{showThinkingDetail ? '분석 과정 닫기' : '분석 과정 보기'}</span>
+          </button>
+          {showThinkingDetail && (
+            <div className="mt-2 bg-gray-50 border border-gray-200 rounded-lg p-2 space-y-1">
+              {thinkingProcess.map((step, i) => (
+                <div key={i} className="text-xs text-gray-600 flex items-start space-x-1.5">
+                  <span className="text-gray-400 flex-shrink-0">{i + 1}.</span>
+                  <span>{step}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
 }
 
 // 초기 고객 정보 수집 폼 (대화 시작 시)
@@ -149,14 +238,23 @@ const Chatbot = () => {
   const [agents, setAgents] = useState([])
   const [escalationMode, setEscalationMode] = useState(false)
   const [followUpIndex, setFollowUpIndex] = useState(0)
-  const [isProcessing, setIsProcessing] = useState(false)
+  // [EP1] isProcessing 분리 — 에스컬레이션 모드에서 폴링 중에도 사용자 입력 가능하게
+  // isAIProcessing: AI 응답 생성 중 — 입력 비활성화
+  // isEscalationBusy: 에스컬레이션 시퀀스(채소희 입장~답변 수집) 진행 중 — 입력 비활성화
+  // isProcessing: 하위 호환용 computed — 둘 중 하나라도 true면 true
+  const [isAIProcessing, setIsAIProcessing] = useState(false)
+  const [isEscalationBusy, setIsEscalationBusy] = useState(false)
+  const isProcessing = isAIProcessing || isEscalationBusy
   const [typingAgent, setTypingAgent] = useState(null)
   const [showQuickReplies, setShowQuickReplies] = useState(false)
-  const [, setSlackPollSince] = useState(null)
+  // [EP2] slackPollSince를 ref로 변경 — 백그라운드 폴링에서 최신 값 참조 필요
+  const slackPollSinceRef = useRef(null)
   const [slackChannelId, setSlackChannelId] = useState(null)
   const [slackChannelName, setSlackChannelName] = useState(null)
   const [sessionId] = useState(() => `session_${Date.now()}`)
   const messagesEndRef = useRef(null)
+  // [EP2] 백그라운드 폴링에서 이미 표시한 메시지 ts 추적 (중복 방지)
+  const seenSlackTsRef = useRef(new Set())
   // 에스컬레이션 시 서브질문 저장 (동적 quickReply 생성용)
   const [escalationSubQuestions, setEscalationSubQuestions] = useState(null)
 
@@ -278,7 +376,7 @@ const Chatbot = () => {
 
   // 에스컬레이션 후 추가 질의 처리 — 가상 에이전트는 LLM, 실제 담당자는 Slack 폴링
   const handleFollowUpQuestion = async (question) => {
-    setIsProcessing(true)
+    setIsEscalationBusy(true)
     setShowQuickReplies(false)
 
     // 담당자 정보 매핑 (handleEscalation과 동일)
@@ -409,7 +507,7 @@ const Chatbot = () => {
     }
 
     setFollowUpIndex(prev => prev + 1)
-    setIsProcessing(false)
+    setIsEscalationBusy(false)
     setShowQuickReplies(true)
   }
 
@@ -440,7 +538,7 @@ const Chatbot = () => {
       setShowThinking(true)
       setThinkingSteps(['🤔 질문 분석 중...'])
     }
-    setIsProcessing(true)
+    setIsAIProcessing(true)
 
     try {
       const history = messages
@@ -474,6 +572,8 @@ const Chatbot = () => {
         model: data.model,
         complexity: data.complexity,
         subQuestions: data.subQuestions || null,
+        thinkingProcess: data.thinkingProcess || null,
+        isError: !!data.aiFailed,
         isNew: true,
         timestamp: new Date()
       }
@@ -484,7 +584,7 @@ const Chatbot = () => {
       }, 500)
       setShowThinking(false)
       setThinkingSteps([])
-      setIsProcessing(false)
+      setIsAIProcessing(false)
 
       // [P3 수정] LLM이 에스컬레이션 필요하다고 판단하면 AI 답변 메시지 자체에 버튼 표시
       // 별도 메시지로 분리하면 이중 에스컬레이션 메시지 + P1(lastAiMsg 오염) 문제 발생
@@ -502,12 +602,13 @@ const Chatbot = () => {
       console.error('Backend API error:', err)
       setShowThinking(false)
       setThinkingSteps([])
-      setIsProcessing(false)
-      // ── Graceful Degradation: API 완전 실패 시 담당자 연결 버튼 표시 ──
+      setIsAIProcessing(false)
+      // ── Graceful Degradation: API 완전 실패 시 담당자 연결 + 재시도 버튼 표시 ──
       setMessages(prev => [...prev, {
         type: 'ai',
         text: '죄송합니다, 현재 AI 응답 생성에 일시적인 문제가 발생했습니다.\n담당자를 직접 연결해 드릴 수 있습니다.',
         showEscalation: true,
+        isError: true,
         timestamp: new Date()
       }])
     }
@@ -593,7 +694,8 @@ const Chatbot = () => {
     setShowThinking(false)
     setThinkingSteps([])
     setInputValue('')
-    setIsProcessing(false)
+    setIsAIProcessing(false)
+    setIsEscalationBusy(false)
     setTypingAgent(null)
     setShowQuickReplies(false)
     setSlackChannelId(null)
@@ -604,7 +706,7 @@ const Chatbot = () => {
 
   const handleEndChat = async () => {
     setMessages(prev => prev.map(msg => msg.showContinueOrEnd ? { ...msg, showContinueOrEnd: false, continueChoice: 'end' } : msg))
-    setIsProcessing(true)
+    setIsEscalationBusy(true)
     setShowQuickReplies(false)
 
     // 채소희 마무리 인사
@@ -659,14 +761,14 @@ const Chatbot = () => {
     sessionStorage.removeItem('anybridge_channelId')
     sessionStorage.removeItem('anybridge_channelName')
 
-    setIsProcessing(false)
+    setIsEscalationBusy(false)
     setEscalationMode(false)
     setShowAgentStatus(false)
   }
 
   const handleEscalation = async () => {
     setShowAgentStatus(true)
-    setIsProcessing(true)
+    setIsEscalationBusy(true)
 
     // 담당자 정보 매핑
     const AGENT_MAP = {
@@ -862,7 +964,7 @@ const Chatbot = () => {
 
     // 에스컬레이션 모드 활성화 (이후 질문은 담당자가 답변)
     setEscalationMode(true)
-    setIsProcessing(false)
+    setIsEscalationBusy(false)
     setShowQuickReplies(true)
   }
 
@@ -872,6 +974,7 @@ const Chatbot = () => {
       {(!isOpen || isMinimized) && (
         <button
           onClick={() => { setIsOpen(true); setIsMinimized(false) }}
+          aria-label="AI 상담 열기"
           className="fixed bottom-6 right-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-5 py-3.5 rounded-full shadow-2xl hover:shadow-blue-500/25 hover:scale-105 transition-all duration-300 z-50 flex items-center space-x-2 group"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -888,7 +991,7 @@ const Chatbot = () => {
 
       {/* Chatbot Window */}
       {isOpen && !isMinimized && (
-        <div className="fixed bottom-0 right-0 sm:bottom-6 sm:right-6 w-full sm:w-[420px] h-full sm:h-[700px] sm:rounded-2xl rounded-none bg-white shadow-2xl flex flex-col z-50 border border-gray-200/50 ring-1 ring-black/5">
+        <div className="fixed bottom-0 right-0 sm:bottom-6 sm:right-6 w-full sm:w-[420px] h-[100dvh] sm:h-[700px] sm:rounded-2xl rounded-none bg-white shadow-2xl flex flex-col z-50 border border-gray-200/50 ring-1 ring-black/5">
           {/* Header */}
           <div className="bg-gradient-to-r from-markany-blue to-markany-dark text-white p-4 sm:rounded-t-2xl rounded-none flex justify-between items-center">
             <div className="flex items-center space-x-3">
@@ -908,18 +1011,18 @@ const Chatbot = () => {
             <div className="flex space-x-1">
               {/* 새 대화 버튼 — 인테이크 폼이 아닌 상태에서만 표시 */}
               {!showIntakeForm && (
-                <button onClick={handleNewChat} className="hover:bg-white/20 p-1 rounded transition" title="새 대화">
+                <button onClick={handleNewChat} className="hover:bg-white/20 p-1 rounded transition" title="새 대화" aria-label="새 대화">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
                 </button>
               )}
-              <button onClick={() => setIsMinimized(true)} className="hover:bg-white/20 p-1 rounded transition" title="최소화">
+              <button onClick={() => setIsMinimized(true)} className="hover:bg-white/20 p-1 rounded transition" title="최소화" aria-label="최소화">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                 </svg>
               </button>
-              <button onClick={() => { setIsOpen(false); handleNewChat() }} className="hover:bg-white/20 p-1 rounded transition" title="닫기">
+              <button onClick={() => { setIsOpen(false); handleNewChat() }} className="hover:bg-white/20 p-1 rounded transition" title="닫기" aria-label="닫기">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -968,6 +1071,8 @@ const Chatbot = () => {
                       {msg.continueChoice === 'returnToAI' && <div className="mt-2 text-xs text-blue-500 font-medium">🤖 AI 대화로 전환</div>}
 
                     </div>
+                    {/* [P3] 에이전트 메시지 타임스탬프 */}
+                    {msg.timestamp && <div className="text-[10px] text-gray-400 mt-1 ml-7">{formatTimestamp(msg.timestamp)}</div>}
                   </div>
                 ) : msg.type === 'contactCard' ? (
                   <div className="max-w-[90%] w-full">
@@ -1006,7 +1111,12 @@ const Chatbot = () => {
                 ) : msg.type === 'slack' ? (
                   <div className="max-w-[90%] w-full">
                     <div className="flex items-center space-x-2 mb-1">
-                      <span className="text-sm">💬</span>
+                      <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none">
+                        <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zm1.271 0a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313z" fill="#E01E5A"/>
+                        <path d="M8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zm0 1.271a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312z" fill="#36C5F0"/>
+                        <path d="M18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zm-1.27 0a2.528 2.528 0 0 1-2.522 2.521 2.527 2.527 0 0 1-2.521-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.522 2.522v6.312z" fill="#2EB67D"/>
+                        <path d="M15.165 18.956a2.528 2.528 0 0 1 2.522 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.521-2.522v-2.522h2.521zm0-1.27a2.527 2.527 0 0 1-2.521-2.522 2.528 2.528 0 0 1 2.521-2.521h6.313A2.528 2.528 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.521h-6.313z" fill="#ECB22E"/>
+                      </svg>
                       <span className="text-xs font-semibold text-purple-700">Slack</span>
                       <span className="text-xs text-purple-400">{msg.channel}</span>
                     </div>
@@ -1040,15 +1150,31 @@ const Chatbot = () => {
                     : 'bg-gradient-to-br from-white to-blue-50 text-gray-800 shadow-md border border-blue-100'
                 } rounded-lg p-3`}>
                   {msg.type === 'ai' ? (
-                    <div className="prose prose-sm max-w-none">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                        {msg.text}
-                      </ReactMarkdown>
-                    </div>
+                    <CollapsibleAIMessage text={msg.text} thinkingProcess={msg.thinkingProcess} />
                   ) : (
-                    <p className="whitespace-pre-wrap">{formatSlackText(msg.text)}</p>
+                    <p className={`whitespace-pre-wrap ${msg.type === 'user' ? 'leading-relaxed' : ''}`}>{formatSlackText(msg.text)}</p>
                   )}
-                  {/* 신뢰도는 콘솔 로그에만 남기고 UI에는 표시하지 않음 */}
+                  {/* [P11] 신뢰도 배지 — AI 메시지 하단에 표시 */}
+                  {msg.type === 'ai' && msg.confidence && (
+                    <div className="mt-2 flex items-center space-x-1">
+                      <span className="text-xs">{msg.confidence === 'high' ? '🟢' : msg.confidence === 'medium' ? '🟡' : '🔴'}</span>
+                      <span className={`text-xs font-medium ${msg.confidence === 'high' ? 'text-green-600' : msg.confidence === 'medium' ? 'text-yellow-600' : 'text-red-500'}`}>
+                        {msg.confidence === 'high' ? '높은 신뢰도' : msg.confidence === 'medium' ? '보통 신뢰도' : '낮은 신뢰도 — 정확하지 않을 수 있습니다'}
+                      </span>
+                    </div>
+                  )}
+                  {/* [P10] 에러 재시도 버튼 */}
+                  {msg.isError && (
+                    <button
+                      onClick={() => {
+                        const lastUserMsg = messages.filter(m => m.type === 'user').pop()
+                        if (lastUserMsg) handleAIResponse(lastUserMsg.text)
+                      }}
+                      className="mt-2 text-xs bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg hover:bg-blue-200 transition font-medium"
+                    >
+                      🔄 다시 시도
+                    </button>
+                  )}
                   {msg.showEscalation && (
                     <button
                       onClick={handleEscalation}
@@ -1072,6 +1198,12 @@ const Chatbot = () => {
                   {msg.answered === 'no' && <div className="mt-2 text-xs text-red-500 font-medium">❌ 불만족 → 담당자 연결</div>}
                 </div>
                 )}
+                {/* [P3] user/ai 메시지 타임스탬프 — system 메시지는 제외 */}
+                {msg.type !== 'system' && msg.timestamp && (
+                  <div className={`text-[10px] text-gray-400 mt-1 ${msg.type === 'user' ? 'text-right' : ''}`}>
+                    {formatTimestamp(msg.timestamp)}
+                  </div>
+                )}
               </div>
             ))}
             
@@ -1082,16 +1214,19 @@ const Chatbot = () => {
             {showQuickReplies && !isProcessing && (
               <div className="px-1">
                 <p className="text-xs text-gray-400 mb-2">💡 추천 질문</p>
-                <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
-                  {quickReplyOptions.slice(followUpIndex, followUpIndex + 5).map((q, i) => (
-                    <button
-                      key={i}
-                      onClick={() => handleQuickReply(q)}
-                      className="flex-shrink-0 bg-white border border-blue-200 text-blue-700 text-xs px-4 py-2 rounded-full hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm whitespace-nowrap"
-                    >
-                      {q}
-                    </button>
-                  ))}
+                <div className="relative">
+                  <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
+                    {quickReplyOptions.slice(followUpIndex, followUpIndex + 5).map((q, i) => (
+                      <button
+                        key={i}
+                        onClick={() => handleQuickReply(q)}
+                        className="flex-shrink-0 bg-white border border-blue-200 text-blue-700 text-xs px-4 py-2 rounded-full hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm whitespace-nowrap"
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-gray-50 to-transparent pointer-events-none"></div>
                 </div>
               </div>
             )}
@@ -1101,7 +1236,7 @@ const Chatbot = () => {
               <div className="flex justify-start">
                 <div className="bg-blue-50 border border-blue-200 text-gray-600 rounded-lg p-3 text-sm flex items-center space-x-2">
                   <span className="text-lg">{typingAgent.avatar}</span>
-                  <span className="font-medium text-gray-700">{typingAgent.name}님이 입력 중</span>
+                  <span className="font-medium text-gray-700">{typingAgent.name}님이 답변 대기 중</span>
                   <span className="flex space-x-1">
                     <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
                     <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
@@ -1123,22 +1258,24 @@ const Chatbot = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input Area */}
-          <div className="p-4 border-t border-gray-200 bg-white sm:rounded-b-2xl rounded-none">
+          {/* [P2] Input Area — shadow-sm으로 메시지 영역과 시각적 분리 강화 */}
+          <div className="p-4 border-t border-gray-200 shadow-[0_-2px_8px_rgba(0,0,0,0.04)] bg-white sm:rounded-b-2xl rounded-none">
             <div className="flex space-x-2">
               <input
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !e.nativeEvent.isComposing && handleSend()}
-                placeholder={showIntakeForm ? '위 정보를 입력해 주세요' : isProcessing ? '담당자 답변 대기 중...' : '메시지를 입력하세요...'}
-                disabled={isProcessing || showIntakeForm}
+                placeholder={showIntakeForm ? '위 정보를 입력해 주세요' : isProcessing ? '담당자 답변 대기 중...' : sessionClosed ? '상담이 종료되었습니다' : '메시지를 입력하세요...'}
+                disabled={isProcessing || showIntakeForm || sessionClosed}
                 className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-markany-blue disabled:bg-gray-100 disabled:text-gray-400"
+                aria-label="메시지 입력"
               />
               <button
                 onClick={handleSend}
-                disabled={isProcessing || showIntakeForm}
+                disabled={isProcessing || showIntakeForm || sessionClosed}
                 className="bg-markany-blue text-white px-6 py-2 rounded-lg hover:bg-markany-dark transition font-semibold disabled:opacity-50"
+                aria-label="메시지 전송"
               >
                 전송
               </button>
