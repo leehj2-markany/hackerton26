@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import ThinkingPanel from './ThinkingPanel'
 import InfoPanel from './InfoPanel'
 import AgentStatus from './AgentStatus'
@@ -38,6 +40,23 @@ const formatSlackText = (text) => {
     .replace(/<(https?:\/\/[^|>]+)\|([^>]+)>/g, '$2')      // URL with label
     .replace(/<(https?:\/\/[^>]+)>/g, '$1')                 // URL without label
     .replace(/<!subteam\^[A-Z0-9]+\|@([^>]+)>/g, '@$1')    // 유저그룹 멘션
+}
+
+// [의도] AI 메시지를 마크다운으로 렌더링하기 위한 커스텀 컴포넌트
+// 챗봇 버블 안에서 적절한 크기/간격으로 표시되도록 tailwind 클래스 조정
+const markdownComponents = {
+  p: ({children}) => <p className="mb-2 last:mb-0">{children}</p>,
+  strong: ({children}) => <span className="font-bold text-gray-900">{children}</span>,
+  ul: ({children}) => <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>,
+  ol: ({children}) => <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>,
+  li: ({children}) => <li className="text-sm">{children}</li>,
+  h1: ({children}) => <h3 className="font-bold text-base mb-1">{children}</h3>,
+  h2: ({children}) => <h4 className="font-bold text-sm mb-1">{children}</h4>,
+  h3: ({children}) => <h5 className="font-semibold text-sm mb-1">{children}</h5>,
+  code: ({inline, children}) => inline 
+    ? <code className="bg-gray-100 text-red-600 px-1 py-0.5 rounded text-xs font-mono">{children}</code>
+    : <pre className="bg-gray-800 text-green-400 p-2 rounded text-xs font-mono overflow-x-auto my-2"><code>{children}</code></pre>,
+  a: ({href, children}) => <a href={href} className="text-blue-600 underline hover:text-blue-800" target="_blank" rel="noopener noreferrer">{children}</a>,
 }
 
 // 초기 고객 정보 수집 폼 (대화 시작 시)
@@ -455,9 +474,14 @@ const Chatbot = () => {
         model: data.model,
         complexity: data.complexity,
         subQuestions: data.subQuestions || null,
+        isNew: true,
         timestamp: new Date()
       }
       setMessages(prev => [...prev, response])
+      // [의도] 새 AI 메시지 fade-in 효과 — 500ms 후 isNew 플래그 제거
+      setTimeout(() => {
+        setMessages(prev => prev.map((m, i) => i === prev.length - 1 && m.isNew ? { ...m, isNew: false } : m))
+      }, 500)
       setShowThinking(false)
       setThinkingSteps([])
       setIsProcessing(false)
@@ -848,23 +872,38 @@ const Chatbot = () => {
       {(!isOpen || isMinimized) && (
         <button
           onClick={() => { setIsOpen(true); setIsMinimized(false) }}
-          className="fixed bottom-6 right-6 bg-markany-blue text-white p-4 rounded-full shadow-2xl hover:bg-markany-dark transition-all z-50 animate-bounce"
+          className="fixed bottom-6 right-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-5 py-3.5 rounded-full shadow-2xl hover:shadow-blue-500/25 hover:scale-105 transition-all duration-300 z-50 flex items-center space-x-2 group"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
           </svg>
+          <span className="text-sm font-semibold">AI 상담</span>
+          {messages.length > 0 && (
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-xs flex items-center justify-center font-bold animate-pulse">
+              {messages.filter(m => m.type === 'ai').length}
+            </span>
+          )}
         </button>
       )}
 
       {/* Chatbot Window */}
       {isOpen && !isMinimized && (
-        <div className="fixed bottom-6 right-6 w-[450px] h-[700px] bg-white rounded-2xl shadow-2xl flex flex-col z-50 border border-gray-200">
+        <div className="fixed bottom-0 right-0 sm:bottom-6 sm:right-6 w-full sm:w-[420px] h-full sm:h-[700px] sm:rounded-2xl rounded-none bg-white shadow-2xl flex flex-col z-50 border border-gray-200/50 ring-1 ring-black/5">
           {/* Header */}
-          <div className="bg-gradient-to-r from-markany-blue to-markany-dark text-white p-4 rounded-t-2xl flex justify-between items-center">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="font-semibold">마크애니 AI 지원</span>
-              {escalationMode && <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">담당자 연결됨</span>}
+          <div className="bg-gradient-to-r from-markany-blue to-markany-dark text-white p-4 sm:rounded-t-2xl rounded-none flex justify-between items-center">
+            <div className="flex items-center space-x-3">
+              <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
+                </svg>
+              </div>
+              <div>
+                <span className="font-bold text-base">Anybridge</span>
+                <div className="flex items-center space-x-1.5">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span className="text-xs text-white/80">AI 상담 온라인</span>
+                </div>
+              </div>
             </div>
             <div className="flex space-x-1">
               {/* 새 대화 버튼 — 인테이크 폼이 아닌 상태에서만 표시 */}
@@ -898,7 +937,7 @@ const Chatbot = () => {
               </div>
             )}
             {!showIntakeForm && messages.map((msg, index) => (
-              <div key={index} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div key={index} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'} ${msg.isNew ? 'animate-fadeIn' : ''}`} style={{ animation: 'slideUp 0.3s ease-out' }}>
                 {msg.type === 'agent' ? (
                   <div className="max-w-[85%]">
                     <div className="flex items-center space-x-2 mb-1">
@@ -995,19 +1034,28 @@ const Chatbot = () => {
                 ) : (
                 <div className={`max-w-[80%] ${
                   msg.type === 'user' 
-                    ? 'bg-markany-blue text-white' 
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md' 
                     : msg.type === 'system'
-                    ? 'bg-yellow-100 text-gray-800 text-sm italic'
-                    : 'bg-white text-gray-800 shadow-sm'
+                    ? 'bg-gray-100 text-gray-500 text-xs text-center italic border-0 shadow-none'
+                    : 'bg-gradient-to-br from-white to-blue-50 text-gray-800 shadow-md border border-blue-100'
                 } rounded-lg p-3`}>
-                  <p className="whitespace-pre-wrap">{formatSlackText(msg.text)}</p>
+                  {msg.type === 'ai' ? (
+                    <div className="prose prose-sm max-w-none">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                        {msg.text}
+                      </ReactMarkdown>
+                    </div>
+                  ) : (
+                    <p className="whitespace-pre-wrap">{formatSlackText(msg.text)}</p>
+                  )}
                   {/* 신뢰도는 콘솔 로그에만 남기고 UI에는 표시하지 않음 */}
                   {msg.showEscalation && (
                     <button
                       onClick={handleEscalation}
-                      className="mt-3 w-full bg-markany-blue text-white py-2 px-4 rounded-lg hover:bg-markany-dark transition text-sm font-semibold"
+                      className="mt-3 w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-2.5 px-4 rounded-lg hover:from-orange-600 hover:to-red-600 transition-all text-sm font-bold shadow-lg shadow-orange-500/25 flex items-center justify-center space-x-2"
                     >
-                      담당자 연결하기
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" /></svg>
+                      <span>전문 담당자 연결하기</span>
                     </button>
                   )}
                   {msg.showSatisfaction && (
@@ -1032,16 +1080,19 @@ const Chatbot = () => {
             
             {/* Quick Reply chips */}
             {showQuickReplies && !isProcessing && (
-              <div className="flex flex-wrap gap-2 px-1">
-                {quickReplyOptions.slice(followUpIndex, followUpIndex + 3).map((q, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handleQuickReply(q)}
-                    className="bg-white border border-markany-blue text-markany-blue text-xs px-3 py-1.5 rounded-full hover:bg-markany-blue hover:text-white transition"
-                  >
-                    {q.length > 25 ? q.slice(0, 25) + '...' : q}
-                  </button>
-                ))}
+              <div className="px-1">
+                <p className="text-xs text-gray-400 mb-2">💡 추천 질문</p>
+                <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
+                  {quickReplyOptions.slice(followUpIndex, followUpIndex + 5).map((q, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleQuickReply(q)}
+                      className="flex-shrink-0 bg-white border border-blue-200 text-blue-700 text-xs px-4 py-2 rounded-full hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm whitespace-nowrap"
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
             
@@ -1073,7 +1124,7 @@ const Chatbot = () => {
           </div>
 
           {/* Input Area */}
-          <div className="p-4 border-t border-gray-200 bg-white rounded-b-2xl">
+          <div className="p-4 border-t border-gray-200 bg-white sm:rounded-b-2xl rounded-none">
             <div className="flex space-x-2">
               <input
                 type="text"
