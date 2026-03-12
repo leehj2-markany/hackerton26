@@ -380,8 +380,47 @@ export async function getChannelHistory(channelId, limit = 10) {
     const data = await slackFetch('conversations.history', { channel: channelId, limit })
     return data.messages || []
   } catch (err) {
+    // [의도] 에러를 빈 배열로 삼키지 않고, 호출자가 에러 원인을 알 수 있도록 에러 정보 포함
     console.error('[Slack:getChannelHistory] 실패:', err.message)
+    // not_in_channel 에러면 자동 참여 후 재시도
+    if (err.message.includes('not_in_channel') || err.message.includes('channel_not_found')) {
+      log('getChannelHistory', `Bot이 채널에 없음 → 자동 참여 시도: ${channelId}`)
+      const joined = await ensureBotInChannel(channelId)
+      if (joined) {
+        try {
+          const retryData = await slackFetch('conversations.history', { channel: channelId, limit })
+          return retryData.messages || []
+        } catch (retryErr) {
+          console.error('[Slack:getChannelHistory] 재시도 실패:', retryErr.message)
+        }
+      }
+    }
     return []
+  }
+}
+
+// ─── 6-1. ensureBotInChannel — Bot 자동 채널 참여 ───────
+
+/**
+ * [의도] Bot이 채널 멤버가 아니면 conversations.history가 channel_not_found 반환
+ * → 폴링이 영원히 빈 배열을 받아 담당자 답변을 감지 못하는 근본 원인 해결
+ * conversations.join은 이미 참여 중이면 무시되므로 idempotent하게 호출 가능
+ */
+export async function ensureBotInChannel(channelId) {
+  if (isDemoMode() || !channelId) return false
+  try {
+    await slackFetch('conversations.join', { channel: channelId })
+    log('ensureBotInChannel', `Bot 채널 참여 성공: ${channelId}`)
+    return true
+  } catch (err) {
+    // method_not_supported_for_channel_type: private 채널은 join 불가 (invite 필요)
+    // already_in_channel: 이미 참여 중 (정상)
+    if (err.message.includes('already_in_channel')) {
+      log('ensureBotInChannel', `이미 참여 중: ${channelId}`)
+      return true
+    }
+    console.error('[Slack:ensureBotInChannel] 실패:', err.message)
+    return false
   }
 }
 

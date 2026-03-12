@@ -1,7 +1,7 @@
 // GET /api/slack/poll — Slack 채널에서 새 메시지 폴링 (실제 담당자 답변 수신)
 import { cors, json, error } from '../_lib/cors.js'
 import { ENV, SLACK_USERS } from '../_lib/config.js'
-import { getChannelHistory } from '../_lib/slackClient.js'
+import { getChannelHistory, ensureBotInChannel } from '../_lib/slackClient.js'
 
 // 실제 사용자 ID → 이름 역매핑
 function buildUserIdMap() {
@@ -45,8 +45,19 @@ export default async function handler(req, res) {
   }
 
   try {
+    // [의도] Bot이 채널 멤버가 아니면 conversations.history가 실패하는 근본 원인 해결
+    // 매 폴링마다 호출하지만 conversations.join은 idempotent (이미 참여 중이면 무시)
+    // Vercel serverless는 stateless이므로 "이미 join했는지" 캐싱 불가 → 매번 호출이 안전
+    await ensureBotInChannel(channelId)
+
     const messages = await getChannelHistory(channelId, parseInt(limit) || 20)
     const userIdMap = buildUserIdMap()
+
+    // [디버그] userIdMap이 비어있으면 환경변수 미설정 — 모든 메시지가 필터링됨
+    const userIdMapSize = Object.keys(userIdMap).length
+    if (userIdMapSize === 0) {
+      console.warn('[slack/poll] ⚠️ userIdMap이 비어있음 — SLACK_USER_* 환경변수 확인 필요')
+    }
 
     // since 타임스탬프 이후 메시지만 필터
     const sinceTs = since ? parseFloat(since) : 0
@@ -91,6 +102,11 @@ export default async function handler(req, res) {
         polledAt: new Date().toISOString(),
         totalRaw: messages.length,
         filteredCount: filtered.length,
+        // [디버그] 프론트엔드에서 문제 진단용 — userIdMap 크기와 등록된 에이전트 이름
+        debug: {
+          userIdMapSize,
+          registeredAgents: Object.values(userIdMap).map(u => u.name),
+        },
       },
     })
   } catch (err) {
