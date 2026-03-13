@@ -130,10 +130,8 @@ export default async function handler(req, res) {
     // 모델 선택 표시
     if (result.complexity === 'critical') {
       thinkingProcess.push('💎 모델 선택: Claude Opus 4 (최고 성능)')
-    } else if (result.complexity === 'complex') {
-      thinkingProcess.push('🧠 모델 선택: Gemini 2.5 Pro (정확도 우선)')
     } else {
-      thinkingProcess.push('🚀 모델 선택: Gemini 2.5 Flash (속도 우선)')
+      thinkingProcess.push('🧠 모델 선택: Claude Sonnet 4 (속도+퀄리티)')
     }
 
     thinkingProcess.push(
