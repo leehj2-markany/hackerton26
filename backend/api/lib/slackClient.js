@@ -428,31 +428,22 @@ export async function ensureBotInChannel(channelId) {
 
 /**
  * Slack 채널 생성 (conversations.create)
- * - 형식: esc-{고객사영문약칭}-{제품명}-{MMDD}-{HHmm} (예: esc-samsung-drm-0305-1423)
- * - esc- 프리픽스로 에스컬레이션 채널 즉시 식별
- * - 고객사 영문약칭 포함으로 어떤 고객 건인지 채널명만으로 파악 가능
- * - 하위 호환: customerEnglishName 미전달 시 기존 형식(esc-{제품}-{MMDD}-{HHmm}) 유지
+ * [Issue 16] 형식: esc-{고객사명}-{고객이름}-{대표솔루션1개}
+ * - 예: esc-skhynix-홍길동-drm, esc-국방부--docsafer (이름 없으면 공란)
+ * - 동일 조합 중복 시 -2, -3 suffix 추가
  *
  * @param {string} productName - 제품명 (영문, 예: 'drm', 'safeguard')
- * @param {string} [customerName] - 고객명 (로그용)
- * @param {string} [customerEnglishName] - 고객사 영문약칭 (채널명에 포함, 예: 'samsung', 'hyundai')
+ * @param {string} [customerName] - 고객사명 (한글 가능, 예: 'SK하이닉스')
+ * @param {string} [customerContactName] - 고객 담당자 이름 (한글 가능, 예: '홍길동')
  */
-export async function createChannel(productName, customerName, customerEnglishName) {
-  // 하위 호환: 기존 단일 인자 호출 지원 (caseName → productName으로 취급)
+export async function createChannel(productName, customerName, customerContactName) {
+  // 하위 호환: 기존 단일 인자 호출 지원
   if (!customerName && productName) {
     const legacy = productName
     productName = legacy.replace(/[가-힣\s]/g, '').replace(/^-+|-+$/g, '') || 'general'
   }
 
-  // 채널명 생성: esc-{고객사영문약칭}-{제품명}-{MMDD}-{HHmm}
-  const now = new Date()
-  const mm = String(now.getMonth() + 1).padStart(2, '0')
-  const dd = String(now.getDate()).padStart(2, '0')
-  const hh = String(now.getHours()).padStart(2, '0')
-  const min = String(now.getMinutes()).padStart(2, '0')
-  const dateSuffix = `${mm}${dd}-${hh}${min}`
-
-  // 제품명 정규화: 영문 소문자+숫자+하이픈만 허용
+  // [Issue 16] 제품명 정규화: 영문 소문자+숫자+하이픈만 허용
   const safeProduct = (productName || 'general')
     .replace(/[^a-z0-9\s-]/gi, '')
     .replace(/\s+/g, '-')
@@ -460,93 +451,94 @@ export async function createChannel(productName, customerName, customerEnglishNa
     .replace(/--+/g, '-')
     .replace(/^-|-$/g, '') || 'general'
 
-  // 고객사 영문약칭 정규화 (있을 때만)
-  const safeCustomer = customerEnglishName
-    ? customerEnglishName
-        .replace(/[^a-z0-9\s-]/gi, '')
-        .replace(/\s+/g, '-')
-        .toLowerCase()
-        .replace(/--+/g, '-')
-        .replace(/^-|-$/g, '')
-    : ''
+  // [Issue 16] 고객사명 정규화: 한글+영문+숫자+하이픈 허용, Slack 채널명 규칙 준수
+  const safeCustomer = (customerName || '')
+    .replace(/[^a-z0-9가-힣\s-]/gi, '')
+    .replace(/\s+/g, '-')
+    .toLowerCase()
+    .replace(/--+/g, '-')
+    .replace(/^-|-$/g, '') || ''
 
-  // 최종 채널명: esc-{고객사}-{제품}-{MMDD}-{HHmm} 또는 esc-{제품}-{MMDD}-{HHmm} (80자 이내)
-  const channelName = safeCustomer
-    ? `esc-${safeCustomer}-${safeProduct}-${dateSuffix}`.slice(0, 80)
-    : `esc-${safeProduct}-${dateSuffix}`.slice(0, 80)
+  // [Issue 16] 고객 담당자 이름 정규화 (없으면 공란 → 하이픈 2개 연속)
+  const safeContact = (customerContactName || '')
+    .replace(/[^a-z0-9가-힣\s-]/gi, '')
+    .replace(/\s+/g, '-')
+    .toLowerCase()
+    .replace(/--+/g, '-')
+    .replace(/^-|-$/g, '')
 
-  log('createChannel', `customer=${customerEnglishName || '(미지정)'}, product=${productName}, channelName=${channelName}`)
+  // [Issue 16] 최종 채널명: esc-{고객사명}-{고객이름}-{대표솔루션} (80자 이내)
+  const baseChannelName = safeCustomer
+    ? `esc-${safeCustomer}-${safeContact}-${safeProduct}`.replace(/--+/g, '-').replace(/-$/g, '').slice(0, 80)
+    : `esc-${safeProduct}`.slice(0, 80)
+
+  log('createChannel', `customer=${customerName || '(미지정)'}, contact=${customerContactName || '(없음)'}, product=${productName}, channelName=${baseChannelName}`)
 
   if (isDemoMode()) {
     const mockId = `C_DEMO_${Date.now().toString(36).toUpperCase()}`
     log('createChannel', '[DEMO] mock 채널 반환')
     return {
       id: mockId,
-      name: `#${channelName}`,
+      name: `#${baseChannelName}`,
       url: `https://markany.slack.com/archives/${mockId}`,
       isSimulated: true,
       created: new Date().toISOString(),
     }
   }
 
-  try {
-    // 채널 생성 시도
-    const data = await slackFetch('conversations.create', {
-      name: channelName,
-      is_private: false,
-    })
-    const ch = data.channel
-    log('createChannel', `채널 생성 성공: #${ch.name} (${ch.id})`)
-    return {
-      id: ch.id,
-      name: `#${ch.name}`,
-      url: `https://markany.slack.com/archives/${ch.id}`,
-      isSimulated: false,
-      created: new Date().toISOString(),
-    }
-  } catch (err) {
-    // name_taken → 기존 채널 검색
-    if (err.message.includes('name_taken')) {
-      log('createChannel', `이름 충돌 → 기존 채널 검색: ${channelName}`)
-      try {
-        const listData = await slackFetch('conversations.list', {
-          types: 'public_channel',
-          limit: 200,
-        })
-        const found = (listData.channels || []).find(c => c.name === channelName)
-        if (found) {
-          return {
-            id: found.id,
-            name: `#${found.name}`,
-            url: `https://markany.slack.com/archives/${found.id}`,
-            isSimulated: false,
-            created: new Date(found.created * 1000).toISOString(),
-            reused: true,
-          }
-        }
-      } catch (_) { /* 검색 실패 → 폴백 */ }
-    }
-
-    // 채널 생성 실패 → SLACK_CHANNEL_ID 폴백
-    console.error('[Slack:createChannel] 실패:', err.message)
-    if (ENV.SLACK_CHANNEL_ID) {
-      log('createChannel', `폴백 → 기본 채널 사용: ${ENV.SLACK_CHANNEL_ID}`)
+  // [Issue 16] 중복 시 -2, -3 suffix 추가하여 재시도
+  let channelName = baseChannelName
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      const data = await slackFetch('conversations.create', {
+        name: channelName,
+        is_private: false,
+      })
+      const ch = data.channel
+      log('createChannel', `채널 생성 성공: #${ch.name} (${ch.id})`)
       return {
-        id: ENV.SLACK_CHANNEL_ID,
-        name: '#anybridge-escalation',
-        url: `https://markany.slack.com/archives/${ENV.SLACK_CHANNEL_ID}`,
+        id: ch.id,
+        name: `#${ch.name}`,
+        url: `https://markany.slack.com/archives/${ch.id}`,
         isSimulated: false,
-        fallback: true,
+        created: new Date().toISOString(),
+      }
+    } catch (err) {
+      if (err.message.includes('name_taken')) {
+        channelName = `${baseChannelName}-${attempt + 2}`.slice(0, 80)
+        log('createChannel', `이름 충돌 → 재시도: ${channelName}`)
+        continue
+      }
+      console.error('[Slack:createChannel] 실패:', err.message)
+      if (ENV.SLACK_CHANNEL_ID) {
+        log('createChannel', `폴백 → 기본 채널 사용: ${ENV.SLACK_CHANNEL_ID}`)
+        return {
+          id: ENV.SLACK_CHANNEL_ID,
+          name: '#anybridge-escalation',
+          url: `https://markany.slack.com/archives/${ENV.SLACK_CHANNEL_ID}`,
+          isSimulated: false,
+          fallback: true,
+        }
+      }
+      return {
+        id: `C_DEMO_${Date.now().toString(36).toUpperCase()}`,
+        name: `#${channelName}`,
+        url: '#',
+        isSimulated: true,
+        error: err.message,
       }
     }
+  }
 
-    return {
-      id: `C_DEMO_${Date.now().toString(36).toUpperCase()}`,
-      name: `#${channelName}`,
-      url: '#',
-      isSimulated: true,
-      error: err.message,
-    }
+  const ts = Date.now().toString(36)
+  channelName = `${baseChannelName}-${ts}`.slice(0, 80)
+  try {
+    const data = await slackFetch('conversations.create', { name: channelName, is_private: false })
+    const ch = data.channel
+    return { id: ch.id, name: `#${ch.name}`, url: `https://markany.slack.com/archives/${ch.id}`, isSimulated: false, created: new Date().toISOString() }
+  } catch (finalErr) {
+    console.error('[Slack:createChannel] 최종 실패:', finalErr.message)
+    return { id: `C_DEMO_${ts.toUpperCase()}`, name: `#${channelName}`, url: '#', isSimulated: true, error: finalErr.message }
   }
 }
 
@@ -643,6 +635,35 @@ export async function archiveChannel(channelId) {
   } catch (err) {
     console.error('[Slack:archiveChannel] 실패:', err.message)
     return { ok: false, error: err.message }
+  }
+}
+
+/**
+ * [Issue 17] 채널 삭제 (admin.conversations.delete)
+ * Enterprise Grid 전용 API — 일반 플랜에서는 실패하므로 graceful fallback
+ */
+export async function deleteChannel(channelId) {
+  log('deleteChannel', `channel=${channelId}`)
+  try {
+    if (isDemoMode()) {
+      log('deleteChannel', '[DEMO] 채널 삭제 시뮬레이션')
+      return { ok: true, demo: true }
+    }
+    const res = await fetch(`${SLACK_API}/admin.conversations.delete`, {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({ channel_id: channelId }),
+    })
+    const data = await res.json()
+    if (data.ok) {
+      log('deleteChannel', `채널 삭제 성공: ${channelId}`)
+      return { ok: true, deleted: true }
+    }
+    log('deleteChannel', `채널 삭제 불가 (${data.error}) — 보관 상태 유지`)
+    return { ok: false, error: data.error, archived: true }
+  } catch (err) {
+    console.error('[Slack:deleteChannel] 실패:', err.message)
+    return { ok: false, error: err.message, archived: true }
   }
 }
 

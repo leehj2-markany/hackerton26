@@ -56,7 +56,7 @@ export default async function handler(req, res) {
   // POST /api/escalate — 에스컬레이션 생성
   if (req.method !== 'POST') return error(res, 'METHOD_NOT_ALLOWED', 'GET 또는 POST만 허용됩니다', 405)
 
-  const { caseId, customerId, customerEnglishName, question, aiAnswer, subQuestions, product } = req.body || {}
+  const { caseId, customerId, customerContactName, question, aiAnswer, subQuestions, product } = req.body || {}
 
   if (!question?.trim()) {
     return error(res, 'INVALID_INPUT', '질문이 비어있습니다.')
@@ -70,8 +70,8 @@ export default async function handler(req, res) {
   let channelId, channelName, channelUrl
 
   try {
-    // ── 1. Slack 채널 생성 (esc-{고객사영문약칭}-{제품}-{MMDD}-{HHmm} 형식) ──
-    const channel = await createChannel(productName, customerName, customerEnglishName)
+    // [Issue 16] Slack 채널 생성 (esc-{고객사명}-{고객이름}-{대표솔루션} 형식)
+    const channel = await createChannel(productName, customerName, customerContactName)
     channelId = channel.id
     channelName = channel.name
     channelUrl = channel.url

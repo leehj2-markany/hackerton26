@@ -1,7 +1,7 @@
 // POST /api/session/close — 세션 종료: Slack 채널 보관 + 담당자 DM 발송
 import { cors, json, error } from '../_lib/cors.js'
 import { ENV, SLACK_USERS } from '../_lib/config.js'
-import { archiveChannel, sendDirectMessage, getChannelHistory } from '../_lib/slackClient.js'
+import { archiveChannel, deleteChannel, sendDirectMessage, getChannelHistory } from '../_lib/slackClient.js'
 import { generateAnswer } from '../_lib/geminiClient.js'
 
 export default async function handler(req, res) {
@@ -82,6 +82,20 @@ export default async function handler(req, res) {
       results.archived = archiveResult?.ok || false
     } catch (e) {
       console.error('[session/close] 채널 보관 실패:', e.message)
+    }
+
+    // ── 5. [Issue 17] 채널 삭제 시도 (Enterprise Grid 전용, graceful fallback) ──
+    if (results.archived) {
+      try {
+        const deleteResult = await deleteChannel(channelId)
+        results.deleted = deleteResult?.ok || false
+        if (!deleteResult?.ok) {
+          console.log('[session/close] 채널 삭제 불가 (Enterprise Grid 전용) — 보관 상태 유지')
+        }
+      } catch (e) {
+        console.error('[session/close] 채널 삭제 실패:', e.message)
+        results.deleted = false
+      }
     }
 
   } catch (err) {

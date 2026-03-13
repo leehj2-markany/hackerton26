@@ -728,7 +728,8 @@ const Chatbot = () => {
     let escalationResult = null
     const escalationPromise = escalateCase({
       caseId: `case_${Date.now()}`,
-      customerId: customerInfo?.id || 'unknown',
+      customerId: customerInfo?.company || customerInfo?.id || 'unknown',
+      customerContactName: customerInfo?.name || '',
       question: lastUserMsg?.text || '',
       aiAnswer: lastAiMsg?.text || '',
       subQuestions: subQuestions,
@@ -747,11 +748,24 @@ const Chatbot = () => {
       timestamp: new Date()
     }])
 
-    // [Issue 15] agents를 서브질문 assignees 기반으로 정확히 구성
-    const assigneeNames = [...new Set(subQuestions.map(sq => sq.assignee).filter(Boolean))]
-    const assignees = assigneeNames.map(name => ({
-      name, ...(AGENT_MAP[name] || { role: '담당자', avatar: '👤' })
-    }))
+    // [Issue 18] API 응답 대기 후 실제 초대된 agents로 AgentStatus 구성
+    await Promise.race([escalationPromise, delay(5000)])
+
+    // [Issue 18] API 응답의 agents 배열 사용 (실제 초대된 인원), 없으면 서브질문 assignees 폴백
+    const apiAgents = escalationResult?.data?.agents || []
+    const actualAgents = apiAgents.length > 0
+      ? apiAgents
+          .filter(a => a.name !== '채소희') // 채소희는 이미 위에서 추가됨
+          .map(a => ({
+            name: a.name,
+            role: a.role || (AGENT_MAP[a.name] || {}).role || '담당자',
+            avatar: (AGENT_MAP[a.name] || {}).avatar || '👤',
+            joined: a.joined || false,
+          }))
+      : [...new Set(subQuestions.map(sq => sq.assignee).filter(Boolean))].map(name => ({
+          name, ...(AGENT_MAP[name] || { role: '담당자', avatar: '👤' })
+        }))
+    const assignees = actualAgents
 
     for (const agent of assignees) {
       await delay(1000)
@@ -760,8 +774,6 @@ const Chatbot = () => {
         type: 'system', text: `${agent.name} (${agent.role})가 입장했습니다`, timestamp: new Date()
       }])
     }
-
-    await Promise.race([escalationPromise, delay(5000)])
 
     if (escalationResult?.data?.channelId) setSlackChannelId(escalationResult.data.channelId)
     const channelName = escalationResult?.data?.channelName || `${customerInfo?.name || '고객'}-문의`
