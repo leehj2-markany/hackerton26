@@ -1,4 +1,8 @@
+import { useState } from 'react'
+
 const Homepage = () => {
+  // [Issue 5] 모바일 햄버거 메뉴
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -15,7 +19,7 @@ const Homepage = () => {
               <a href="#" className="text-gray-700 hover:text-markany-blue transition">회사소개</a>
               <a href="/dashboard" className="text-markany-blue font-semibold hover:text-markany-dark transition">📊 대시보드</a>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="hidden md:flex items-center space-x-4">
               <button className="text-gray-700 hover:text-markany-blue transition">로그인</button>
               <button
                 className="bg-markany-blue text-white px-4 py-2 rounded-lg hover:bg-markany-dark transition"
@@ -24,7 +28,42 @@ const Homepage = () => {
                 문의하기
               </button>
             </div>
+            {/* [Issue 5] 모바일 햄버거 버튼 */}
+            <button
+              className="md:hidden p-2 text-gray-700 hover:text-markany-blue transition"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="메뉴"
+            >
+              {mobileMenuOpen ? (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
+            </button>
           </div>
+          {/* [Issue 5] 모바일 메뉴 드롭다운 */}
+          {mobileMenuOpen && (
+            <div className="md:hidden border-t border-gray-100 py-3 space-y-2">
+              <a href="#" className="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">제품</a>
+              <a href="#" className="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">솔루션</a>
+              <a href="#" className="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">고객지원</a>
+              <a href="#" className="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">회사소개</a>
+              <a href="/dashboard" className="block px-4 py-2 text-markany-blue font-semibold hover:bg-blue-50 rounded-lg">📊 대시보드</a>
+              <div className="px-4 pt-2 space-y-2">
+                <button className="w-full text-left text-gray-700 py-2">로그인</button>
+                <button
+                  className="w-full bg-markany-blue text-white px-4 py-2 rounded-lg hover:bg-markany-dark transition"
+                  onClick={() => { setMobileMenuOpen(false); window.dispatchEvent(new CustomEvent('openChatbot')) }}
+                >
+                  문의하기
+                </button>
+              </div>
+            </div>
+          )}
         </nav>
       </header>
 
