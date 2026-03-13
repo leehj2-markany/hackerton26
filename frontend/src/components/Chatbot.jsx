@@ -422,8 +422,6 @@ const Chatbot = () => {
     await delay(1000)
     if (answeredCountRef.current > 0) {
       setMessages(prev => [...prev, { type: 'system', text: '담당자 답변이 도착했습니다 ✅', timestamp: new Date() }])
-    } else {
-      setMessages(prev => [...prev, { type: 'system', text: '담당자가 현재 다른 업무 중입니다. 슬랙 채널에서 확인 후 답변 예정입니다. 📩', timestamp: new Date() }])
     }
 
     // [Issue 14] showContinueOrEnd를 별도 state로 관리
@@ -851,16 +849,7 @@ const Chatbot = () => {
       }
       setTypingAgent(null)
 
-      // [Issue 10] 타임아웃 안내 — 배정된 담당자만, 시스템 메시지로
-      for (const name of realAgentNames) {
-        if (!answeredRealAgents.has(name)) {
-          setMessages(prev => [...prev, {
-            type: 'system',
-            text: `${name}님이 현재 다른 업무 중입니다. 슬랙 채널에서 확인 후 답변 예정입니다. 📩`,
-            timestamp: new Date()
-          }])
-        }
-      }
+      // [Issue 10] 타임아웃 — 해커톤 데모에서는 조용히 넘어감
     }
 
     // [Issue 15] 에스컬레이션 완료 → AgentStatus 패널 닫기
@@ -875,13 +864,7 @@ const Chatbot = () => {
         type: 'system',
         text: answered === totalQ
           ? '담당자 답변이 모두 도착했습니다 ✅'
-          : `${totalQ}명 중 ${answered}명 답변 완료. 나머지는 슬랙 채널에서 답변 예정입니다.`,
-        timestamp: new Date()
-      }])
-    } else {
-      setMessages(prev => [...prev, {
-        type: 'system',
-        text: '담당자가 현재 다른 업무 중입니다. 슬랙 채널에 질문이 전달되어 있습니다. 📩',
+          : `${totalQ}명 중 ${answered}명 답변 완료.`,
         timestamp: new Date()
       }])
     }
