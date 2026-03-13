@@ -304,8 +304,8 @@ const Chatbot = () => {
     sessionStorage.setItem('anybridge_escalationMode', String(escalationMode))
   }, [escalationMode])
 
-  // [Issue 3] 백그라운드 폴링 훅
-  useSlackPolling({ escalationMode, slackChannelId, sessionClosed, seenSlackTsRef, slackPollSinceRef, setMessages })
+  // [Issue 3] 백그라운드 폴링 훅 — isEscalationBusy 중에는 비활성화하여 중복 방지
+  useSlackPolling({ escalationMode, slackChannelId, sessionClosed, seenSlackTsRef, slackPollSinceRef, setMessages, isEscalationBusy })
 
   // 초기 정보 수집 완료 핸들러
   const handleIntakeSubmit = (info) => {

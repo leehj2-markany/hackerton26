@@ -6,12 +6,15 @@ const REAL_SLACK_AGENTS = ['송인찬', '이현진']
 /**
  * [Issue 3] 에스컬레이션 모드 백그라운드 폴링 훅
  * 초기 폴링 루프(90초) 종료 후에도 담당자 답변을 지속 캡처
+ * [Fix] isEscalationBusy 중에는 폴링 스킵 — 초기 폴링 루프와 중복 방지
  */
-export default function useSlackPolling({ escalationMode, slackChannelId, sessionClosed, seenSlackTsRef, slackPollSinceRef, setMessages }) {
+export default function useSlackPolling({ escalationMode, slackChannelId, sessionClosed, seenSlackTsRef, slackPollSinceRef, setMessages, isEscalationBusy }) {
   useEffect(() => {
     if (!escalationMode || !slackChannelId || sessionClosed) return
     const POLL_INTERVAL = 10000
     const intervalId = setInterval(async () => {
+      // 초기 폴링 루프가 돌고 있으면 백그라운드 폴링 스킵 (중복 메시지 방지)
+      if (isEscalationBusy) return
       try {
         const sinceTs = slackPollSinceRef.current || '0'
         const result = await pollSlackMessages(sinceTs, 20, slackChannelId)
@@ -35,5 +38,5 @@ export default function useSlackPolling({ escalationMode, slackChannelId, sessio
       }
     }, POLL_INTERVAL)
     return () => clearInterval(intervalId)
-  }, [escalationMode, slackChannelId, sessionClosed])
+  }, [escalationMode, slackChannelId, sessionClosed, isEscalationBusy])
 }
