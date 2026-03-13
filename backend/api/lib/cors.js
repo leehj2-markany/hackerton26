@@ -7,8 +7,10 @@ const ALLOWED_ORIGINS = [
 
 export function cors(req, res) {
   const origin = req.headers.origin || ''
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]
-  res.setHeader('Access-Control-Allow-Origin', allowedOrigin)
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ''
+  if (allowedOrigin) {
+    res.setHeader('Access-Control-Allow-Origin', allowedOrigin)
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   res.setHeader('Access-Control-Max-Age', '86400')

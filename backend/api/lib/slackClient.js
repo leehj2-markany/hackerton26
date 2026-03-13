@@ -505,10 +505,12 @@ export async function createChannel(productName, customerName, customerContactNa
       }
     } catch (err) {
       if (err.message.includes('name_taken')) {
+        // [Issue 16] 동일 이름 존재 → suffix 추가 후 재시도
         channelName = `${baseChannelName}-${attempt + 2}`.slice(0, 80)
         log('createChannel', `이름 충돌 → 재시도: ${channelName}`)
         continue
       }
+      // 다른 에러 → 폴백
       console.error('[Slack:createChannel] 실패:', err.message)
       if (ENV.SLACK_CHANNEL_ID) {
         log('createChannel', `폴백 → 기본 채널 사용: ${ENV.SLACK_CHANNEL_ID}`)
@@ -530,6 +532,7 @@ export async function createChannel(productName, customerName, customerContactNa
     }
   }
 
+  // 5회 시도 후에도 실패 → 타임스탬프 suffix로 최종 시도
   const ts = Date.now().toString(36)
   channelName = `${baseChannelName}-${ts}`.slice(0, 80)
   try {
@@ -641,6 +644,7 @@ export async function archiveChannel(channelId) {
 /**
  * [Issue 17] 채널 삭제 (admin.conversations.delete)
  * Enterprise Grid 전용 API — 일반 플랜에서는 실패하므로 graceful fallback
+ * archive 후 호출하는 것을 권장 (삭제 실패 시 보관 상태 유지)
  */
 export async function deleteChannel(channelId) {
   log('deleteChannel', `channel=${channelId}`)
@@ -649,6 +653,7 @@ export async function deleteChannel(channelId) {
       log('deleteChannel', '[DEMO] 채널 삭제 시뮬레이션')
       return { ok: true, demo: true }
     }
+    // admin.conversations.delete는 Enterprise Grid + admin.conversations:write scope 필요
     const res = await fetch(`${SLACK_API}/admin.conversations.delete`, {
       method: 'POST',
       headers: headers(),
@@ -659,6 +664,7 @@ export async function deleteChannel(channelId) {
       log('deleteChannel', `채널 삭제 성공: ${channelId}`)
       return { ok: true, deleted: true }
     }
+    // 권한 없음 등 실패 → graceful fallback (보관 상태 유지)
     log('deleteChannel', `채널 삭제 불가 (${data.error}) — 보관 상태 유지`)
     return { ok: false, error: data.error, archived: true }
   } catch (err) {

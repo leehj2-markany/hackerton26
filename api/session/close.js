@@ -42,7 +42,7 @@ export default async function handler(req, res) {
       try {
         const summaryResult = await generateAnswer(
           `다음은 고객 상담 Slack 채널의 대화 내용입니다. 3줄 이내로 핵심만 요약하세요.\n\n고객: ${customerName}\n\n대화:\n${historyText}`,
-          null, [], { skipRAG: true }
+          null, [], { skipRAG: true, skipAnalysis: true }
         )
         results.summary = summaryResult?.answer || ''
       } catch (e) {
