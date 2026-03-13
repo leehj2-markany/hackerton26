@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import DemoModal from './DemoModal'
 
 const Homepage = () => {
   // [Issue 5] 모바일 햄버거 메뉴
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [showDemo, setShowDemo] = useState(false)
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -96,7 +98,10 @@ const Homepage = () => {
                 >
                   AI 상담 시작하기
                 </button>
-                <button className="bg-white text-gray-700 px-8 py-3.5 rounded-xl text-lg font-semibold border border-gray-200 hover:bg-gray-50 transition-all">
+                <button
+                  className="bg-white text-gray-700 px-8 py-3.5 rounded-xl text-lg font-semibold border border-gray-200 hover:bg-gray-50 transition-all"
+                  onClick={() => setShowDemo(true)}
+                >
                   데모 영상 보기
                 </button>
               </div>
@@ -234,6 +239,9 @@ const Homepage = () => {
 
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
+
+      {/* Demo Modal */}
+      <DemoModal isOpen={showDemo} onClose={() => setShowDemo(false)} />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
