@@ -91,18 +91,22 @@ const formatTime = (date) => {
 }
 
 // [P1] AI 답변 접기/펼치기 — 6줄 이상 또는 300자 이상이면 접기 적용
-const CollapsibleAIMessage = ({ text, thinkingProcess }) => {
+const CollapsibleAIMessage = ({ text, thinkingProcess, isStreaming }) => {
   const [expanded, setExpanded] = useState(false)
   const [showThinkingDetail, setShowThinkingDetail] = useState(false)
   const lines = text.split('\n')
-  const shouldCollapse = lines.length > 6 || text.length > 300
+  const shouldCollapse = !isStreaming && (lines.length > 6 || text.length > 300)
   const displayText = shouldCollapse && !expanded ? lines.slice(0, 4).join('\n') + '...' : text
   return (
     <div>
       <div className="prose prose-sm max-w-none">
-        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-          {displayText}
-        </ReactMarkdown>
+        {isStreaming ? (
+          <p className="whitespace-pre-wrap">{text}<span className="inline-block w-[2px] h-[1em] bg-gray-800 ml-0.5 animate-pulse align-middle" /></p>
+        ) : (
+          <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+            {displayText}
+          </ReactMarkdown>
+        )}
       </div>
       {shouldCollapse && (
         <button
@@ -467,15 +471,11 @@ const Chatbot = () => {
         .slice(-6)
         .map(m => ({ role: m.type === 'user' ? 'user' : 'assistant', content: m.text }))
 
-      // 스트리밍 AI 메시지를 먼저 추가 (빈 텍스트로 시작)
+      // 스트리밍 AI 메시지 — 첫 토큰 도착 시 추가 (ThinkingPanel과 겹침 방지)
       const streamMsgId = `stream_${Date.now()}`
       let streamedText = ''
       let metaData = null
-
-      setMessages(prev => [...prev, {
-        type: 'ai', text: '', isStreaming: true,
-        streamId: streamMsgId, isNew: true, timestamp: new Date()
-      }])
+      let streamMsgAdded = false
 
       const result = await sendMessageStream(question, customerInfo?.id || null, sessionId, history, {
         onMeta: (meta) => {
@@ -484,19 +484,28 @@ const Chatbot = () => {
           if (!isSimpleGreeting && meta.thinkingProcess?.length) setThinkingSteps(meta.thinkingProcess)
         },
         onToken: (text) => {
-          streamedText += text
-          setMessages(prev => prev.map(m =>
-            m.streamId === streamMsgId ? { ...m, text: streamedText } : m
-          ))
+          // 첫 토큰 도착: ThinkingPanel 닫고 스트리밍 메시지 추가
+          if (!streamMsgAdded) {
+            streamMsgAdded = true
+            setShowThinking(false)
+            setThinkingSteps([])
+            setMessages(prev => [...prev, {
+              type: 'ai', text: text, isStreaming: true,
+              streamId: streamMsgId, isNew: true, timestamp: new Date()
+            }])
+            streamedText = text
+          } else {
+            streamedText += text
+            setMessages(prev => prev.map(m =>
+              m.streamId === streamMsgId ? { ...m, text: streamedText } : m
+            ))
+          }
         },
       })
 
       const data = result.data || {}
 
-      if (thinkingStartTime) {
-        const elapsed = Date.now() - thinkingStartTime
-        if (elapsed < 1500) await new Promise(r => setTimeout(r, 1500 - elapsed))
-      }
+      // ThinkingPanel은 이미 첫 토큰에서 닫혔으므로 추가 대기 불필요
       setShowThinking(false)
       setThinkingSteps([])
 
@@ -528,6 +537,15 @@ const Chatbot = () => {
       setThinkingSteps([])
       setIsAIProcessing(false)
       setMessages(prev => {
+        // 스트리밍 중 부분 텍스트가 있으면 유지하고 에러 표시
+        const hasPartialStream = prev.some(m => m.isStreaming && m.text?.length > 0)
+        if (hasPartialStream) {
+          return prev.map(m => m.isStreaming ? {
+            ...m, isStreaming: false, streamId: undefined,
+            text: m.text + '\n\n⚠️ _답변 생성이 중단되었습니다._',
+            showEscalation: true, isError: true
+          } : m)
+        }
         const filtered = prev.filter(m => !m.isStreaming)
         return [...filtered, {
           type: 'ai',
@@ -928,7 +946,7 @@ const Chatbot = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                 </svg>
               </button>
-              <button onClick={() => { setIsOpen(false); handleNewChat() }} className="hover:bg-white/20 p-1 rounded transition" title="닫기" aria-label="닫기">
+              <button onClick={() => setIsOpen(false)} className="hover:bg-white/20 p-1 rounded transition" title="닫기" aria-label="닫기">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -937,7 +955,7 @@ const Chatbot = () => {
           </div>
 
           {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50" role="log" aria-live="polite">
             {showIntakeForm && (
               <div className="flex justify-center items-center h-full">
                 <div className="w-full max-w-sm bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -1055,8 +1073,15 @@ const Chatbot = () => {
                     ? 'bg-gray-100 text-gray-500 text-xs text-center italic border-0 shadow-none'
                     : 'bg-gradient-to-br from-white to-blue-50 text-gray-800 shadow-md border border-blue-100'
                 } rounded-lg p-3`}>
+                  {msg.type === 'ai' && (
+                    <div className="flex items-center space-x-1.5 mb-1.5">
+                      <span className="text-sm">🤖</span>
+                      <span className="text-xs font-semibold text-blue-600">AI</span>
+                      {msg.model && <span className="text-[10px] text-gray-400">{msg.model}</span>}
+                    </div>
+                  )}
                   {msg.type === 'ai' ? (
-                    <CollapsibleAIMessage text={msg.text} thinkingProcess={msg.thinkingProcess} />
+                    <CollapsibleAIMessage text={msg.text} thinkingProcess={msg.thinkingProcess} isStreaming={msg.isStreaming} />
                   ) : (
                     <p className={`whitespace-pre-wrap ${msg.type === 'user' ? 'leading-relaxed' : ''}`}>{formatSlackText(msg.text)}</p>
                   )}
