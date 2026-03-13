@@ -63,8 +63,29 @@ async function callClaude(prompt, model = 'claude-sonnet-4-20250514') {
   }
 }
 
-// KNOWLEDGE_BASE 하드코딩 제거 — pgvector RAG가 동적으로 컨텍스트를 주입하므로 정적 데이터 불필요
-// 제거 이유: 프롬프트 토큰 낭비 방지 + 벡터 DB와의 데이터 불일치 위험 제거
+// Claude Streaming API 호출 — SSE 스트리밍용
+// fetch로 stream: true 요청 후 ReadableStream을 반환
+async function callClaudeStream(prompt, model = 'claude-sonnet-4-20250514') {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': ENV.CLAUDE_API_KEY,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 1024,
+      stream: true,
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  })
+  if (!res.ok) {
+    const errText = await res.text()
+    throw new Error(`Claude stream error: ${res.status} ${errText}`)
+  }
+  return res.body // ReadableStream
+}
 
 const SYSTEM_PROMPT = `당신은 마크애니의 AI 프리세일즈 어시스턴트 "ANY 브릿지"입니다.
 
@@ -678,6 +699,134 @@ ${historyText}
     return finalResult
   } catch (err) {
     console.error('Gemini API error:', err.message)
+    throw err
+  }
+}
+
+
+// ── 스트리밍 답변 생성 ──
+// Router + RAG + 프롬프트 구성 후, Claude streaming API로 토큰 단위 전송
+// onToken(text) 콜백으로 각 청크를 전달, 완료 후 메타데이터 반환
+export async function generateAnswerStream(question, customerInfo, conversationHistory = [], options = {}) {
+  const client = getClient()
+  const { skipRAG = false, preAnalysis = null, onToken } = options
+
+  if (!client) throw new Error('LLM client unavailable — no GEMINI_API_KEY')
+  if (!ENV.CLAUDE_API_KEY) throw new Error('Streaming requires CLAUDE_API_KEY')
+
+  try {
+    const analysis = preAnalysis || await analyzeQuestion(question, conversationHistory)
+    const thinkingProcess = []
+    const isComplex = analysis.complexity === 'complex' && analysis.subQuestions?.length > 0
+
+    // 공통 컨텍스트 구성 (generateAnswer와 동일)
+    const contextParts = []
+    if (customerInfo) {
+      contextParts.push(`[고객 정보] ${customerInfo.name} / ${customerInfo.product} ${customerInfo.version} / ${customerInfo.license}`)
+      if (customerInfo.history?.length) {
+        contextParts.push(`[과거 문의] ${customerInfo.history.map(h => h.question).join(', ')}`)
+      }
+    }
+    if (analysis.extractedContext) {
+      const ec = analysis.extractedContext
+      const parts = []
+      if (ec.product) parts.push(`제품: ${ec.product}`)
+      if (ec.userScale) parts.push(`규모: ${ec.userScale}`)
+      if (ec.intent) parts.push(`의도: ${ec.intent}`)
+      if (ec.environment) parts.push(`환경: ${ec.environment}`)
+      if (ec.urgency === 'urgent') parts.push(`긴급도: 긴급`)
+      if (parts.length > 0) {
+        contextParts.push(`[추출된 고객 조건]\n${parts.join(' / ')}`)
+        thinkingProcess.push(`🎯 고객 조건 추출: ${parts.join(', ')}`)
+      }
+    }
+
+    const historyText = conversationHistory
+      .slice(-6)
+      .map(h => `${h.role === 'user' ? '고객' : 'AI'}: ${h.content}`)
+      .join('\n')
+
+    let prompt, enrichment
+
+    if (isComplex && !skipRAG) {
+      const customerProductHint = customerInfo?.product || null
+      enrichment = await enrichRAGForSubQuestions(analysis.subQuestions, customerProductHint)
+      if (enrichment) {
+        enrichment.enrichedSubs.forEach((sub, i) => {
+          const status = sub.hasContext ? `✅ ${sub.stores.join(', ')}` : '⚠️ 컨텍스트 부족'
+          thinkingProcess.push(`📚 서브질문 ${i + 1} RAG: "${sub.question}" → ${status}`)
+        })
+        prompt = buildComplexPrompt(SYSTEM_PROMPT, contextParts, enrichment, historyText, question)
+      }
+    }
+
+    if (!prompt) {
+      if (!skipRAG) {
+        const productHint = customerInfo?.product || null
+        const ragResult = await searchKnowledge(question, productHint, 3)
+        const ragContext = formatContext(ragResult)
+        if (ragContext) {
+          contextParts.push(`[지식 베이스 검색 결과 — ${ragResult.stores.join(', ')} 제품]\n${ragContext}`)
+        }
+      }
+      prompt = `${SYSTEM_PROMPT}\n\n${contextParts.join('\n')}\n\n[대화 이력]\n${historyText}\n\n고객 질문: ${question}\n\n위 정보를 바탕으로 답변해주세요. 지식 베이스 검색 결과를 우선 참조하되, 답변만 출력하세요.`
+    }
+
+    // Claude Streaming 호출
+    const modelId = analysis.complexity === 'critical' ? 'claude-opus-4-20250514' : 'claude-sonnet-4-20250514'
+    const modelName = analysis.complexity === 'critical' ? 'claude-opus-4' : 'claude-sonnet-4'
+    const stream = await callClaudeStream(prompt, modelId)
+
+    // SSE 파싱 — Claude streaming 형식: data: {"type":"content_block_delta","delta":{"text":"..."}}
+    let fullAnswer = ''
+    const reader = stream.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() || ''
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue
+        const jsonStr = line.slice(6).trim()
+        if (jsonStr === '[DONE]') continue
+        try {
+          const evt = JSON.parse(jsonStr)
+          if (evt.type === 'content_block_delta' && evt.delta?.text) {
+            fullAnswer += evt.delta.text
+            if (onToken) onToken(evt.delta.text)
+          }
+        } catch (_) { /* skip non-JSON lines */ }
+      }
+    }
+
+    // [ESCALATION] 마커 감지
+    let needsEscalation = false
+    if (fullAnswer.includes('[ESCALATION]')) {
+      needsEscalation = true
+      fullAnswer = fullAnswer.replace(/\[ESCALATION\]\s*/g, '').trim()
+    }
+
+    const confidence = evaluateConfidence(question, fullAnswer)
+
+    return {
+      answer: fullAnswer,
+      confidence: confidence.level,
+      confidenceScore: confidence.score,
+      references: customerInfo?.references || [],
+      needsEscalation,
+      isComplex: analysis.isComplex,
+      complexity: analysis.complexity,
+      subQuestions: analysis.subQuestions,
+      extractedContext: analysis.extractedContext || null,
+      model: modelName,
+      thinkingProcess,
+    }
+  } catch (err) {
+    console.error('[generateAnswerStream] error:', err.message)
     throw err
   }
 }

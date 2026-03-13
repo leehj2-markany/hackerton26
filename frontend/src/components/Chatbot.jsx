@@ -7,7 +7,7 @@ import AgentStatus from './AgentStatus'
 import { mockAgents } from '../data/mockData'
 import useSlackPolling from '../hooks/useSlackPolling'
 import useSessionRestore from '../hooks/useSessionRestore'
-import { sendMessage, escalateCase, sendSlackQuestion, pollSlackMessages, closeSession, closeSessionBeacon } from '../api/chatApi'
+import { sendMessage, sendMessageStream, escalateCase, sendSlackQuestion, pollSlackMessages, closeSession, closeSessionBeacon } from '../api/chatApi'
 
 // 실제 Slack 사용자 (에스컬레이션 후 폴링 대상)
 // [Issue 12] 박우호(가상 에이전트) 제거 — AI가 사람인 척 답변하는 것은 혼란+불필요
@@ -453,7 +453,6 @@ const Chatbot = () => {
 
   const handleAIResponse = async (question) => {
     const isSimpleGreeting = question.trim().length <= 10 && !question.includes('?')
-    // [Issue 7] ThinkingPanel 최소 표시 시간 보장
     let thinkingStartTime = null
     if (!isSimpleGreeting) {
       setShowThinking(true)
@@ -468,52 +467,51 @@ const Chatbot = () => {
         .slice(-6)
         .map(m => ({ role: m.type === 'user' ? 'user' : 'assistant', content: m.text }))
 
-      const result = await sendMessage(question, customerInfo?.id || null, sessionId, history)
-      const data = result.data
+      // 스트리밍 AI 메시지를 먼저 추가 (빈 텍스트로 시작)
+      const streamMsgId = `stream_${Date.now()}`
+      let streamedText = ''
+      let metaData = null
 
-      // 백엔드에서 고객 매칭 정보가 오면 InfoPanel용으로 저장
-      if (data.customerInfo && !customerInfo) {
-        setCustomerInfo(data.customerInfo)
-      }
+      setMessages(prev => [...prev, {
+        type: 'ai', text: '', isStreaming: true,
+        streamId: streamMsgId, isNew: true, timestamp: new Date()
+      }])
 
-      // ThinkingPanel: 인사가 아니고 confidence가 low가 아닐 때만 표시
-      const showThinkingSteps = !isSimpleGreeting && data.confidence !== 'low'
-      if (showThinkingSteps && data.thinkingProcess) {
-        for (let i = 0; i < data.thinkingProcess.length; i++) {
-          await new Promise(resolve => setTimeout(resolve, 300))
-          setThinkingSteps(data.thinkingProcess.slice(0, i + 1))
-        }
-        await new Promise(resolve => setTimeout(resolve, 500))
-      }
+      const result = await sendMessageStream(question, customerInfo?.id || null, sessionId, history, {
+        onMeta: (meta) => {
+          metaData = meta
+          if (meta.customerInfo && !customerInfo) setCustomerInfo(meta.customerInfo)
+          if (!isSimpleGreeting && meta.thinkingProcess?.length) setThinkingSteps(meta.thinkingProcess)
+        },
+        onToken: (text) => {
+          streamedText += text
+          setMessages(prev => prev.map(m =>
+            m.streamId === streamMsgId ? { ...m, text: streamedText } : m
+          ))
+        },
+      })
 
-      const response = {
-        type: 'ai',
-        text: data.answer,
-        confidence: data.confidence,
-        references: data.references || [],
-        model: data.model,
-        complexity: data.complexity,
-        subQuestions: data.subQuestions || null,
-        thinkingProcess: data.thinkingProcess || null,
-        isError: !!data.aiFailed,
-        isNew: true,
-        timestamp: new Date()
-      }
-      setMessages(prev => [...prev, response])
-      setTimeout(() => {
-        setMessages(prev => prev.map((m, i) => i === prev.length - 1 && m.isNew ? { ...m, isNew: false } : m))
-      }, 500)
-      // [Issue 7] ThinkingPanel 최소 1.5초 표시 보장
+      const data = result.data || {}
+
       if (thinkingStartTime) {
         const elapsed = Date.now() - thinkingStartTime
         if (elapsed < 1500) await new Promise(r => setTimeout(r, 1500 - elapsed))
       }
       setShowThinking(false)
       setThinkingSteps([])
+
+      // 스트리밍 완료 → 최종 메시지로 교체
+      setMessages(prev => prev.map(m =>
+        m.streamId === streamMsgId ? {
+          ...m, text: data.answer || streamedText, isStreaming: false, streamId: undefined,
+          confidence: data.confidence, references: data.references || [],
+          model: data.model || metaData?.model, complexity: data.complexity || metaData?.complexity,
+          subQuestions: metaData?.subQuestions || null, thinkingProcess: metaData?.thinkingProcess || null,
+          isError: false, isNew: false,
+        } : m
+      ))
       setIsAIProcessing(false)
 
-      // [P3 수정] LLM이 에스컬레이션 필요하다고 판단하면 AI 답변 메시지 자체에 버튼 표시
-      // 별도 메시지로 분리하면 이중 에스컬레이션 메시지 + P1(lastAiMsg 오염) 문제 발생
       if (data.needsEscalation) {
         setMessages(prev => {
           const updated = [...prev]
@@ -529,14 +527,14 @@ const Chatbot = () => {
       setShowThinking(false)
       setThinkingSteps([])
       setIsAIProcessing(false)
-      // ── Graceful Degradation: API 완전 실패 시 담당자 연결 + 재시도 버튼 표시 ──
-      setMessages(prev => [...prev, {
-        type: 'ai',
-        text: '죄송합니다, 현재 AI 응답 생성에 일시적인 문제가 발생했습니다.\n담당자를 직접 연결해 드릴 수 있습니다.',
-        showEscalation: true,
-        isError: true,
-        timestamp: new Date()
-      }])
+      setMessages(prev => {
+        const filtered = prev.filter(m => !m.isStreaming)
+        return [...filtered, {
+          type: 'ai',
+          text: '죄송합니다, 현재 AI 응답 생성에 일시적인 문제가 발생했습니다.\n담당자를 직접 연결해 드릴 수 있습니다.',
+          showEscalation: true, isError: true, timestamp: new Date()
+        }]
+      })
     }
   }
 

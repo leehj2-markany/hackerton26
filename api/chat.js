@@ -1,6 +1,6 @@
 // POST /api/chat — 챗봇 메시지 전송 + AI 답변 생성
 import { cors, json, error } from './_lib/cors.js'
-import { generateAnswer, analyzeQuestion } from './_lib/geminiClient.js'
+import { generateAnswer, generateAnswerStream, analyzeQuestion } from './_lib/geminiClient.js'
 import { customers, customerNameMap } from './_lib/mockData.js'
 import { validateInput, validateOutput, maskPII } from './_lib/safety.js'
 import { searchKnowledge } from './_lib/knowledgeBase.js'
@@ -26,7 +26,7 @@ export default async function handler(req, res) {
   if (cors(req, res)) return
   if (req.method !== 'POST') return error(res, 'METHOD_NOT_ALLOWED', 'POST만 허용됩니다', 405)
 
-  const { message, customerId, conversationHistory } = req.body || {}
+  const { message, customerId, conversationHistory, stream: useStream } = req.body || {}
 
   if (!message?.trim()) {
     return error(res, 'INVALID_INPUT', '메시지가 비어있습니다.')
@@ -52,6 +52,11 @@ export default async function handler(req, res) {
 
   // customerInfo는 try 밖에서 선언 — catch에서도 접근 가능하도록
   let customerInfo = null
+
+  // ── 스트리밍 모드 ──
+  if (useStream) {
+    return handleStreamChat(req, res, message, customerId, conversationHistory)
+  }
 
   try {
     // 고객 정보: 명시적 customerId 또는 메시지에서 자동 매칭
@@ -193,5 +198,91 @@ export default async function handler(req, res) {
         aiFailed: true,
       },
     })
+  }
+}
+
+
+// ── SSE 스트리밍 모드 핸들러 ──
+async function handleStreamChat(req, res, message, customerId, conversationHistory) {
+  // SSE 헤더 설정
+  res.setHeader('Content-Type', 'text/event-stream')
+  res.setHeader('Cache-Control', 'no-cache')
+  res.setHeader('Connection', 'keep-alive')
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.flushHeaders?.()
+
+  const sendSSE = (event, data) => {
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
+  }
+
+  let customerInfo = null
+  try {
+    customerInfo = customerId ? customers[customerId] : null
+    if (!customerInfo) {
+      const matchedKey = Object.keys(customerNameMap).find(k => message.includes(k))
+      if (matchedKey) customerInfo = customers[customerNameMap[matchedKey]] || null
+    }
+
+    // 인사 → 스트리밍 불필요, 즉시 응답
+    if (isGreetingMessage(message)) {
+      const result = await generateAnswer(message, customerInfo, conversationHistory || [], { skipRAG: true })
+      sendSSE('meta', {
+        confidence: 'high', model: result.model, complexity: 'simple',
+        thinkingProcess: [], needsEscalation: false, customerInfo: customerInfo || null,
+      })
+      sendSSE('token', { text: result.answer })
+      sendSSE('done', { answer: result.answer })
+      res.end()
+      return
+    }
+
+    // Router 분석
+    const analysis = await analyzeQuestion(message)
+    const thinkingProcess = ['🤔 질문 분석 중...']
+
+    if (customerInfo) {
+      thinkingProcess.push(`👤 고객 매칭: ${customerInfo.name} (${customerInfo.product} ${customerInfo.version})`)
+    }
+    if (analysis.isComplex && analysis.subQuestions) {
+      thinkingProcess.push(`🔀 복합 질문 감지: ${analysis.subQuestions.length}개 서브질문`)
+    }
+
+    // RAG 검색
+    const productHint = customerInfo?.product || null
+    const ragResult = await searchKnowledge(message, productHint, 3)
+    thinkingProcess.push(`📚 지식 베이스: ${ragResult.chunks.length}건 (${ragResult.stores?.join(', ') || ''})`)
+    thinkingProcess.push('🧠 모델 선택: Claude Sonnet 4 (속도+퀄리티)')
+
+    // 메타데이터 먼저 전송 (ThinkingPanel용)
+    sendSSE('meta', {
+      thinkingProcess,
+      complexity: analysis.complexity,
+      model: analysis.complexity === 'critical' ? 'claude-opus-4' : 'claude-sonnet-4',
+      customerInfo: customerInfo || null,
+      subQuestions: analysis.subQuestions || null,
+      extractedContext: analysis.extractedContext || null,
+    })
+
+    // 스트리밍 답변 생성
+    const result = await generateAnswerStream(message, customerInfo, conversationHistory || [], {
+      preAnalysis: analysis,
+      onToken: (text) => sendSSE('token', { text }),
+    })
+
+    // 최종 메타데이터 (에스컬레이션, 신뢰도 등)
+    const finalAnswer = maskPII(result.answer)
+    sendSSE('done', {
+      answer: finalAnswer,
+      confidence: result.confidence,
+      confidenceScore: result.confidenceScore,
+      needsEscalation: result.needsEscalation,
+      references: result.references,
+      model: result.model,
+    })
+    res.end()
+  } catch (err) {
+    console.error('[stream] error:', err.message)
+    sendSSE('error', { message: 'AI 응답 생성 중 오류가 발생했습니다.' })
+    res.end()
   }
 }

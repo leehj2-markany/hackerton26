@@ -25,6 +25,59 @@ export async function sendMessage(message, customerId, sessionId, conversationHi
   })
 }
 
+// 1-1. 챗봇 메시지 전송 (SSE 스트리밍)
+// onToken(text): 토큰 단위 콜백, onMeta(data): 메타데이터 콜백
+// 반환: { answer, confidence, needsEscalation, ... }
+export async function sendMessageStream(message, customerId, sessionId, conversationHistory = [], { onToken, onMeta } = {}) {
+  const url = `${API_URL}/chat`
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, customerId, sessionId, conversationHistory, stream: true }),
+  })
+  if (!res.ok) {
+    throw new Error(`Stream API Error: ${res.status}`)
+  }
+
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  let finalData = null
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+    const lines = buffer.split('\n')
+    buffer = lines.pop() || ''
+
+    let currentEvent = null
+    for (const line of lines) {
+      if (line.startsWith('event: ')) {
+        currentEvent = line.slice(7).trim()
+      } else if (line.startsWith('data: ') && currentEvent) {
+        try {
+          const data = JSON.parse(line.slice(6))
+          if (currentEvent === 'token' && onToken) {
+            onToken(data.text)
+          } else if (currentEvent === 'meta' && onMeta) {
+            onMeta(data)
+          } else if (currentEvent === 'done') {
+            finalData = data
+          } else if (currentEvent === 'error') {
+            throw new Error(data.message || 'Stream error')
+          }
+        } catch (e) {
+          if (e.message === 'Stream error' || e.message?.includes('Stream')) throw e
+        }
+        currentEvent = null
+      }
+    }
+  }
+
+  return { success: true, data: finalData }
+}
+
 // 2. 고객 매칭
 export async function matchCustomer(customerName) {
   return request('/customer/match', {
