@@ -162,12 +162,22 @@ const SHEET_PRODUCTS = [
   {
     group: 'DLP 제품군', name: 'SafePC Enterprise',
     version: 'V7.0',
-    serverEnv: '[202506 최신 버전 기준] OS: RedHat 9.4 / Rocky 9.4 / WAS: Tomcat 9.0.102 / DB: MariaDB 11.4.2 / JDK: OpenJDK 21.0.1',
+    serverEnv: '[V7.0 기준] OS: RedHat 9.4 / Rocky 9.4 / WAS: Tomcat 9.0.102 / DB: MariaDB 11.4.2 / JDK: OpenJDK 21.0.1',
     clientEnv: 'Windows 10 (32/64bit), Windows 11 (64bit). 이하 버전은 EOS로 정식 지원하지 않음.',
     browserSupport: 'Chrome, Edge, Firefox',
-    useCases: 'PC 내 정보 유출 방지(DLP), USB/외장매체 사용 통제, 네트워크 파일 전송 제어, PC 보안 정책 중앙 관리, 매체 제어(USB/블루투스/Wi-Fi), 파일 반출 승인 워크플로우, 개인정보 파일 탐지 및 관리. SafePC 자체적으로 매체제어, 출력물보안(SafePC 내장 프린트통제 옵션), 개인정보보호(SafePC 내장 개인정보 탐지 옵션) 세 가지 기능을 옵션으로 제공하는 통합 DLP 솔루션. 주의: SafePC의 출력물보안 옵션은 Print SAFER(DRM 제품군)와 별개이며, SafePC의 개인정보보호 옵션은 Privacy SAFER(DRM 제품군)와 별개입니다. 다만 Privacy SAFER와 연계하여 개인정보 컴플라이언스 대응을 강화할 수 있습니다.',
+    useCases: '[버전: SafePC V7.0] PC 내 정보 유출 방지(DLP), USB/외장매체 사용 통제, 네트워크 파일 전송 제어, PC 보안 정책 중앙 관리, 매체 제어(USB/블루투스/Wi-Fi), 파일 반출 승인 워크플로우, 개인정보 파일 탐지 및 관리. SafePC 자체적으로 매체제어, 출력물보안(SafePC 내장 프린트통제 옵션), 개인정보보호(SafePC 내장 개인정보 탐지 옵션) 세 가지 기능을 옵션으로 제공하는 통합 DLP 솔루션. 주의: SafePC의 출력물보안 옵션은 Print SAFER(DRM 제품군)와 별개이며, SafePC의 개인정보보호 옵션은 Privacy SAFER(DRM 제품군)와 별개입니다. 다만 Privacy SAFER와 연계하여 개인정보 컴플라이언스 대응을 강화할 수 있습니다.',
     notes: '기존 SecuPrint 기능 신규 제공 불가 (Litech 연동 제품 EOS). PrintSAFER 출력물 제어 기능 연동 개발 중.',
     docs: 'SAFEPC_정책정의서.xlsx, SafePC Enterprise V7.0 매뉴얼, 프로젝트_스펙정의서_v2.4.xlsx',
+  },
+  {
+    group: 'DLP 제품군', name: 'SafePC Enterprise',
+    version: 'V8.0',
+    serverEnv: '[V8.0 기준] OS: Rocky Linux 9.4 / RHEL 9.x / MSA/Docker 기반 아키텍처',
+    clientEnv: 'Windows 10+ (32/64bit), Windows 11 (64bit), MacOS 10+',
+    browserSupport: 'Chrome, Edge',
+    useCases: '[버전: SafePC V8.0] SafePC Enterprise V8.0은 MSA/Docker 기반 웹 관리시스템으로 전면 재설계된 차세대 DLP 솔루션. V7.0 대비 주요 변경사항: ① MSA(마이크로서비스 아키텍처)/Docker 기반 서버 구조로 전환 ② JWT 기반 사용자 인증 ③ MacOS 10+ 클라이언트 신규 지원 ④ 웹 관리 콘솔 전면 개편. 주요기능: 환경설정(라이선스/서브시스템/접속/인사연동/로그인관리), 조직관리(기업체/부서/사용자/결재), 정책관리(네트워크-사이트차단/메신저차단/공유디렉터리, 디바이스-매체별허용차단, 프린터-SafePC자체프린트통제(가시성/비가시성워터마크/개인정보마스킹), 자동암호화, 프로그램실행차단, 클립보드, 캡처방지, PC설정, 개인정보-SafePC자체개인정보탐지(검출/실시간/격리)), 로그관리(전체 보안 이벤트 로그 수집). V7.0과 동일하게 매체제어+출력물보안+개인정보보호 3가지 기능을 자체 옵션으로 제공하는 통합 DLP 솔루션.',
+    notes: 'V7.0에서 V8.0으로 업그레이드 시 MSA/Docker 기반 서버 재구축 필요. V8.0은 현재 개발 진행 중.',
+    docs: 'SafePC v8.0 관리시스템 요구명세서_v0.9',
   },
   {
     group: 'DLP 제품군', name: 'SafeUSB',
@@ -344,8 +354,8 @@ Web DRM과 동일 제품(관리자 콘솔 유무 차이). 웹화면 캡처방지
   },
   {
     group: 'DLP 제품군', name: 'SafePC Enterprise',
-    title: 'SafePC Enterprise — 표준기능정의서 DataLoss SAFER(USB보안)',
-    content: `DataLoss SAFER(USB보안) 표준기능정의서 — SafePC Enterprise 연관:
+    title: 'SafePC Enterprise V7.0 — 표준기능정의서 DataLoss SAFER(USB보안)',
+    content: `[버전: SafePC V7.0] DataLoss SAFER(USB보안) 표준기능정의서 — SafePC Enterprise 연관:
 매체제어: 병렬포트, IEEE1394, 이동식저장장치, 안드로이드, 아이폰, CD-DVD, Bluetooth, 시리얼포트 제어.
 SafePC Enterprise V7.0에서 매체제어 기능 통합 제공.
 [용도/유스케이스] USB/매체 제어 정책, 이동식 저장장치 차단, 블루투스/CD-DVD 제어`,
@@ -444,8 +454,8 @@ QDRM: v2 — mafmftii.sys/QDRM_EX_Agent/QDRM_EX_Core.
   },
   {
     group: 'DLP 제품군', name: 'SafePC Enterprise',
-    title: 'SafePC Enterprise — 프로젝트 사전환경 조사서',
-    content: `SafePC(DLP) 프로젝트 사전환경 조사서:
+    title: 'SafePC Enterprise V7.0 — 프로젝트 사전환경 조사서',
+    content: `[버전: SafePC V7.0] SafePC(DLP) 프로젝트 사전환경 조사서:
 서버정보: OS RedHat9.4/Rocky9.4, 이중화 LifeKeeper만 사용.
 클라이언트: SafePC 자체 출력물보안 옵션 대상 Application, SafePC 자체 개인정보 마스킹 옵션.
 네트워크정보, 연동정보(그룹웨어/로그인/DRM).
@@ -494,8 +504,8 @@ SafePC 전용 포트: 10443/5436/5437/5500/5555/5562/5566/8977/9009/9080.
   // ── Doc 8: SafePC v8.0 관리시스템 요구명세서 (depth 2) ──
   {
     group: 'DLP 제품군', name: 'SafePC Enterprise',
-    title: 'SafePC Enterprise v8.0 — 관리시스템 요구명세서',
-    content: `SafePC Enterprise v8.0 관리시스템 요구명세서. MSA/Docker 기반 웹 관리시스템.
+    title: 'SafePC Enterprise V8.0 — 관리시스템 요구명세서',
+    content: `[버전: SafePC V8.0] SafePC Enterprise v8.0 관리시스템 요구명세서. MSA/Docker 기반 웹 관리시스템.
 주요기능: 사용자인증(JWT), 환경설정(라이선스/서브시스템/접속/인사연동/로그인관리).
 조직관리: 기업체/부서/사용자/결재.
 정책관리: 네트워크(사이트차단/메신저차단/공유디렉터리), 디바이스(매체별 허용/차단), 프린터(SafePC 자체 프린트통제 — 가시성/비가시성 워터마크/개인정보마스킹), 자동암호화, 프로그램실행차단, 클립보드, 캡처방지, PC설정, 개인정보(SafePC 자체 개인정보 탐지 — 검출/실시간/격리).
@@ -510,7 +520,7 @@ SafePC Enterprise는 매체제어 + 출력물보안(SafePC 내장 옵션, Print 
   {
     group: 'DLP 제품군', name: 'SafePC Enterprise',
     title: 'SafePC Enterprise V7.0 — 관리자 매뉴얼',
-    content: `SafePC Enterprise V7.0 관리자 매뉴얼.
+    content: `[버전: SafePC V7.0] SafePC Enterprise V7.0 관리자 매뉴얼.
 보안관리: PC보안(방화벽/웹차단/컨텐츠업로드차단/웜차단/네트워크로그/매체제어-플로피/CD/USB/PDA/스마트폰/무선랜/HSDPA/WIBRO/테더링/SafePC자체프린트통제/프로그램실행차단/PC설정제어/BAD USB), 개인정보보호(SafePC 자체 개인정보 탐지 옵션 — 패턴관리-정규식/키워드, 등급관리, 정책관리, 알림관리, 보안정책적용-기본/그룹/직위/개별), 보조기억매체관리(일반저장매체 등록/배포/회수/불용처리), 공유폴더통제.
 자산관리: SW/HW관리, 라이센스관리.
 감사로그: PC보안/개인정보보호/보조기억매체/신청이력/운영로그.
@@ -696,6 +706,10 @@ async function ingest() {
       `[문서제목] ${chunk.title}`,
       chunk.content,
     ].join('\n')
+    // SafePC 버전 자동 추출: 타이틀에서 V7.0/V8.0 감지
+    let version = ''
+    if (chunk.title && chunk.title.includes('V7.0')) version = 'V7.0'
+    else if (chunk.title && (chunk.title.includes('V8.0') || chunk.title.includes('v8.0'))) version = 'V8.0'
     allChunks.push({
       content: text,
       metadata: {
@@ -704,6 +718,7 @@ async function ingest() {
         product_name: chunk.name,
         title: chunk.title,
         source_url: chunk.source_url || '',
+        ...(version && { version }),
       },
     })
   }

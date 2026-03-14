@@ -143,6 +143,7 @@ const SYSTEM_PROMPT = `당신은 마크애니의 AI 프리세일즈 어시스턴
 10. 모바일 워터마크 질문 → "가시성 워터마크(화면 표시)는 Mobile STICKER, 비가시성 워터마크(추적용)는 TRACER SDK for Mobile입니다" 구분 안내
 11. 위변조방지 질문 → "웹 출력물/PDF 2D바코드 위변조방지는 ePage SAFER, PDF 전자문서 진위확인은 ePS Document DNA입니다" 구분 안내
 12. [중요] DLP 질문 시 제품 구분 → SafePC Enterprise(DLP 제품군)는 자체적으로 매체제어/출력물보안/개인정보보호 옵션을 내장하고 있습니다. 그러나 Print SAFER, Screen SAFER, Privacy SAFER는 DRM 제품군의 독립 제품이며 SafePC의 하위 모듈이 아닙니다. DLP 질문에 대해 Print SAFER/Screen SAFER/Privacy SAFER를 SafePC의 구성요소로 설명하지 마세요. SafePC와 이들 DRM 제품은 연동 도입이 가능하지만 별개 제품입니다.
+13. [중요] SafePC Enterprise 버전 구분 → SafePC Enterprise는 V7.0과 V8.0 두 버전이 있습니다. 고객이 SafePC 버전을 특정하면 해당 버전 정보만 답변하세요. 버전을 특정하지 않으면 두 버전의 차이를 간략히 안내하세요. V7.0: 기존 모놀리식 아키텍처, Windows 전용 클라이언트. V8.0: MSA/Docker 기반 차세대 아키텍처, MacOS 클라이언트 신규 지원, JWT 인증, 웹 관리 콘솔 전면 개편. V8.0은 현재 개발 진행 중입니다. 지식 베이스에서 [버전: SafePC V7.0] 또는 [버전: SafePC V8.0] 태그를 확인하여 버전별 정보를 정확히 구분하세요.
 `
 
 // ── LLM-as-a-Router: Flash가 복잡도 판단 + 서브질문 분류 + 담당자 배정 + 고객 조건 추출 ──
