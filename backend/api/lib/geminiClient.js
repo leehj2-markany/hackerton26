@@ -121,6 +121,7 @@ const SYSTEM_PROMPT = `당신은 마크애니의 AI 프리세일즈 어시스턴
 9. Web SAFER 추천 시 → "파일 다운로드 차단은 Web SAFER 기능이 아닙니다 (JSP 개발단 영역). Web SAFER는 캡처방지/우클릭 비활성화/브라우저 보안제어를 담당합니다" 안내
 10. 모바일 워터마크 질문 → "가시성 워터마크(화면 표시)는 Mobile STICKER, 비가시성 워터마크(추적용)는 TRACER SDK for Mobile입니다" 구분 안내
 11. 위변조방지 질문 → "웹 출력물/PDF 2D바코드 위변조방지는 ePage SAFER, PDF 전자문서 진위확인은 ePS Document DNA입니다" 구분 안내
+12. [중요] DLP 질문 시 제품 구분 → SafePC Enterprise(DLP 제품군)는 자체적으로 매체제어/출력물보안/개인정보보호 옵션을 내장하고 있습니다. 그러나 Print SAFER, Screen SAFER, Privacy SAFER는 DRM 제품군의 독립 제품이며 SafePC의 하위 모듈이 아닙니다. DLP 질문에 대해 Print SAFER/Screen SAFER/Privacy SAFER를 SafePC의 구성요소로 설명하지 마세요. SafePC와 이들 DRM 제품은 연동 도입이 가능하지만 별개 제품입니다.
 `
 
 // ── LLM-as-a-Router: Flash가 복잡도 판단 + 서브질문 분류 + 담당자 배정 + 고객 조건 추출 ──
