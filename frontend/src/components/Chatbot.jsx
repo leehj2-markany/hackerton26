@@ -24,9 +24,24 @@ const RETURN_TO_AI_PATTERNS = [
   '처음으로', 'ai 모드', '자동 응답', '봇으로',
 ]
 
+// 에스컬레이션 의도 감지 — chat API 13초 대기 없이 바로 에스컬레이션 트리거
+const ESCALATION_INTENT_PATTERNS = [
+  '담당자 연결', '담당자 연결해', '담당자 연결해주', '담당자 연결해줘',
+  '담당자 부탁', '담당자 바꿔', '담당자 전환', '담당자와 대화',
+  '상담원 연결', '상담원 연결해', '상담원 부탁', '상담원 바꿔',
+  '사람 연결', '사람과 대화', '사람이랑 대화', '사람한테',
+  '전문가 연결', '전문가 상담', '직접 상담',
+  '에스컬레이션', 'escalat',
+]
+
 function isReturnToAIIntent(msg) {
   const normalized = msg.trim().replace(/[.!?~？ ]+$/g, '').toLowerCase()
   return RETURN_TO_AI_PATTERNS.some(p => normalized.includes(p))
+}
+
+function isEscalationIntent(msg) {
+  const normalized = msg.trim().replace(/[.!?~？ ]+$/g, '').toLowerCase()
+  return ESCALATION_INTENT_PATTERNS.some(p => normalized.includes(p))
 }
 
 /**
@@ -350,6 +365,11 @@ const Chatbot = () => {
     }
 
     // 모든 입력을 백엔드 LLM으로 전송 — 모델이 판단
+    // 단, 에스컬레이션 의도가 명확하면 chat API(13초) 스킵 → 바로 에스컬레이션
+    if (isEscalationIntent(currentInput)) {
+      handleEscalation()
+      return
+    }
     handleAIResponse(currentInput)
   }
 
