@@ -29,9 +29,9 @@ export default function useSessionRestore({
       if (savedChannel) setSlackChannelId(savedChannel)
       const savedChannelName = sessionStorage.getItem('anybridge_channelName')
       if (savedChannelName) setSlackChannelName(savedChannelName)
-      // [Issue 6] 에스컬레이션 모드 복원
+      // [Issue 6] 에스컬레이션 모드 복원 — 채널 ID가 있을 때만
       const savedEscMode = sessionStorage.getItem('anybridge_escalationMode')
-      if (savedEscMode === 'true') setEscalationMode(true)
+      if (savedEscMode === 'true' && savedChannel) setEscalationMode(true)
     } catch (_) {}
   }, [])
 }
