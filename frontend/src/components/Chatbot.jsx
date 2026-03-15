@@ -407,7 +407,7 @@ const Chatbot = () => {
               const aInfo = AGENT_MAP[msg.agentName] || {}
               setMessages(prev => [...prev, {
                 type: 'agent', agentName: msg.agentName, agentRole: aInfo.role || msg.agentRole,
-                agentAvatar: aInfo.avatar || msg.agentAvatar, text: msg.text, isLive: true, timestamp: new Date(msg.timestamp)
+                agentAvatar: aInfo.avatar || msg.agentAvatar, text: msg.text, files: msg.files || undefined, isLive: true, timestamp: new Date(msg.timestamp)
               }])
               answeredCountRef.current++
               if (answeredAgents.size < REAL_SLACK_AGENTS.length) setTypingAgent({ name: '담당자', avatar: '💬' })
@@ -875,7 +875,7 @@ const Chatbot = () => {
               setTypingAgent(null)
               setMessages(prev => [...prev, {
                 type: 'agent', agentName: msg.agentName, agentRole: aInfo.role,
-                agentAvatar: aInfo.avatar, text: msg.text, isLive: true,
+                agentAvatar: aInfo.avatar, text: msg.text, files: msg.files || undefined, isLive: true,
                 timestamp: new Date(msg.timestamp)
               }])
               answeredCountRef.current++
@@ -997,7 +997,31 @@ const Chatbot = () => {
                       {msg.isLive && <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">🟢 LIVE</span>}
                     </div>
                     <div className="bg-blue-50 border border-blue-200 text-gray-800 rounded-lg p-3 ml-7">
-                      <p className="whitespace-pre-wrap text-sm">{formatSlackText(msg.text)}</p>
+                      {msg.text && <p className="whitespace-pre-wrap text-sm">{formatSlackText(msg.text)}</p>}
+                      {/* Slack 첨부파일 렌더링 */}
+                      {msg.files && msg.files.length > 0 && (
+                        <div className={`${msg.text ? 'mt-2 pt-2 border-t border-blue-100' : ''} space-y-2`}>
+                          {msg.files.map((file, fi) => {
+                            const isImage = file.mimetype?.startsWith('image/')
+                            const fileSize = file.size ? (file.size > 1024 * 1024 ? `${(file.size / 1024 / 1024).toFixed(1)}MB` : `${Math.round(file.size / 1024)}KB`) : ''
+                            return (
+                              <div key={fi} className="flex items-start space-x-2 bg-white/60 rounded-lg p-2 border border-blue-100">
+                                {isImage && file.thumb ? (
+                                  <img src={file.thumb} alt={file.name} className="w-16 h-16 object-cover rounded" />
+                                ) : (
+                                  <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
+                                    <span className="text-lg">📎</span>
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-medium text-gray-800 truncate">{file.name}</p>
+                                  <p className="text-[10px] text-gray-400">{file.filetype?.toUpperCase()} {fileSize && `· ${fileSize}`}</p>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
                       {msg.showContinueOrEnd && (
                         <div className="mt-3 space-y-2">
                           <div className="flex space-x-2">

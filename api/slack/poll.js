@@ -82,6 +82,18 @@ export default async function handler(req, res) {
       })
       .map(msg => {
         const userInfo = userIdMap[msg.user]
+
+        // Slack 첨부파일 정보 추출
+        const files = (msg.files || []).map(f => ({
+          id: f.id,
+          name: f.name,
+          mimetype: f.mimetype,
+          size: f.size,
+          url: f.url_private,
+          thumb: f.thumb_360 || f.thumb_160 || f.thumb_80 || null,
+          filetype: f.filetype,
+        }))
+
         return {
           ts: msg.ts,
           user: msg.user,
@@ -89,6 +101,7 @@ export default async function handler(req, res) {
           agentRole: userInfo?.role || '',
           agentAvatar: userInfo?.avatar || '👤',
           text: formatSlackMentions(msg.text, userIdMap),
+          files: files.length > 0 ? files : undefined,
           timestamp: new Date(parseFloat(msg.ts) * 1000).toISOString(),
         }
       })

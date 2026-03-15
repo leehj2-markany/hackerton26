@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { pollSlackMessages } from '../api/chatApi'
 
 const REAL_SLACK_AGENTS = ['송인찬', '이현진']
@@ -29,6 +29,7 @@ export default function useSlackPolling({ escalationMode, slackChannelId, sessio
             agentRole: msg.agentRole || '',
             agentAvatar: msg.agentAvatar || '👤',
             text: msg.text,
+            files: msg.files || undefined,
             isLive: true,
             timestamp: new Date(msg.timestamp)
           }])
