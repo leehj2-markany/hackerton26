@@ -7,7 +7,7 @@ import AgentStatus from './AgentStatus'
 import { mockAgents } from '../data/mockData'
 import useSlackPolling from '../hooks/useSlackPolling'
 import useSessionRestore from '../hooks/useSessionRestore'
-import { sendMessage, sendMessageStream, escalateCase, sendSlackQuestion, pollSlackMessages, closeSession, closeSessionBeacon } from '../api/chatApi'
+import { sendMessage, sendMessageStream, escalateCase, sendSlackQuestion, pollSlackMessages, closeSession, closeSessionBeacon, submitFeedback } from '../api/chatApi'
 
 // 실제 Slack 사용자 (에스컬레이션 후 폴링 대상)
 // [Issue 12] 박우호(가상 에이전트) 제거 — AI가 사람인 척 답변하는 것은 혼란+불필요
@@ -247,6 +247,10 @@ const Chatbot = () => {
   const [slackChannelName, setSlackChannelName] = useState(null)
   const [sessionId] = useState(() => `session_${Date.now()}`)
   const messagesEndRef = useRef(null)
+  // 피드백 상태: { [messageIndex]: 'positive'|'negative' }
+  const [feedbackMap, setFeedbackMap] = useState({})
+  const [feedbackToast, setFeedbackToast] = useState(false)
+  const [feedbackComment, setFeedbackComment] = useState({ show: false, idx: null, text: '' })
   // [EP2] 백그라운드 폴링에서 이미 표시한 메시지 ts 추적 (중복 방지)
   const seenSlackTsRef = useRef(new Set())
   // [Issue 9/11] answeredCount를 ref로 관리 — 백그라운드 폴링에서도 카운트 반영
@@ -579,6 +583,33 @@ const Chatbot = () => {
       }
       return [...updated, escalationMsg]
     })
+  }
+
+  // 피드백 제출 핸들러
+  const handleFeedback = async (msgIdx, rating, comment) => {
+    const msg = messages[msgIdx]
+    if (!msg) return
+    setFeedbackMap(prev => ({ ...prev, [msgIdx]: rating }))
+    setFeedbackToast(true)
+    setTimeout(() => setFeedbackToast(false), 2000)
+    // 이전 user 메시지 찾기
+    let question = ''
+    for (let i = msgIdx - 1; i >= 0; i--) {
+      if (messages[i].type === 'user') { question = messages[i].text; break }
+    }
+    try {
+      await submitFeedback({
+        session_id: sessionId,
+        message_index: msgIdx,
+        question,
+        answer: msg.text,
+        rating,
+        comment: comment || null,
+        model: msg.model || null,
+        complexity: msg.complexity || null,
+        confidence_score: msg.confidence ? parseInt(msg.confidence) || null : null,
+      })
+    } catch (e) { console.error('Feedback submit error:', e) }
   }
 
   // [의도] 에스컬레이션 → AI 대화 복귀 상태 전환
@@ -1098,6 +1129,32 @@ const Chatbot = () => {
                       🔄 다시 시도
                     </button>
                   )}
+                  {/* 피드백 👍👎 버튼 — 스트리밍 완료된 AI 메시지에만 표시 */}
+                  {msg.type === 'ai' && !msg.isStreaming && !msg.isError && !msg.showSatisfaction && (
+                    <div className="mt-2 flex items-center space-x-1">
+                      {feedbackMap[index] ? (
+                        <span className="text-xs text-gray-400">
+                          {feedbackMap[index] === 'positive' ? '👍 감사합니다!' : '👎 피드백 반영됨'}
+                        </span>
+                      ) : (
+                        <>
+                          <button onClick={() => handleFeedback(index, 'positive')} className="text-gray-400 hover:text-green-500 transition p-1 rounded hover:bg-green-50" title="도움이 됐어요">👍</button>
+                          <button onClick={() => { setFeedbackComment({ show: true, idx: index, text: '' }) }} className="text-gray-400 hover:text-red-500 transition p-1 rounded hover:bg-red-50" title="아쉬워요">👎</button>
+                        </>
+                      )}
+                      {feedbackComment.show && feedbackComment.idx === index && (
+                        <form className="flex items-center space-x-1 ml-1" onSubmit={(e) => { e.preventDefault(); handleFeedback(index, 'negative', feedbackComment.text); setFeedbackComment({ show: false, idx: null, text: '' }) }}>
+                          <input
+                            type="text" autoFocus placeholder="어떤 점이 아쉬웠나요?" value={feedbackComment.text}
+                            onChange={(e) => setFeedbackComment(prev => ({ ...prev, text: e.target.value }))}
+                            className="text-xs border border-gray-300 rounded px-2 py-1 w-40 focus:outline-none focus:border-blue-400"
+                          />
+                          <button type="submit" className="text-xs text-blue-600 hover:text-blue-800 font-medium">전송</button>
+                          <button type="button" onClick={() => { handleFeedback(index, 'negative'); setFeedbackComment({ show: false, idx: null, text: '' }) }} className="text-xs text-gray-400 hover:text-gray-600">건너뛰기</button>
+                        </form>
+                      )}
+                    </div>
+                  )}
                   {msg.showEscalation && (
                     <button
                       onClick={handleEscalation}
@@ -1238,6 +1295,13 @@ const Chatbot = () => {
       {isOpen && !isMinimized && customerInfo?.product && (
         <div className="hidden xl:block">
           <InfoPanel customerInfo={customerInfo} />
+        </div>
+      )}
+
+      {/* 피드백 감사 토스트 */}
+      {feedbackToast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-sm px-4 py-2 rounded-lg shadow-lg z-[9999] animate-fade-in">
+          감사합니다! 피드백이 반영됩니다 🙏
         </div>
       )}
     </>

@@ -141,7 +141,15 @@ export async function closeSession(channelId, sessionId, customerInfo) {
   })
 }
 
-// 11. 세션 종료 (sendBeacon용 — 탭 닫기/리프레시 시)
+// 11. 피드백 제출
+export async function submitFeedback(feedbackData) {
+  return request('/feedback', {
+    method: 'POST',
+    body: JSON.stringify(feedbackData),
+  })
+}
+
+// 12. 세션 종료 (sendBeacon용 — 탭 닫기/리프레시 시)
 export function closeSessionBeacon(channelId, sessionId, customerInfo) {
   const url = `${API_URL}/session/close`
   const body = JSON.stringify({ channelId, sessionId, customerInfo })

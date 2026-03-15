@@ -4,6 +4,7 @@ import { generateAnswer, analyzeQuestion } from './_lib/geminiClient.js'
 import { customers, customerNameMap } from './_lib/mockData.js'
 import { validateInput, validateOutput, maskPII } from './_lib/safety.js'
 import { searchKnowledge } from './_lib/knowledgeBase.js'
+import { saveMessage, getCustomerPastSessions, formatPastSessionsForPrompt } from './lib/sessionStore.js'
 
 // 인사/간단한 입력 패턴
 const GREETING_PATTERNS = [
@@ -26,11 +27,14 @@ export default async function handler(req, res) {
   if (cors(req, res)) return
   if (req.method !== 'POST') return error(res, 'METHOD_NOT_ALLOWED', 'POST만 허용됩니다', 405)
 
-  const { message, customerId, conversationHistory } = req.body || {}
+  const { message, customerId, sessionId, conversationHistory } = req.body || {}
 
   if (!message?.trim()) {
     return error(res, 'INVALID_INPUT', '메시지가 비어있습니다.')
   }
+
+  // fire-and-forget: 사용자 메시지 저장
+  saveMessage(sessionId, 'user', message, { customer_id: customerId || null })
 
   // ── AI Safety: 입력 검증 ──
   const inputCheck = validateInput(message)
@@ -67,10 +71,12 @@ export default async function handler(req, res) {
     // ── 인사/간단한 입력 → RAG 스킵, ThinkingProcess 스킵 ──
     if (isGreetingMessage(message)) {
       const result = await generateAnswer(message, customerInfo, conversationHistory || [], { skipRAG: true })
+      const greetingAnswer = result.answer
+      saveMessage(sessionId, 'assistant', greetingAnswer, { model: result.model, complexity: 'simple' })
       return json(res, {
         success: true,
         data: {
-          answer: result.answer,
+          answer: greetingAnswer,
           confidence: 'high',
           confidenceScore: 95,
           references: [],
@@ -88,6 +94,20 @@ export default async function handler(req, res) {
     // [P4 수정] analyzeQuestion 1회 호출 후 결과를 generateAnswer에 전달
     const analysis = await analyzeQuestion(message)
     const thinkingProcess = ['🤔 질문 분석 중...']
+
+    // ── 장기 메모리: 이전 세션 이력 조회 (고객 매칭 시) ──
+    let pastSessionContext = ''
+    if (customerId) {
+      try {
+        const pastMsgs = await getCustomerPastSessions(customerId, sessionId, 20)
+        pastSessionContext = formatPastSessionsForPrompt(pastMsgs)
+        if (pastSessionContext) {
+          thinkingProcess.push(`🧠 장기 메모리: 이전 ${new Set(pastMsgs.map(m => m.session_id)).size}개 세션 이력 로드`)
+        }
+      } catch (e) {
+        console.error('[chat] 장기 메모리 조회 실패:', e.message)
+      }
+    }
 
     if (customerInfo) {
       thinkingProcess.push(`👤 고객 매칭: ${customerInfo.name} (${customerInfo.product} ${customerInfo.version})`)
@@ -120,7 +140,7 @@ export default async function handler(req, res) {
     // [성능최적화] generateAnswer와 validateOutput 병렬화 준비
     // generateAnswer 내부에서 selfReflect까지 끝난 후, validateOutput을 순차로 돌리면
     // ~3-5초 낭비. generateAnswer 완료 즉시 validateOutput을 시작하도록 구조 변경.
-    const result = await generateAnswer(message, customerInfo, conversationHistory || [], { preAnalysis: analysis })
+    const result = await generateAnswer(message, customerInfo, conversationHistory || [], { preAnalysis: analysis, pastSessionContext })
 
     // geminiClient에서 반환한 thinkingProcess 병합
     if (result.thinkingProcess?.length) {
@@ -154,6 +174,14 @@ export default async function handler(req, res) {
 
     finalAnswer = maskPII(finalAnswer)
     console.log(`[chat] confidence=${result.confidence} (${result.confidenceScore}%), model=${result.model}, complexity=${result.complexity}`)
+
+    // fire-and-forget: AI 답변 저장
+    saveMessage(sessionId, 'assistant', finalAnswer, {
+      model: result.model,
+      complexity: result.complexity,
+      confidence_score: result.confidenceScore,
+      customer_id: customerId || null,
+    })
 
     return json(res, {
       success: true,
