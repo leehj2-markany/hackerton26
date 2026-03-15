@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 
 const AgentStatus = ({ agents }) => {
-  const totalAgents = 4
+  const totalAgents = agents.length
   const joinedCount = agents.filter(a => a.joined).length
   const allJoined = joinedCount === totalAgents
   const [collapsed, setCollapsed] = useState(false)

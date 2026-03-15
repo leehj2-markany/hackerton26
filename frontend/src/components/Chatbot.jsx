@@ -82,21 +82,13 @@ const markdownComponents = {
   blockquote: ({children}) => <div className="bg-amber-50 border-l-4 border-amber-400 rounded-r-lg p-3 my-2 text-sm text-amber-900">{children}</div>,
 }
 
-// [P3] 타임스탬프 포맷 헬퍼 — "오후 2:30" 형식
-const formatTime = (date) => {
-  if (!date) return ''
-  const d = date instanceof Date ? date : new Date(date)
-  if (isNaN(d.getTime())) return ''
-  return d.toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit', hour12: true })
-}
-
 // [P1] AI 답변 접기/펼치기 — 6줄 이상 또는 300자 이상이면 접기 적용
 const CollapsibleAIMessage = ({ text, thinkingProcess, isStreaming }) => {
   const [expanded, setExpanded] = useState(false)
   const [showThinkingDetail, setShowThinkingDetail] = useState(false)
   const lines = text.split('\n')
-  const shouldCollapse = !isStreaming && (lines.length > 6 || text.length > 300)
-  const displayText = shouldCollapse && !expanded ? lines.slice(0, 4).join('\n') + '...' : text
+  const shouldCollapse = !isStreaming && (lines.length > 12 || text.length > 600)
+  const displayText = shouldCollapse && !expanded ? lines.slice(0, 8).join('\n') + '...' : text
   return (
     <div>
       <div className="prose prose-sm max-w-none">
@@ -1213,7 +1205,7 @@ const Chatbot = () => {
                 <p className="text-xs text-gray-400 mb-2">💡 추천 질문</p>
                 <div className="relative">
                   <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
-                    {quickReplyOptions.slice(followUpIndex, followUpIndex + 5).map((q, i) => (
+                    {quickReplyOptions.slice(0, 5).map((q, i) => (
                       <button
                         key={i}
                         onClick={() => handleQuickReply(q)}
@@ -1262,6 +1254,15 @@ const Chatbot = () => {
             )}
             
             <div ref={messagesEndRef} />
+            {/* 세션 종료 안내 배너 */}
+            {sessionClosed && (
+              <div className="px-4 py-3 bg-gray-100 border-t border-gray-200 text-center">
+                <p className="text-sm text-gray-500 mb-2">상담이 종료되었습니다</p>
+                <button onClick={handleNewChat} className="text-sm text-blue-600 font-semibold hover:text-blue-800 transition">
+                  🔄 새 상담 시작하기
+                </button>
+              </div>
+            )}
           </div>
 
           {/* [P2] Input Area — shadow-sm으로 메시지 영역과 시각적 분리 강화 */}
@@ -1273,13 +1274,13 @@ const Chatbot = () => {
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !e.nativeEvent.isComposing && handleSend()}
                 placeholder={showIntakeForm ? '위 정보를 입력해 주세요' : isAIProcessing ? 'AI 답변 생성 중...' : isEscalationBusy ? '담당자 연결 중...' : sessionClosed ? '상담이 종료되었습니다' : showContinueOrEnd ? '위 버튼을 선택해 주세요' : escalationMode ? '담당자에게 질문하기...' : '메시지를 입력하세요...'}
-                disabled={isAIProcessing || isEscalationBusy || showIntakeForm || sessionClosed}
+                disabled={isAIProcessing || isEscalationBusy || showIntakeForm || sessionClosed || showContinueOrEnd}
                 className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-markany-blue disabled:bg-gray-100 disabled:text-gray-400"
                 aria-label="메시지 입력"
               />
               <button
                 onClick={handleSend}
-                disabled={isAIProcessing || isEscalationBusy || showIntakeForm || sessionClosed}
+                disabled={isAIProcessing || isEscalationBusy || showIntakeForm || sessionClosed || showContinueOrEnd}
                 className="bg-markany-blue text-white px-6 py-2 rounded-lg hover:bg-markany-dark transition font-semibold disabled:opacity-50"
                 aria-label="메시지 전송"
               >
@@ -1300,7 +1301,7 @@ const Chatbot = () => {
 
       {/* 피드백 감사 토스트 */}
       {feedbackToast && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-sm px-4 py-2 rounded-lg shadow-lg z-[9999] animate-fade-in">
+        <div className="fixed bottom-32 right-8 sm:bottom-24 sm:right-8 bg-gray-800 text-white text-sm px-4 py-2 rounded-lg shadow-lg z-[9999] animate-fadeIn">
           감사합니다! 피드백이 반영됩니다 🙏
         </div>
       )}

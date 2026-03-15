@@ -102,7 +102,7 @@ const Homepage = () => {
                   className="bg-white text-gray-700 px-8 py-3.5 rounded-xl text-lg font-semibold border border-gray-200 hover:bg-gray-50 transition-all"
                   onClick={() => setShowDemo(true)}
                 >
-                  데모 영상 보기
+                  데모 영상 보기 ▶
                 </button>
               </div>
               <div className="flex items-center space-x-6 mt-8 text-sm text-gray-500">
