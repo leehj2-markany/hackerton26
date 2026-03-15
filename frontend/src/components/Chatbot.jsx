@@ -942,7 +942,7 @@ const Chatbot = () => {
         <button
           onClick={() => { setIsOpen(true); setIsMinimized(false) }}
           aria-label="AI 상담 열기"
-          className="fixed bottom-6 right-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-5 py-3.5 rounded-full shadow-2xl hover:shadow-blue-500/25 hover:scale-105 transition-all duration-300 z-50 flex items-center space-x-2 group"
+          className="fixed bottom-6 right-6 bg-toss-blue text-white px-5 py-3.5 rounded-full shadow-lg shadow-toss-blue/25 hover:shadow-xl hover:shadow-toss-blue/30 hover:scale-105 transition-all duration-300 z-50 flex items-center space-x-2 group"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -958,9 +958,9 @@ const Chatbot = () => {
 
       {/* Chatbot Window */}
       {isOpen && !isMinimized && (
-        <div className="fixed bottom-0 right-0 sm:bottom-6 sm:right-6 w-full sm:w-[420px] h-[100dvh] sm:h-[700px] sm:rounded-2xl rounded-none bg-white shadow-2xl flex flex-col z-50 border border-gray-200/50 ring-1 ring-black/5">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-markany-blue to-markany-dark text-white p-4 sm:rounded-t-2xl rounded-none flex justify-between items-center">
+        <div className="fixed bottom-0 right-0 sm:bottom-6 sm:right-6 w-full sm:w-[420px] h-[100dvh] sm:h-[700px] sm:rounded-2xl rounded-none bg-white shadow-2xl flex flex-col z-50 border border-toss-gray-200 overflow-hidden">
+          {/* Header — 토스 스타일 단색 */}
+          <div className="bg-toss-blue text-white p-4 sm:rounded-t-2xl rounded-none flex justify-between items-center">
             <div className="flex items-center space-x-3">
               <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center">
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -968,37 +968,34 @@ const Chatbot = () => {
                 </svg>
               </div>
               <div>
-                <span className="font-bold text-base">Anybridge</span>
+                <span className="font-bold text-[15px] tracking-tight">Anybridge</span>
                 <div className="flex items-center space-x-1.5">
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  <span className="text-xs text-white/80">AI 상담 온라인</span>
+                  <div className="w-1.5 h-1.5 bg-green-300 rounded-full"></div>
+                  <span className="text-[11px] text-white/70 font-medium">AI 상담 온라인</span>
                 </div>
               </div>
             </div>
-            <div className="flex space-x-1">
-              {/* 새 대화 버튼 — 인테이크 폼이 아닌 상태에서만 표시 */}
+            <div className="flex space-x-0.5">
               {!showIntakeForm && (
-                <button onClick={handleNewChat} className="hover:bg-white/20 p-1 rounded transition" title="새 대화" aria-label="새 대화">
+                <button onClick={handleNewChat} className="hover:bg-white/15 p-1.5 rounded-lg transition" title="새 대화" aria-label="새 대화">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
                 </button>
               )}
-              <button onClick={() => setIsMinimized(true)} className="hover:bg-white/20 p-1 rounded transition" title="최소화" aria-label="최소화">
+              <button onClick={() => setIsMinimized(true)} className="hover:bg-white/15 p-1.5 rounded-lg transition" title="최소화" aria-label="최소화">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                 </svg>
               </button>
-              <button onClick={() => setIsOpen(false)} className="hover:bg-white/20 p-1 rounded transition" title="닫기" aria-label="닫기">
+              <button onClick={() => setIsOpen(false)} className="hover:bg-white/15 p-1.5 rounded-lg transition" title="닫기" aria-label="닫기">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
           </div>
-
-          {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50" role="log" aria-live="polite">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-toss-gray-50" role="log" aria-live="polite">
             {showIntakeForm && (
               <div className="flex justify-center items-center h-full">
                 <div className="w-full max-w-sm bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -1011,33 +1008,40 @@ const Chatbot = () => {
                 {msg.type === 'agent' ? (
                   <div className="max-w-[85%]">
                     <div className="flex items-center space-x-2 mb-1">
-                      <span className="text-lg">{msg.agentAvatar}</span>
-                      <span className="text-xs font-semibold text-gray-700">{msg.agentName}</span>
-                      <span className="text-xs text-gray-400">{msg.agentRole}</span>
-                      {msg.isLive && <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">🟢 LIVE</span>}
+                      <span className="text-base">{msg.agentAvatar}</span>
+                      <span className="text-[13px] font-semibold text-toss-gray-800">{msg.agentName}</span>
+                      <span className="text-[11px] text-toss-gray-500">{msg.agentRole}</span>
+                      {msg.isLive && <span className="text-[10px] bg-green-50 text-green-600 px-1.5 py-0.5 rounded-full font-semibold tracking-tight">LIVE</span>}
                     </div>
-                    <div className="bg-blue-50 border border-blue-200 text-gray-800 rounded-lg p-3 ml-7">
-                      {msg.text && <p className="whitespace-pre-wrap text-sm">{formatSlackText(msg.text)}</p>}
-                      {/* Slack 첨부파일 렌더링 */}
+                    <div className="bg-white text-toss-gray-900 rounded-2xl rounded-tl-md p-3.5 ml-7 shadow-sm border border-toss-gray-100">
+                      {msg.text && <p className="whitespace-pre-wrap text-[14px] leading-[1.6]">{formatSlackText(msg.text)}</p>}
+                      {/* Slack 첨부파일 렌더링 — 다운로드 활성화 */}
                       {msg.files && msg.files.length > 0 && (
-                        <div className={`${msg.text ? 'mt-2 pt-2 border-t border-blue-100' : ''} space-y-2`}>
+                        <div className={`${msg.text ? 'mt-3 pt-3 border-t border-toss-gray-100' : ''} space-y-2`}>
                           {msg.files.map((file, fi) => {
                             const isImage = file.mimetype?.startsWith('image/')
                             const fileSize = file.size ? (file.size > 1024 * 1024 ? `${(file.size / 1024 / 1024).toFixed(1)}MB` : `${Math.round(file.size / 1024)}KB`) : ''
+                            const downloadUrl = file.url ? `/api/slack/file?url=${encodeURIComponent(file.url)}&name=${encodeURIComponent(file.name)}` : null
                             return (
-                              <div key={fi} className="flex items-start space-x-2 bg-white/60 rounded-lg p-2 border border-blue-100">
+                              <a key={fi} href={downloadUrl} download={file.name} target="_blank" rel="noopener noreferrer"
+                                className="flex items-center space-x-3 bg-toss-gray-50 hover:bg-toss-gray-100 rounded-xl p-3 border border-toss-gray-100 transition-colors cursor-pointer group">
                                 {isImage && file.thumb ? (
-                                  <img src={file.thumb} alt={file.name} className="w-16 h-16 object-cover rounded" />
+                                  <img src={`/api/slack/file?url=${encodeURIComponent(file.thumb)}&name=thumb`} alt={file.name} className="w-12 h-12 object-cover rounded-lg" />
                                 ) : (
-                                  <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
-                                    <span className="text-lg">📎</span>
+                                  <div className="w-10 h-10 bg-toss-blue/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <svg className="w-5 h-5 text-toss-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                    </svg>
                                   </div>
                                 )}
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-xs font-medium text-gray-800 truncate">{file.name}</p>
-                                  <p className="text-[10px] text-gray-400">{file.filetype?.toUpperCase()} {fileSize && `· ${fileSize}`}</p>
+                                  <p className="text-[13px] font-medium text-toss-gray-800 truncate">{file.name}</p>
+                                  <p className="text-[11px] text-toss-gray-400">{file.filetype?.toUpperCase()} {fileSize && `· ${fileSize}`}</p>
                                 </div>
-                              </div>
+                                <svg className="w-4 h-4 text-toss-gray-400 group-hover:text-toss-blue transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                              </a>
                             )
                           })}
                         </div>
@@ -1045,15 +1049,15 @@ const Chatbot = () => {
                       {msg.showContinueOrEnd && (
                         <div className="mt-3 space-y-2">
                           <div className="flex space-x-2">
-                            <button onClick={handleContinueChat} className="flex-1 bg-markany-blue text-white py-2 px-3 rounded-lg hover:bg-markany-dark transition text-sm font-semibold">
-                              💬 더 물어볼게요
+                            <button onClick={handleContinueChat} className="flex-1 bg-toss-blue text-white py-2.5 px-3 rounded-xl hover:bg-toss-dark transition text-[13px] font-semibold">
+                              더 물어볼게요
                             </button>
-                            <button onClick={handleEndChat} className="flex-1 bg-gray-500 text-white py-2 px-3 rounded-lg hover:bg-gray-600 transition text-sm font-semibold">
-                              ✅ 충분합니다, 감사해요
+                            <button onClick={handleEndChat} className="flex-1 bg-toss-gray-100 text-toss-gray-700 py-2.5 px-3 rounded-xl hover:bg-toss-gray-200 transition text-[13px] font-semibold">
+                              충분합니다
                             </button>
                           </div>
-                          <button onClick={handleReturnToAI} className="w-full bg-white border border-markany-blue text-markany-blue py-2 px-3 rounded-lg hover:bg-markany-light transition text-sm font-semibold">
-                            🤖 AI 대화로 돌아가기
+                          <button onClick={handleReturnToAI} className="w-full bg-white border border-toss-gray-200 text-toss-gray-600 py-2 px-3 rounded-xl hover:bg-toss-gray-50 transition text-[13px] font-medium">
+                            AI 대화로 돌아가기
                           </button>
                         </div>
                       )}
@@ -1063,7 +1067,7 @@ const Chatbot = () => {
 
                     </div>
                     {/* [P3] 에이전트 메시지 타임스탬프 */}
-                    {msg.timestamp && <div className="text-[10px] text-gray-400 mt-1 ml-7">{formatTimestamp(msg.timestamp)}</div>}
+                    {msg.timestamp && <div className="text-[10px] text-toss-gray-400 mt-1 ml-7">{formatTimestamp(msg.timestamp)}</div>}
                   </div>
                 ) : msg.type === 'contactCard' ? (
                   <div className="max-w-[90%] w-full">
@@ -1135,22 +1139,22 @@ const Chatbot = () => {
                 ) : (
                 <div className={`max-w-[80%] ${
                   msg.type === 'user' 
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md' 
+                    ? 'bg-toss-blue text-white' 
                     : msg.type === 'system'
-                    ? 'bg-gray-100 text-gray-500 text-xs text-center italic border-0 shadow-none'
-                    : 'bg-gradient-to-br from-white to-blue-50 text-gray-800 shadow-md border border-blue-100'
-                } rounded-lg p-3`}>
+                    ? 'bg-toss-gray-100 text-toss-gray-500 text-[12px] text-center border-0 shadow-none'
+                    : 'bg-white text-toss-gray-900 shadow-sm border border-toss-gray-100'
+                } ${msg.type === 'user' ? 'rounded-2xl rounded-tr-md' : msg.type === 'system' ? 'rounded-xl' : 'rounded-2xl rounded-tl-md'} ${msg.type === 'system' ? 'px-3 py-2' : 'p-3.5'}`}>
                   {msg.type === 'ai' && (
-                    <div className="flex items-center space-x-1.5 mb-1.5">
+                    <div className="flex items-center space-x-1.5 mb-2">
                       <span className="text-sm">🤖</span>
-                      <span className="text-xs font-semibold text-blue-600">AI</span>
-                      {msg.model && <span className="text-[10px] text-gray-400">{msg.model}</span>}
+                      <span className="text-[12px] font-semibold text-toss-blue">AI</span>
+                      {msg.model && <span className="text-[10px] text-toss-gray-400 font-medium">{msg.model}</span>}
                     </div>
                   )}
                   {msg.type === 'ai' ? (
                     <CollapsibleAIMessage text={msg.text} thinkingProcess={msg.thinkingProcess} isStreaming={msg.isStreaming} />
                   ) : (
-                    <p className={`whitespace-pre-wrap ${msg.type === 'user' ? 'leading-relaxed' : ''}`}>{formatSlackText(msg.text)}</p>
+                    <p className={`whitespace-pre-wrap text-[14px] leading-[1.6] ${msg.type === 'user' ? '' : ''}`}>{formatSlackText(msg.text)}</p>
                   )}
                   {/* [P11] 신뢰도 배지 — 제거됨 (고객에게 "정확하지 않을 수 있습니다"는 신뢰를 깎음, 내부 디버깅용으로만 유지) */}
                   {/* [P10] 에러 재시도 버튼 */}
@@ -1165,17 +1169,21 @@ const Chatbot = () => {
                       🔄 다시 시도
                     </button>
                   )}
-                  {/* 피드백 👍👎 버튼 — 스트리밍 완료된 AI 메시지에만 표시 */}
+                  {/* 피드백 버튼 — 토스 스타일 */}
                   {msg.type === 'ai' && !msg.isStreaming && !msg.isError && !msg.showSatisfaction && (
-                    <div className="mt-2 flex items-center space-x-1">
+                    <div className="mt-2.5 flex items-center space-x-1">
                       {feedbackMap[index] ? (
-                        <span className="text-xs text-gray-400">
-                          {feedbackMap[index] === 'positive' ? '👍 감사합니다!' : '👎 피드백 반영됨'}
+                        <span className="text-[11px] text-toss-gray-400 font-medium">
+                          {feedbackMap[index] === 'positive' ? '도움이 됐어요 ✓' : '피드백 반영됨 ✓'}
                         </span>
                       ) : (
                         <>
-                          <button onClick={() => handleFeedback(index, 'positive')} className="text-gray-400 hover:text-green-500 transition p-1 rounded hover:bg-green-50" title="도움이 됐어요">👍</button>
-                          <button onClick={() => { setFeedbackComment({ show: true, idx: index, text: '' }) }} className="text-gray-400 hover:text-red-500 transition p-1 rounded hover:bg-red-50" title="아쉬워요">👎</button>
+                          <button onClick={() => handleFeedback(index, 'positive')} className="text-toss-gray-300 hover:text-toss-blue transition p-1 rounded-lg hover:bg-toss-blue/5" title="도움이 됐어요">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6.633 10.5c.806 0 1.533-.446 2.031-1.08a9.041 9.041 0 012.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 00.322-1.672V3a.75.75 0 01.75-.75A2.25 2.25 0 0116.5 4.5c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 01-2.649 7.521c-.388.482-.987.729-1.605.729H13.48a4.53 4.53 0 01-1.423-.23l-3.114-1.04a4.501 4.501 0 00-1.423-.23H5.904M14.25 9h2.25M5.904 18.75c.083.205.173.405.27.602.197.4-.078.898-.523.898h-.908c-.889 0-1.713-.518-1.972-1.368a12 12 0 01-.521-3.507c0-1.553.295-3.036.831-4.398C3.387 10.203 4.167 9.75 5 9.75h1.053c.472 0 .745.556.5.96a8.958 8.958 0 00-1.302 4.665c0 1.194.232 2.333.654 3.375z" /></svg>
+                          </button>
+                          <button onClick={() => { setFeedbackComment({ show: true, idx: index, text: '' }) }} className="text-toss-gray-300 hover:text-red-400 transition p-1 rounded-lg hover:bg-red-50" title="아쉬워요">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7.5 15h2.25m8.024-9.75c.011.05.028.1.052.148.591 1.2.924 2.55.924 3.977a8.96 8.96 0 01-1.302 4.665c-.245.404.028.96.5.96h1.053c.832 0 1.612-.453 1.918-1.227.306-.774.47-1.61.47-2.473 0-1.553-.295-3.036-.831-4.398C20.613 5.797 19.833 5.25 19 5.25h-1.053c-.472 0-.745.556-.5.96a8.958 8.958 0 011.302 4.665M7.5 15l-3.114 1.04a4.501 4.501 0 00-1.423.23H1.904M7.5 15h2.25m-2.25 0c-.621 0-1.125.504-1.125 1.125v3.026c0 .621.504 1.125 1.125 1.125h.908c.445 0 .72-.498.523-.898a5.54 5.54 0 01-.27-.602M14.25 9h-2.25M14.25 9c.621 0 1.125-.504 1.125-1.125V4.849c0-.621-.504-1.125-1.125-1.125h-.908c-.445 0-.72.498-.523.898.097.197.187.397.27.602" /></svg>
+                          </button>
                         </>
                       )}
                       {feedbackComment.show && feedbackComment.idx === index && (
@@ -1194,7 +1202,7 @@ const Chatbot = () => {
                   {msg.showEscalation && (
                     <button
                       onClick={handleEscalation}
-                      className="mt-3 w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-2.5 px-4 rounded-lg hover:from-orange-600 hover:to-red-600 transition-all text-sm font-bold shadow-lg shadow-orange-500/25 flex items-center justify-center space-x-2"
+                      className="mt-3 w-full bg-toss-gray-900 text-white py-2.5 px-4 rounded-xl hover:bg-toss-gray-800 transition-all text-[13px] font-semibold flex items-center justify-center space-x-2"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" /></svg>
                       <span>전문 담당자 연결하기</span>
@@ -1202,11 +1210,11 @@ const Chatbot = () => {
                   )}
                   {msg.showSatisfaction && (
                     <div className="mt-3 flex space-x-2">
-                      <button onClick={handleSatisfactionYes} className="flex-1 bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition text-sm font-semibold">
-                        👍 네
+                      <button onClick={handleSatisfactionYes} className="flex-1 bg-toss-blue text-white py-2.5 px-4 rounded-xl hover:bg-toss-dark transition text-[13px] font-semibold">
+                        네, 도움됐어요
                       </button>
-                      <button onClick={handleSatisfactionNo} className="flex-1 bg-gray-400 text-white py-2 px-4 rounded-lg hover:bg-gray-500 transition text-sm font-semibold">
-                        👎 아니요
+                      <button onClick={handleSatisfactionNo} className="flex-1 bg-toss-gray-100 text-toss-gray-700 py-2.5 px-4 rounded-xl hover:bg-toss-gray-200 transition text-[13px] font-semibold">
+                        아쉬워요
                       </button>
                     </div>
                   )}
@@ -1216,7 +1224,7 @@ const Chatbot = () => {
                 )}
                 {/* [P3] user/ai 메시지 타임스탬프 — system 메시지는 제외 */}
                 {msg.type !== 'system' && msg.timestamp && (
-                  <div className={`text-[10px] text-gray-400 mt-1 ${msg.type === 'user' ? 'text-right' : ''}`}>
+                  <div className={`text-[10px] text-toss-gray-400 mt-1 ${msg.type === 'user' ? 'text-right' : ''}`}>
                     {formatTimestamp(msg.timestamp)}
                   </div>
                 )}
@@ -1230,15 +1238,15 @@ const Chatbot = () => {
             {showContinueOrEnd && !isProcessing && (
               <div className="px-2 py-2 space-y-2">
                 <div className="flex space-x-2">
-                  <button onClick={handleContinueChat} className="flex-1 bg-markany-blue text-white py-2.5 px-3 rounded-lg hover:bg-markany-dark transition text-sm font-semibold shadow-sm">
-                    💬 더 물어볼게요
+                  <button onClick={handleContinueChat} className="flex-1 bg-toss-blue text-white py-2.5 px-3 rounded-xl hover:bg-toss-dark transition text-[13px] font-semibold">
+                    더 물어볼게요
                   </button>
-                  <button onClick={handleEndChat} className="flex-1 bg-gray-500 text-white py-2.5 px-3 rounded-lg hover:bg-gray-600 transition text-sm font-semibold shadow-sm">
-                    ✅ 충분합니다, 감사해요
+                  <button onClick={handleEndChat} className="flex-1 bg-toss-gray-100 text-toss-gray-700 py-2.5 px-3 rounded-xl hover:bg-toss-gray-200 transition text-[13px] font-semibold">
+                    충분합니다
                   </button>
                 </div>
-                <button onClick={handleReturnToAI} className="w-full bg-white border border-markany-blue text-markany-blue py-2 px-3 rounded-lg hover:bg-markany-light transition text-sm font-semibold">
-                  🤖 AI 대화로 돌아가기
+                <button onClick={handleReturnToAI} className="w-full bg-white border border-toss-gray-200 text-toss-gray-600 py-2 px-3 rounded-xl hover:bg-toss-gray-50 transition text-[13px] font-medium">
+                  AI 대화로 돌아가기
                 </button>
               </div>
             )}
@@ -1309,9 +1317,9 @@ const Chatbot = () => {
             )}
           </div>
 
-          {/* [P2] Input Area — shadow-sm으로 메시지 영역과 시각적 분리 강화 */}
-          <div className="p-4 border-t border-gray-200 shadow-[0_-2px_8px_rgba(0,0,0,0.04)] bg-white sm:rounded-b-2xl rounded-none">
-            <div className="flex space-x-2">
+          {/* Input Area — 토스 스타일 */}
+          <div className="p-3 border-t border-toss-gray-100 bg-white sm:rounded-b-2xl rounded-none">
+            <div className="flex space-x-2 items-center">
               <input
                 type="text"
                 value={inputValue}
@@ -1319,13 +1327,13 @@ const Chatbot = () => {
                 onKeyDown={(e) => e.key === 'Enter' && !e.nativeEvent.isComposing && handleSend()}
                 placeholder={showIntakeForm ? '위 정보를 입력해 주세요' : isAIProcessing ? 'AI 답변 생성 중...' : isEscalationBusy ? '담당자 연결 중...' : sessionClosed ? '상담이 종료되었습니다' : showContinueOrEnd ? '위 버튼을 선택해 주세요' : escalationMode ? '담당자에게 질문하기...' : '메시지를 입력하세요...'}
                 disabled={isAIProcessing || isEscalationBusy || showIntakeForm || sessionClosed || showContinueOrEnd}
-                className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-markany-blue disabled:bg-gray-100 disabled:text-gray-400"
+                className="flex-1 bg-toss-gray-50 border-0 rounded-xl px-4 py-2.5 text-[14px] text-toss-gray-900 placeholder:text-toss-gray-400 focus:outline-none focus:ring-2 focus:ring-toss-blue/30 disabled:bg-toss-gray-100 disabled:text-toss-gray-300 transition"
                 aria-label="메시지 입력"
               />
               <button
                 onClick={handleSend}
                 disabled={isAIProcessing || isEscalationBusy || showIntakeForm || sessionClosed || showContinueOrEnd}
-                className="bg-markany-blue text-white px-6 py-2 rounded-lg hover:bg-markany-dark transition font-semibold disabled:opacity-50"
+                className="bg-toss-blue text-white px-5 py-2.5 rounded-xl hover:bg-toss-dark transition font-semibold text-[14px] disabled:opacity-40 flex-shrink-0"
                 aria-label="메시지 전송"
               >
                 전송

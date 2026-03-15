@@ -9,11 +9,11 @@
 }
 
 body {
-  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, 'Roboto', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: #191F28;
+  letter-spacing: -0.02em;
 }
 
 html {
@@ -120,7 +120,7 @@ html {
 
 /* Gradient text */
 .text-gradient {
-  background: linear-gradient(135deg, #0066CC 0%, #0052a3 50%, #003d7a 100%);
+  background: linear-gradient(135deg, #3182F6 0%, #1B64DA 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -128,7 +128,7 @@ html {
 
 /* Glass morphism for chatbot header */
 .glass-header {
-  background: linear-gradient(135deg, rgba(0, 102, 204, 0.95) 0%, rgba(0, 51, 102, 0.95) 100%);
+  background: #3182F6;
   backdrop-filter: blur(10px);
 }
 
@@ -148,23 +148,23 @@ html {
   margin-bottom: 0.5rem;
 }
 .markdown-content li { margin-bottom: 0.2rem; line-height: 1.5; }
-.markdown-content strong { font-weight: 600; color: #1e293b; }
+.markdown-content strong { font-weight: 600; color: #333D4B; }
 .markdown-content code {
-  background: #f1f5f9;
+  background: #F2F4F6;
   padding: 0.1rem 0.3rem;
   border-radius: 0.25rem;
   font-size: 0.85em;
-  color: #0066CC;
+  color: #3182F6;
 }
 .markdown-content a {
-  color: #0066CC;
+  color: #3182F6;
   text-decoration: underline;
 }
 .markdown-content blockquote {
-  border-left: 3px solid #0066CC;
+  border-left: 3px solid #3182F6;
   padding-left: 0.75rem;
   margin: 0.5rem 0;
-  color: #64748b;
+  color: #6B7684;
 }
 
 /* Quick reply horizontal scroll */
