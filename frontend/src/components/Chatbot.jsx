@@ -399,9 +399,7 @@ const Chatbot = () => {
     }])
 
     // Slack 전송
-    // [Fix] follow-up은 현재 시점부터 폴링 — 2분 전 lookback은 이전 답변 중복 원인
-    const pollStartTs = String(Date.now() / 1000)
-    slackPollSinceRef.current = pollStartTs
+    // [Fix] follow-up 폴링은 seenSlackTsRef로만 중복 체크 — since 기반 필터는 시간 동기화 이슈 발생
     const realAgents = REAL_SLACK_AGENTS.map(name => ({ name, role: (AGENT_MAP[name] || {}).role || '담당자' }))
     sendSlackQuestion(question, realAgents, customerInfo?.name || '고객', { followUp: true }, slackChannelId)
       .then(res => { if (res?.data?.channelId) setSlackChannelId(res.data.channelId) })
@@ -413,6 +411,15 @@ const Chatbot = () => {
     // [Issue 9/11] answeredCount를 ref로 관리
     answeredCountRef.current = 0
     const answeredAgents = new Set()
+
+    // [Fix] 폴링 시작 전에 현재 채널의 모든 기존 메시지 ts를 seenSlackTsRef에 등록
+    // 이렇게 하면 이전 답변이 절대 중복 표시되지 않음
+    try {
+      const existingResult = await pollSlackMessages('0', 50, slackChannelId)
+      for (const msg of (existingResult?.data?.messages || [])) {
+        seenSlackTsRef.current.add(msg.ts)
+      }
+    } catch (_) {}
 
     if (REAL_SLACK_AGENTS.length > 0) {
       setTypingAgent({ name: '담당자', avatar: '💬' })
@@ -426,7 +433,8 @@ const Chatbot = () => {
         if (firstAnswerTime && (Date.now() - firstAnswerTime) > shortenedWait) break
         await delay(pollInterval)
         try {
-          const pollResult = await pollSlackMessages(pollStartTs, 20, slackChannelId)
+          // [Fix] since='0'으로 전체 메시지 가져오고 seenSlackTsRef로만 중복 체크
+          const pollResult = await pollSlackMessages('0', 50, slackChannelId)
           for (const msg of (pollResult?.data?.messages || [])) {
             // [Fix] seenSlackTsRef 체크 — 이전 에스컬레이션 답변이 follow-up에서 중복 표시되는 문제 방지
             if (seenSlackTsRef.current.has(msg.ts)) continue
@@ -448,6 +456,10 @@ const Chatbot = () => {
       }
       setTypingAgent(null)
     }
+
+    // [Fix] 폴링 루프 종료 후 slackPollSinceRef를 현재 시점으로 업데이트
+    // 백그라운드 폴링이 이어받을 때 이전 메시지를 다시 가져오지 않도록
+    slackPollSinceRef.current = String(Date.now() / 1000)
 
     // [Issue 13] 마무리 → 시스템 메시지로 축소
     await delay(500)
