@@ -430,25 +430,21 @@ const Chatbot = () => {
 
     if (REAL_SLACK_AGENTS.length > 0) {
       setTypingAgent({ name: '담당자', avatar: '💬' })
-      const maxPollTime = 90000, shortenedWait = 30000, pollInterval = 3000
+      // [UX Fix] 첫 답변만 대기 (최대 30초) — 나머지는 백그라운드 폴링이 처리
+      const maxPollTime = 30000, pollInterval = 3000
       const startTime = Date.now()
-      let firstAnswerTime = null
 
-      while (answeredAgents.size < REAL_SLACK_AGENTS.length) {
+      while (answeredAgents.size === 0) {
         const elapsed = Date.now() - startTime
         if (elapsed > maxPollTime) break
-        if (firstAnswerTime && (Date.now() - firstAnswerTime) > shortenedWait) break
         await delay(pollInterval)
         try {
-          // [Fix] since='0'으로 전체 메시지 가져오고 seenSlackTsRef로만 중복 체크
           const pollResult = await pollSlackMessages('0', 50, slackChannelId)
           for (const msg of (pollResult?.data?.messages || [])) {
-            // [Fix] seenSlackTsRef 체크 — 이전 에스컬레이션 답변이 follow-up에서 중복 표시되는 문제 방지
             if (seenSlackTsRef.current.has(msg.ts)) continue
-            if (!answeredAgents.has(msg.agentName) && REAL_SLACK_AGENTS.includes(msg.agentName)) {
+            if (REAL_SLACK_AGENTS.includes(msg.agentName)) {
               answeredAgents.add(msg.agentName)
               seenSlackTsRef.current.add(msg.ts)
-              if (!firstAnswerTime) firstAnswerTime = Date.now()
               setTypingAgent(null)
               const aInfo = AGENT_MAP[msg.agentName] || {}
               setMessages(prev => [...prev, {
@@ -456,7 +452,6 @@ const Chatbot = () => {
                 agentAvatar: aInfo.avatar || msg.agentAvatar, text: msg.text, files: msg.files || undefined, isLive: true, timestamp: new Date(msg.timestamp)
               }])
               answeredCountRef.current++
-              if (answeredAgents.size < REAL_SLACK_AGENTS.length) setTypingAgent({ name: '담당자', avatar: '💬' })
             }
           }
         } catch (err) { console.error('Slack poll error:', err) }
@@ -465,16 +460,15 @@ const Chatbot = () => {
     }
 
     // [Fix] 폴링 루프 종료 후 slackPollSinceRef를 현재 시점으로 업데이트
-    // 백그라운드 폴링이 이어받을 때 이전 메시지를 다시 가져오지 않도록
     slackPollSinceRef.current = String(Date.now() / 1000)
 
-    // [Issue 13] 마무리 → 시스템 메시지로 축소
+    // 마무리 메시지
     await delay(500)
     if (answeredCountRef.current > 0) {
       setMessages(prev => [...prev, { type: 'system', text: '담당자 답변이 도착했습니다 ✅', timestamp: new Date() }])
     }
 
-    // [Issue 14] showContinueOrEnd를 별도 state로 관리
+    // 입력 활성화 + 버튼 표시
     setShowContinueOrEnd(true)
     setFollowUpIndex(prev => prev + 1)
     setIsEscalationBusy(false)
@@ -905,23 +899,21 @@ const Chatbot = () => {
 
     if (realAgentNames.length > 0) {
       setTypingAgent({ name: '담당자', avatar: '💬' })
-      const maxPollTime = 90000, shortenedWait = 30000, pollInterval = 3000
+      // [UX Fix] 첫 답변만 대기 (최대 30초) — 나머지는 백그라운드 폴링이 처리
+      const maxPollTime = 30000, pollInterval = 3000
       const startTime = Date.now()
-      let firstAnswerTime = null
 
-      while (answeredRealAgents.size < realAgentNames.length) {
+      while (answeredRealAgents.size === 0) {
         const elapsed = Date.now() - startTime
         if (elapsed > maxPollTime) break
-        if (firstAnswerTime && (Date.now() - firstAnswerTime) > shortenedWait) break
         await delay(pollInterval)
         try {
           const pollResult = await pollSlackMessages(escalationPollStartTs, 20, activeChannelId)
           for (const msg of (pollResult?.data?.messages || [])) {
             if (seenSlackTsRef.current.has(msg.ts)) continue
-            if (!answeredRealAgents.has(msg.agentName) && realAgentNames.includes(msg.agentName)) {
+            if (realAgentNames.includes(msg.agentName)) {
               answeredRealAgents.add(msg.agentName)
               seenSlackTsRef.current.add(msg.ts)
-              if (!firstAnswerTime) firstAnswerTime = Date.now()
               const aInfo = AGENT_MAP[msg.agentName] || { role: '담당자', avatar: '👤' }
               setTypingAgent(null)
               setMessages(prev => [...prev, {
@@ -930,36 +922,24 @@ const Chatbot = () => {
                 timestamp: new Date(msg.timestamp)
               }])
               answeredCountRef.current++
-              if (answeredRealAgents.size < realAgentNames.length) {
-                setTypingAgent({ name: '담당자', avatar: '💬' })
-              }
             }
           }
         } catch (err) { console.error('Slack poll error:', err) }
       }
       setTypingAgent(null)
-
-      // [Issue 10] 타임아웃 — 해커톤 데모에서는 조용히 넘어감
     }
 
     // [Issue 15] 에스컬레이션 완료 → AgentStatus 패널 닫기
     setShowAgentStatus(false)
 
-    // [Issue 9/11] completionText에서 ref 값 사용
     await delay(500)
-    const totalQ = realAgentNames.length
-    const answered = answeredCountRef.current
-    if (answered > 0) {
+    if (answeredCountRef.current > 0) {
       setMessages(prev => [...prev, {
-        type: 'system',
-        text: answered === totalQ
-          ? '담당자 답변이 모두 도착했습니다 ✅'
-          : `${totalQ}명 중 ${answered}명 답변 완료.`,
-        timestamp: new Date()
+        type: 'system', text: '담당자 답변이 도착했습니다 ✅', timestamp: new Date()
       }])
     }
 
-    // [Issue 14] showContinueOrEnd를 별도 state로 관리
+    // 입력 활성화 + 버튼 표시
     setShowContinueOrEnd(true)
     setIsEscalationBusy(false)
     setIsEscalating(false)
