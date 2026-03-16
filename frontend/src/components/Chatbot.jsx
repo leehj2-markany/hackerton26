@@ -797,7 +797,7 @@ const Chatbot = () => {
     }])
 
     // [Issue 13] 채소희 입장 + 인사 통합 (1회만)
-    await delay(1500)
+    await delay(500)
     setAgents(prev => [...prev, { name: '채소희', ...AGENT_MAP['채소희'], joined: true }])
     setMessages(prev => [...prev, {
       type: 'agent', agentName: '채소희', agentRole: '고객센터', agentAvatar: '👩‍💼',
