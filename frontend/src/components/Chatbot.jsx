@@ -392,14 +392,16 @@ const Chatbot = () => {
     }])
 
     // Slack 전송
-    const pollStartTs = String((Date.now() / 1000) - 120)
+    // [Fix] follow-up은 현재 시점부터 폴링 — 2분 전 lookback은 이전 답변 중복 원인
+    const pollStartTs = String(Date.now() / 1000)
     slackPollSinceRef.current = pollStartTs
     const realAgents = REAL_SLACK_AGENTS.map(name => ({ name, role: (AGENT_MAP[name] || {}).role || '담당자' }))
     sendSlackQuestion(question, realAgents, customerInfo?.name || '고객', { followUp: true }, slackChannelId)
       .then(res => { if (res?.data?.channelId) setSlackChannelId(res.data.channelId) })
       .catch(err => console.error('Slack send error:', err))
 
-    setIsEscalationBusy(false)
+    // [Fix] isEscalationBusy를 폴링 루프 완료까지 유지 — 백그라운드 폴링 중복 방지
+    // (함수 끝에서 setIsEscalationBusy(false) 호출됨)
 
     // [Issue 9/11] answeredCount를 ref로 관리
     answeredCountRef.current = 0
@@ -419,6 +421,8 @@ const Chatbot = () => {
         try {
           const pollResult = await pollSlackMessages(pollStartTs, 20, slackChannelId)
           for (const msg of (pollResult?.data?.messages || [])) {
+            // [Fix] seenSlackTsRef 체크 — 이전 에스컬레이션 답변이 follow-up에서 중복 표시되는 문제 방지
+            if (seenSlackTsRef.current.has(msg.ts)) continue
             if (!answeredAgents.has(msg.agentName) && REAL_SLACK_AGENTS.includes(msg.agentName)) {
               answeredAgents.add(msg.agentName)
               seenSlackTsRef.current.add(msg.ts)
@@ -439,7 +443,7 @@ const Chatbot = () => {
     }
 
     // [Issue 13] 마무리 → 시스템 메시지로 축소
-    await delay(1000)
+    await delay(500)
     if (answeredCountRef.current > 0) {
       setMessages(prev => [...prev, { type: 'system', text: '담당자 답변이 도착했습니다 ✅', timestamp: new Date() }])
     }
@@ -887,6 +891,7 @@ const Chatbot = () => {
         try {
           const pollResult = await pollSlackMessages(escalationPollStartTs, 20, activeChannelId)
           for (const msg of (pollResult?.data?.messages || [])) {
+            if (seenSlackTsRef.current.has(msg.ts)) continue
             if (!answeredRealAgents.has(msg.agentName) && realAgentNames.includes(msg.agentName)) {
               answeredRealAgents.add(msg.agentName)
               seenSlackTsRef.current.add(msg.ts)
