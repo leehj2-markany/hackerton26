@@ -344,6 +344,12 @@ const Chatbot = () => {
   const handleSend = async () => {
     if (!inputValue.trim() || isProcessing) return
 
+    // [UX Fix] showContinueOrEnd 상태에서 직접 입력하면 자동으로 "더 물어볼게요" 처리
+    if (showContinueOrEnd) {
+      setShowContinueOrEnd(false)
+      setShowQuickReplies(false)
+    }
+
     const userMessage = { type: 'user', text: inputValue, timestamp: new Date() }
     setMessages(prev => [...prev, userMessage])
     const currentInput = inputValue
@@ -416,10 +422,11 @@ const Chatbot = () => {
     // 이렇게 하면 이전 답변이 절대 중복 표시되지 않음
     try {
       const existingResult = await pollSlackMessages('0', 50, slackChannelId)
-      for (const msg of (existingResult?.data?.messages || [])) {
+      const existingMsgs = existingResult?.data?.messages || []
+      for (const msg of existingMsgs) {
         seenSlackTsRef.current.add(msg.ts)
       }
-    } catch (_) {}
+    } catch (e) { console.error('[followUp] pre-register error:', e) }
 
     if (REAL_SLACK_AGENTS.length > 0) {
       setTypingAgent({ name: '담당자', avatar: '💬' })
@@ -1349,14 +1356,14 @@ const Chatbot = () => {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !e.nativeEvent.isComposing && handleSend()}
-                placeholder={showIntakeForm ? '위 정보를 입력해 주세요' : isAIProcessing ? 'AI 답변 생성 중...' : isEscalationBusy ? '담당자 연결 중...' : sessionClosed ? '상담이 종료되었습니다' : showContinueOrEnd ? '위 버튼을 선택해 주세요' : escalationMode ? '담당자에게 질문하기...' : '메시지를 입력하세요...'}
-                disabled={isAIProcessing || isEscalationBusy || showIntakeForm || sessionClosed || showContinueOrEnd}
+                placeholder={showIntakeForm ? '위 정보를 입력해 주세요' : isAIProcessing ? 'AI 답변 생성 중...' : isEscalationBusy ? '담당자 연결 중...' : sessionClosed ? '상담이 종료되었습니다' : showContinueOrEnd ? '질문을 입력하거나 위 버튼을 선택해 주세요' : escalationMode ? '담당자에게 질문하기...' : '메시지를 입력하세요...'}
+                disabled={isAIProcessing || isEscalationBusy || showIntakeForm || sessionClosed}
                 className="flex-1 bg-toss-gray-50 border-0 rounded-xl px-4 py-2.5 text-[14px] text-toss-gray-900 placeholder:text-toss-gray-400 focus:outline-none focus:ring-2 focus:ring-toss-blue/30 disabled:bg-toss-gray-100 disabled:text-toss-gray-300 transition"
                 aria-label="메시지 입력"
               />
               <button
                 onClick={handleSend}
-                disabled={isAIProcessing || isEscalationBusy || showIntakeForm || sessionClosed || showContinueOrEnd}
+                disabled={isAIProcessing || isEscalationBusy || showIntakeForm || sessionClosed}
                 className="bg-toss-blue text-white px-5 py-2.5 rounded-xl hover:bg-toss-dark transition font-semibold text-[14px] disabled:opacity-40 flex-shrink-0"
                 aria-label="메시지 전송"
               >
