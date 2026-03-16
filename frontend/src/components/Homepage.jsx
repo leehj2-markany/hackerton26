@@ -183,29 +183,28 @@ const Homepage = () => {
               <a href="#" className="text-markany-blue font-semibold hover:underline">자세히 보기 →</a>
             </div>
 
-            {/* Document SAFER */}
+            {/* DLP */}
             <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition border border-gray-100">
               <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mb-4">
                 <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">Document SAFER</h3>
-              <p className="text-gray-600 mb-4">기업 문서를 안전하게 관리하고 유출을 방지하는 통합 문서 보안 솔루션입니다.</p>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">DLP</h3>
+              <p className="text-gray-600 mb-4">데이터 유출 방지 솔루션으로 기업의 중요 정보가 외부로 유출되는 것을 탐지하고 차단합니다.</p>
               <a href="#" className="text-markany-blue font-semibold hover:underline">자세히 보기 →</a>
             </div>
 
-            {/* Print TRACER — 출력물 비가시성 워터마크 기반 유출 추적 솔루션 */}
+            {/* 비가시성 워터마크 */}
             <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition border border-gray-100">
               <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mb-4">
                 <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 9V2h12v7" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 14h12v8H6z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">Print TRACER</h3>
-              <p className="text-gray-600 mb-4">출력물에 비가시성 워터마크를 삽입하여 유출 경로를 추적하는 솔루션입니다.</p>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">비가시성 워터마크</h3>
+              <p className="text-gray-600 mb-4">눈에 보이지 않는 워터마크를 삽입하여 출력물·화면 캡처의 유출 경로를 추적합니다.</p>
               <a href="#" className="text-markany-blue font-semibold hover:underline">자세히 보기 →</a>
             </div>
           </div>
@@ -252,8 +251,8 @@ const Homepage = () => {
               <h4 className="font-semibold mb-4">제품</h4>
               <ul className="space-y-2 text-gray-400">
                 <li><a href="#" className="hover:text-white transition">DRM</a></li>
-                <li><a href="#" className="hover:text-white transition">Document SAFER</a></li>
-                <li><a href="#" className="hover:text-white transition">Print TRACER</a></li>
+                <li><a href="#" className="hover:text-white transition">DLP</a></li>
+                <li><a href="#" className="hover:text-white transition">비가시성 워터마크</a></li>
               </ul>
             </div>
             <div>
