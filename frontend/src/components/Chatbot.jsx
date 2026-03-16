@@ -829,7 +829,7 @@ const Chatbot = () => {
     const assignees = actualAgents
 
     for (const agent of assignees) {
-      await delay(1000)
+      await delay(400)
       setAgents(prev => [...prev, { ...agent, joined: true }])
       setMessages(prev => [...prev, {
         type: 'system', text: `${agent.name} (${agent.role})가 입장했습니다`, timestamp: new Date()
@@ -841,7 +841,7 @@ const Chatbot = () => {
     setSlackChannelName(channelName)
 
     // [Issue 13] 질문 분류 상세 안내 제거 → 슬랙 채널 전송만
-    await delay(800)
+    await delay(300)
     const slackMentionLines = subQuestions.map(sq =>
       `@${sq.assignee} 님, [${sq.question}] 답변 부탁드립니다. 🙏`
     ).join('\n')
@@ -920,7 +920,7 @@ const Chatbot = () => {
     setShowAgentStatus(false)
 
     // [Issue 9/11] completionText에서 ref 값 사용
-    await delay(1500)
+    await delay(500)
     const totalQ = realAgentNames.length
     const answered = answeredCountRef.current
     if (answered > 0) {
