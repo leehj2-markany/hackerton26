@@ -320,7 +320,7 @@ const Chatbot = () => {
   }, [escalationMode])
 
   // [Issue 3] 백그라운드 폴링 훅 — isEscalationBusy 중에는 비활성화하여 중복 방지
-  useSlackPolling({ escalationMode, slackChannelId, sessionClosed, seenSlackTsRef, slackPollSinceRef, setMessages, isEscalationBusy })
+  useSlackPolling({ escalationMode, slackChannelId, sessionClosed, seenSlackTsRef, slackPollSinceRef, setMessages, isEscalationBusy, setShowContinueOrEnd })
 
   // 초기 정보 수집 완료 핸들러
   const handleIntakeSubmit = (info) => {
@@ -411,13 +411,6 @@ const Chatbot = () => {
       .then(res => { if (res?.data?.channelId) setSlackChannelId(res.data.channelId) })
       .catch(err => console.error('Slack send error:', err))
 
-    // [Fix] isEscalationBusy를 폴링 루프 완료까지 유지 — 백그라운드 폴링 중복 방지
-    // (함수 끝에서 setIsEscalationBusy(false) 호출됨)
-
-    // [Issue 9/11] answeredCount를 ref로 관리
-    answeredCountRef.current = 0
-    const answeredAgents = new Set()
-
     // [Fix] 폴링 시작 전에 현재 채널의 모든 기존 메시지 ts를 seenSlackTsRef에 등록
     // 이렇게 하면 이전 답변이 절대 중복 표시되지 않음
     try {
@@ -428,51 +421,10 @@ const Chatbot = () => {
       }
     } catch (e) { console.error('[followUp] pre-register error:', e) }
 
-    if (REAL_SLACK_AGENTS.length > 0) {
-      setTypingAgent({ name: '담당자', avatar: '💬' })
-      // [UX Fix] 첫 답변만 대기 (최대 30초) — 나머지는 백그라운드 폴링이 처리
-      const maxPollTime = 30000, pollInterval = 3000
-      const startTime = Date.now()
-
-      while (answeredAgents.size === 0) {
-        const elapsed = Date.now() - startTime
-        if (elapsed > maxPollTime) break
-        await delay(pollInterval)
-        try {
-          const pollResult = await pollSlackMessages('0', 50, slackChannelId)
-          for (const msg of (pollResult?.data?.messages || [])) {
-            if (seenSlackTsRef.current.has(msg.ts)) continue
-            if (REAL_SLACK_AGENTS.includes(msg.agentName)) {
-              answeredAgents.add(msg.agentName)
-              seenSlackTsRef.current.add(msg.ts)
-              setTypingAgent(null)
-              const aInfo = AGENT_MAP[msg.agentName] || {}
-              setMessages(prev => [...prev, {
-                type: 'agent', agentName: msg.agentName, agentRole: aInfo.role || msg.agentRole,
-                agentAvatar: aInfo.avatar || msg.agentAvatar, text: msg.text, files: msg.files || undefined, isLive: true, timestamp: new Date(msg.timestamp)
-              }])
-              answeredCountRef.current++
-            }
-          }
-        } catch (err) { console.error('Slack poll error:', err) }
-      }
-      setTypingAgent(null)
-    }
-
-    // [Fix] 폴링 루프 종료 후 slackPollSinceRef를 현재 시점으로 업데이트
+    // [UX Fix] Slack 전송 후 즉시 입력 활성화 — 답변 대기는 백그라운드 폴링(useSlackPolling)이 처리
     slackPollSinceRef.current = String(Date.now() / 1000)
-
-    // 마무리 메시지
-    await delay(500)
-    if (answeredCountRef.current > 0) {
-      setMessages(prev => [...prev, { type: 'system', text: '담당자 답변이 도착했습니다 ✅', timestamp: new Date() }])
-    }
-
-    // 입력 활성화 + 버튼 표시
-    setShowContinueOrEnd(true)
-    setFollowUpIndex(prev => prev + 1)
     setIsEscalationBusy(false)
-    setShowQuickReplies(true)
+    setFollowUpIndex(prev => prev + 1)
   }
 
   const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms))
@@ -656,6 +608,7 @@ const Chatbot = () => {
     setShowQuickReplies(false)
     setShowContinueOrEnd(false)
     setTypingAgent(null)
+    setIsEscalating(false)
     setMessages(prev => [...prev, {
       type: 'system',
       text: 'AI 대화 모드로 전환합니다. 궁금하신 점을 자유롭게 질문해 주세요! 🤖',
