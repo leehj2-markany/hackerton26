@@ -360,6 +360,13 @@ const Chatbot = () => {
         handleReturnToAI()
         return
       }
+      // [Fix] 에스컬레이션 모드에서도 에스컬레이션 의도 감지 시 새로 handleEscalation 호출
+      // 세션 복원 후 escalationMode=true인데 채널이 없는 경우 대비
+      if (isEscalationIntent(currentInput) && !slackChannelId) {
+        setEscalationMode(false)
+        handleEscalation()
+        return
+      }
       handleFollowUpQuestion(currentInput)
       return
     }
